@@ -5,7 +5,7 @@ from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas import SCHEMA_TOO_AINVOAIC
+from app.db.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL
 
 
 class InvoiceDB(Base, BaseMixin):
@@ -19,7 +19,11 @@ class InvoiceDB(Base, BaseMixin):
     inv_title: Mapped[str | None] = mapped_column(String(256))
     inv_template_id: Mapped[str | None] = mapped_column(String(32))
 
-    client_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("clients.id"), index=True)
+    client_id: Mapped[UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey(f"{SCHEMA_TOO_GLOBAL}.zclient.id"),
+        index=True,
+    )
     client_number: Mapped[str | None] = mapped_column(String(64))
     client_company_name: Mapped[str | None] = mapped_column(String(256))
     client_contact_name: Mapped[str | None] = mapped_column(String(128))

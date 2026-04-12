@@ -1,12 +1,20 @@
 from logging.config import fileConfig
 import os
+import sys
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context 
-from app.db.models.too.z_base import Base
-from config import settings
+from alembic import context
+# Ensure project root is on sys.path when running Alembic from CLI.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from app.db.models.too.z_base import Base  # noqa: E402
+import app.db.models  # noqa: F401,E402
+from config import settings  # noqa: E402
 
 config = context.config
 if config.config_file_name is not None:

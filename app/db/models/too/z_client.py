@@ -7,13 +7,10 @@ from app.db.models.too.z_base import Base, BaseMixin
 from app.db.schemas import SCHEMA_TOO_GLOBAL
 
 
-class Client(Base, BaseMixin):
+class ZClientDB(Base, BaseMixin):
     __tablename__ = "zclient"
     __table_args__ = {"schema": SCHEMA_TOO_GLOBAL}
     
-
-    user_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("zme.id"), index=True)
-    be_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("business_entities.id"), index=True)
 
     client_number: Mapped[str | None] = mapped_column(String(64))
     client_business_number: Mapped[str | None] = mapped_column(String(128))
@@ -38,4 +35,4 @@ class Client(Base, BaseMixin):
     client_note: Mapped[str | None] = mapped_column(String(1024))
     client_status: Mapped[str | None] = mapped_column(String(64))
 
-    business = relationship("BusinessEntity", back_populates="clients")
+    business = relationship("BusinessEntity", back_populates="client")

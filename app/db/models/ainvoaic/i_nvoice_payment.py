@@ -12,9 +12,13 @@ class InvoicePaymentDB(Base, BaseMixin):
     __tablename__ = "invoice_payment"
     __table_args__ = {"schema": SCHEMA_TOO_AINVOAIC}
 
-    inv_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("invoice.id"), index=True)
+    inv_id: Mapped[UUID] = mapped_column(        Uuid,        ForeignKey(f"{SCHEMA_TOO_AINVOAIC}.invoice.id"),        index=True,    )
 
-    pm_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("payment_method.id"), nullable=True)
+    pm_id: Mapped[UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey(f"{SCHEMA_TOO_AINVOAIC}.i_payment_method.id"),
+        nullable=True,
+    )
     pm_name: Mapped[str | None] = mapped_column(String(128))
     pm_note: Mapped[str | None] = mapped_column(String(1024))
 

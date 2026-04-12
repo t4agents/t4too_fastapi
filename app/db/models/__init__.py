@@ -1,9 +1,4 @@
-from app.db.models.ainvoaic import invoice2  # noqa: F401
-from db.models.global import shared  # noqa: F401
-from db.models.t4agents import payroll  # noqa: F401
-
-__all__ = [
-    "invoice2",
-    "payroll",
-    "shared",
-]
+from .ai import *  # noqa: F401,F403
+from .ainvoaic import *  # noqa: F401,F403
+from .too import *  # noqa: F401,F403
+from .t4agents import *  # noqa: F401,F403
