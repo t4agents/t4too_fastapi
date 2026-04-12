@@ -50,7 +50,8 @@ def _email_to_display_name(email: str | None) -> str:
 
 async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
     _log.info("provision_new_user start keys=%s", sorted(decoded.keys()))
-    user_id_raw = decoded.get("id")
+    # Supabase access tokens use "sub" as the user UUID
+    user_id_raw = decoded.get("sub") or decoded.get("id")
     email = decoded.get("email") or DEFAULTS["email"]
     if not user_id_raw:
         raise HTTPException(
