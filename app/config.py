@@ -8,7 +8,7 @@ class _Settings(BaseSettings):
     JWKS_URL: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1/.well-known/jwks.json"
     JWKS_ISS: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1"
     JWKS_AUD: str = "authenticated"
-    JWKS_ALG: list[str] = ["RS256"]
+    JWKS_ALG: list[str] = ["ES256", "RS256"]
     # T4_ADMIN: str = "postgresql+asyncpg://username:pwd@local/icedb"
     # OPENAI_API_KEY: str =""
     # COHERE_API_KEY: str = ""
