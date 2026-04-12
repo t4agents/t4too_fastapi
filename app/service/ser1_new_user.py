@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Dict
 from uuid import UUID
 
@@ -29,6 +30,7 @@ DEFAULTS = {
     "taxNo": "invoaice123",
 }
 
+_log = logging.getLogger(__name__)
 
 def _to_name_parts(full_name: str | None) -> Dict[str, str]:
     safe_name = (full_name or "").strip() or DEFAULTS["name"]
@@ -47,6 +49,7 @@ def _email_to_display_name(email: str | None) -> str:
 
 
 async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
+    _log.info("provision_new_user start keys=%s", sorted(decoded.keys()))
     user_id_raw = decoded.get("id")
     email = decoded.get("email") or DEFAULTS["email"]
     if not user_id_raw:
@@ -65,6 +68,12 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 
     display_name = _email_to_display_name(email)
     name_parts = _to_name_parts(display_name)
+    _log.info(
+        "provision_new_user identity user_id=%s email=%s display_name=%s",
+        user_id,
+        email,
+        display_name,
+    )
 
     base_ids = {
         "id": user_id,
@@ -122,19 +131,28 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
         "client_note": zbe_payload.get("be_note"),
     }
 
-    async with db.begin():
-        await db.execute(
+    try:
+        async with db.begin():
+            _log.info("provision_new_user db begin")
+            await db.execute(
             insert(ZMeDB)
             .values(**zme_payload)
             .on_conflict_do_nothing(index_elements=["id"])
-        )
-        await db.execute(
+            )
+            _log.info("provision_new_user z_me insert done")
+            await db.execute(
             insert(ZBizEntityDB)
             .values(**zbe_payload)
             .on_conflict_do_nothing(index_elements=["id"])
-        )
-        await db.execute(
+            )
+            _log.info("provision_new_user z_be insert done")
+            await db.execute(
             insert(ZClientDB)
             .values(**zclient_payload)
             .on_conflict_do_nothing(index_elements=["id"])
-        )
+            )
+            _log.info("provision_new_user z_client insert done")
+    except Exception:
+        _log.exception("provision_new_user db error")
+        raise
+    _log.info("provision_new_user complete")

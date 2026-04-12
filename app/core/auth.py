@@ -1,4 +1,5 @@
 import time
+import logging
 from typing import Any, Dict
 
 import httpx
@@ -15,6 +16,7 @@ _JWKS_CACHE_TS: float | None = None
 _JWKS_TTL_SECONDS = 3600
 
 _security = HTTPBearer(auto_error=False)
+_log = logging.getLogger(__name__)
 
 
 async def _fetch_jwks() -> Dict[str, Any]:
@@ -92,6 +94,22 @@ async def get_jwks_decoded(
         )
         return decoded
     except JWTError as exc:
+        # Full diagnostics for auth failures (no signature verification here)
+        try:
+            unverified_claims = jose_jwt.get_unverified_claims(token)
+        except JWTError:
+            unverified_claims = {}
+        settings = get_settings_singleton()
+        _log.info(
+            "JWT validation failed. token=%s header=%s claims=%s jwks_url=%s expected_iss=%s expected_aud=%s error=%s",
+            token,
+            header,
+            unverified_claims,
+            settings.JWKS_URL,
+            settings.JWKS_ISS,
+            settings.JWKS_AUD,
+            str(exc),
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token validation failed.",
