@@ -16,7 +16,6 @@ class InvoicePaymentDB(Base, BaseMixin):
 
     pm_id: Mapped[UUID | None] = mapped_column(
         Uuid,
-        ForeignKey(f"{SCHEMA_TOO_AINVOAIC}.i_payment_method.id"),
         nullable=True,
     )
     pm_name: Mapped[str | None] = mapped_column(String(128))

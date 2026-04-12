@@ -40,11 +40,7 @@ class ZBizEntityDB(Base, BaseMixin):
 
     be_show_paid_stamp: Mapped[bool | None] = mapped_column(Boolean, default=True)
 
-    be_plan_id: Mapped[UUID | None] = mapped_column(
-        Uuid,
-        ForeignKey(f"{SCHEMA_TOO_AINVOAIC}.plans.id"),
-        nullable=True,
-    )
+    be_plan_id: Mapped[UUID | None] = mapped_column(Uuid,nullable=True,)
     be_plan_name: Mapped[str | None] = mapped_column(String(128))
     be_plan251_expired: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     be_plan252_expired: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

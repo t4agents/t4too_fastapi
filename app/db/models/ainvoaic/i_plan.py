@@ -7,7 +7,7 @@ from app.db.schemas import SCHEMA_TOO_AINVOAIC
 
 
 class PlanDB(Base, BaseMixin):
-    __tablename__ = "plans"
+    __tablename__ = "iplan"
     __table_args__ = {"schema": SCHEMA_TOO_AINVOAIC}
     
     plan_code: Mapped[str | None] = mapped_column(String(64))

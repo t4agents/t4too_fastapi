@@ -8,7 +8,7 @@ from app.db.schemas import SCHEMA_TOO_AINVOAIC
 
 
 class TaxDB(Base, BaseMixin):
-    __tablename__ = "taxes"
+    __tablename__ = "itax"
     __table_args__ = {"schema": SCHEMA_TOO_AINVOAIC}
 
     tax_name: Mapped[str | None] = mapped_column(String(128))

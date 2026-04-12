@@ -8,7 +8,7 @@ from app.db.schemas import SCHEMA_TOO_AINVOAIC
 
 
 class FeeDB(Base, BaseMixin):
-    __tablename__ = "fee"
+    __tablename__ = "ifee"
     __table_args__ = {"schema": SCHEMA_TOO_AINVOAIC}
 
 
