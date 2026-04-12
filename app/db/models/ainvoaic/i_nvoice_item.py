@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey, Integer, Numeric, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL
+from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL
 
 
 class InvoiceItemDB(Base, BaseMixin):

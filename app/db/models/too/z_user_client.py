@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Uuid, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.schemas import SCHEMA_TOO_GLOBAL
+from app.db.schemas.schemas import SCHEMA_TOO_GLOBAL
 
 from .z_base import Base, BaseMixin
 

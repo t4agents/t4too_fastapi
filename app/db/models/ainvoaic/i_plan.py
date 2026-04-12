@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas import SCHEMA_TOO_AINVOAIC
+from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC
 
 
 class PlanDB(Base, BaseMixin):

@@ -8,7 +8,7 @@ from sqlalchemy import (Computed, ForeignKey,String,Numeric,Date,Boolean, Uuid,)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas import SCHEMA_TOO_T4AGENTS
+from app.db.schemas.schemas import SCHEMA_TOO_T4AGENTS
 
 
 class T4EmployeeDB(Base, BaseMixin):

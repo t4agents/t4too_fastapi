@@ -6,7 +6,7 @@ from sqlalchemy import Boolean, DateTime, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .z_base import Base, BaseMixin
-from app.db.schemas import SCHEMA_TOO_GLOBAL
+from app.db.schemas.schemas import SCHEMA_TOO_GLOBAL
 
 
 class ZMeDB(Base, BaseMixin):
