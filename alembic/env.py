@@ -33,6 +33,16 @@ if DATABASE_URL.startswith("postgresql+asyncpg://"):
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 target_metadata = Base.metadata
 
+# Limit autogenerate comparisons to our app schemas only.
+# Keep this list in sync with app/db/schemas.py.
+APP_SCHEMAS = {"too_inv", "too_t4", "too_global", "too_ai"}
+
+
+def include_name(name, type_, parent_names):
+    if type_ == "schema":
+        return name in APP_SCHEMAS
+    return True
+
 
 
 def run_migrations_offline() -> None:
@@ -40,6 +50,9 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_schemas=True,
+        include_name=include_name,
+        version_table_schema="too_global",
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -63,7 +76,11 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            include_name=include_name,
+            version_table_schema="too_global",
         )
 
         with context.begin_transaction():

@@ -9,10 +9,12 @@ from sqlalchemy.sql import func
 from sqlalchemy import Uuid
 
 from app.db.models.too.z_base import Base, BaseMixin
+from app.db.schemas import SCHEMA_TOO_AI
 
 
 class AICacheDB(Base, BaseMixin):
     __tablename__ = "ai_cache"
+    __table_args__ = {"schema": SCHEMA_TOO_AI}
     __table_args__ = (UniqueConstraint("ten_id", "cache_key", name="uq_agent_cache_ten_key"),)
 
     cache_key: Mapped[str] = mapped_column(String(255), index=True, nullable=False)

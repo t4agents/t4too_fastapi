@@ -11,10 +11,9 @@ from app.db.models.too.z_base import Base, BaseMixin
 from app.db.schemas import SCHEMA_TOO_T4AGENTS
 
 
-class Employee(Base, BaseMixin):
+class T4EmployeeDB(Base, BaseMixin):
     __tablename__ = "t4_employee"
     __table_args__ = {"schema": SCHEMA_TOO_T4AGENTS}
-
     # --- Identity ---
     first_name: Mapped[str] = mapped_column(String, nullable=True)
     last_name: Mapped[str] = mapped_column(String, nullable=True)
