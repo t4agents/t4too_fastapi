@@ -17,6 +17,7 @@ _JWKS_TTL_SECONDS = 3600
 
 _security = HTTPBearer(auto_error=False)
 _log = logging.getLogger(__name__)
+_http_log = logging.getLogger("app.http")
 
 
 async def _fetch_jwks() -> Dict[str, Any]:
@@ -65,13 +66,23 @@ async def get_jwks_decoded(
             detail="Missing bearer token.",
         )
     token = credentials.credentials
+    _http_log.info("auth: received bearer token=%s", token)
     try:
         header = jose_jwt.get_unverified_header(token)
+        try:
+            unverified_claims = jose_jwt.get_unverified_claims(token)
+        except JWTError:
+            unverified_claims = {}
     except JWTError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token header.",
         ) from exc
+    _http_log.info(
+        "auth: unverified header=%s claims=%s",
+        header,
+        unverified_claims,
+    )
 
     jwks = await _get_jwks_cached()
     jwk = _find_jwk(jwks, header.get("kid"))
@@ -85,6 +96,14 @@ async def get_jwks_decoded(
         jwk_key = jose_jwk.construct(jwk)
         key = jwk_key.to_pem().decode("utf-8")
         settings = get_settings_singleton()
+        _http_log.info(
+            "auth: validating token header=%s jwks_url=%s expected_iss=%s expected_aud=%s expected_alg=%s",
+            header,
+            settings.JWKS_URL,
+            settings.JWKS_ISS,
+            settings.JWKS_AUD,
+            settings.JWKS_ALG,
+        )
         decoded = jose_jwt.decode(
             token,
             key=key,
@@ -92,6 +111,7 @@ async def get_jwks_decoded(
             audience=settings.JWKS_AUD,
             issuer=settings.JWKS_ISS,
         )
+        _http_log.info("auth: token validated claims=%s", decoded)
         return decoded
     except JWTError as exc:
         # Full diagnostics for auth failures (no signature verification here)
@@ -102,6 +122,16 @@ async def get_jwks_decoded(
         settings = get_settings_singleton()
         _log.info(
             "JWT validation failed. token=%s header=%s claims=%s jwks_url=%s expected_iss=%s expected_aud=%s error=%s",
+            token,
+            header,
+            unverified_claims,
+            settings.JWKS_URL,
+            settings.JWKS_ISS,
+            settings.JWKS_AUD,
+            str(exc),
+        )
+        _http_log.info(
+            "auth: validation failed token=%s header=%s claims=%s jwks_url=%s expected_iss=%s expected_aud=%s error=%s",
             token,
             header,
             unverified_claims,
