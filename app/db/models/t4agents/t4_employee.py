@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import (Computed, ForeignKey,String,Numeric,Date,Boolean, Uuid,)
+from sqlalchemy import (Computed, String,Numeric,Date,Boolean, Uuid,)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin

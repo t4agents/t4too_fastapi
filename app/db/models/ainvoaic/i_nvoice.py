@@ -73,6 +73,5 @@ class InvoiceDB(Base, BaseMixin):
     inv_pdf_template: Mapped[str | None] = mapped_column(String(64))
     inv_terms_conditions: Mapped[str | None] = mapped_column(String(1024))
 
-    business = relationship("BusinessEntity", back_populates="invoices")
     items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
     payments = relationship("InvoicePayment", back_populates="invoice", cascade="all, delete-orphan")

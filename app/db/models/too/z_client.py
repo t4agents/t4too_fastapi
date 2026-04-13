@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Integer, String, Uuid
+from sqlalchemy import  Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
@@ -35,4 +35,3 @@ class ZClientDB(Base, BaseMixin):
     client_note: Mapped[str | None] = mapped_column(String(1024))
     client_status: Mapped[str | None] = mapped_column(String(64))
 
-    business = relationship("BusinessEntity", back_populates="client")

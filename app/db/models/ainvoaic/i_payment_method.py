@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String, Uuid
+from sqlalchemy import String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
@@ -14,4 +14,3 @@ class PaymentMethodDB(Base, BaseMixin):
     pm_name: Mapped[str | None] = mapped_column(String(128))
     pm_note: Mapped[str | None] = mapped_column(String(1024))
 
-    business = relationship("BusinessEntityDB", back_populates="ipayment_method")

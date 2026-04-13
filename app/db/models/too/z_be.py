@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, Integer, String, Uuid
+from sqlalchemy import UUID, Boolean, Date, DateTime, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL

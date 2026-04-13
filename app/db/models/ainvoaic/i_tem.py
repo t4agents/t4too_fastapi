@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Integer, Numeric, String, Uuid
+from sqlalchemy import Integer, Numeric, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
@@ -23,4 +23,3 @@ class ItemDB(Base, BaseMixin):
     item_note: Mapped[str | None] = mapped_column(String(1024))
     item_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
 
-    business = relationship("BusinessEntityDB", back_populates="items")

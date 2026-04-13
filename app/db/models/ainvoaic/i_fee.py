@@ -1,6 +1,4 @@
-from uuid import UUID
-
-from sqlalchemy import ForeignKey, Numeric, String, Uuid
+from sqlalchemy import  Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
@@ -16,4 +14,3 @@ class FeeDB(Base, BaseMixin):
     fee_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
     fee_note: Mapped[str | None] = mapped_column(String(1024))
 
-    business = relationship("BusinessEntityDB", back_populates="fee")
