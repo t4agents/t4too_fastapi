@@ -19,6 +19,7 @@ class BaseMixin:
     ten_id: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
     biz_id: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
     usr_id: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
+    cli_id: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
     usr_type: Mapped[str] = mapped_column(String(32), nullable=True)
     created_by: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

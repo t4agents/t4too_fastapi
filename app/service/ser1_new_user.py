@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
-from app.db.models.too.z_user import ZMeDB
+from app.db.models.too.z_user import ZUserDB
 
 DEFAULTS = {
     "email": "invoaice@gmail.com",
@@ -69,22 +69,17 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 
     display_name = _email_to_display_name(email)
     name_parts = _to_name_parts(display_name)
-    _log.info(
-        "provision_new_user identity user_id=%s email=%s display_name=%s",
-        user_id,
-        email,
-        display_name,
-    )
 
     base_ids = {
         "id": user_id,
         "ten_id": user_id,
         "biz_id": user_id,
         "usr_id": user_id,
+        "cli_id": user_id,
         "created_by": user_id,
     }
 
-    zme_payload = {
+    zuser_payload = {
         **base_ids,
         "email": email,
         "display_name": display_name,
@@ -132,15 +127,23 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
         "client_note": zbe_payload.get("be_note"),
     }
 
+    z_user_client_payload = {
+        **base_ids,
+        "be_name": "My Business",
+        "be_type": "ME",
+        "be_email": email,
+        "be_phone": DEFAULTS["phone"],
+        "be_contact": display_name,
+    }
+
+
     try:
         async with db.begin():
-            _log.info("provision_new_user db begin")
             await db.execute(
-            insert(ZMeDB)
-            .values(**zme_payload)
-            .on_conflict_do_nothing(index_elements=["id"])
-            )
-            _log.info("provision_new_user z_me insert done")
+                insert(ZUserDB)
+                    .values(**zuser_payload)
+                    .on_conflict_do_nothing(index_elements=["id"])
+                )
             await db.execute(
             insert(ZBizEntityDB)
             .values(**zbe_payload)

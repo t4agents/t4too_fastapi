@@ -9,7 +9,7 @@ from .z_base import Base, BaseMixin
 from app.db.schemas.schemas import SCHEMA_TOO_GLOBAL
 
 
-class ZMeDB(Base, BaseMixin):
+class ZUserDB(Base, BaseMixin):
     __tablename__ = "zuser"
     __table_args__ = {"schema": SCHEMA_TOO_GLOBAL}
 
