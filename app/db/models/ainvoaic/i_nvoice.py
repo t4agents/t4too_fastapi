@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Uuid
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, Integer, Numeric, String, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
 from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL
@@ -19,11 +19,7 @@ class InvoiceDB(Base, BaseMixin):
     inv_title: Mapped[str | None] = mapped_column(String(256))
     inv_template_id: Mapped[str | None] = mapped_column(String(32))
 
-    client_id: Mapped[UUID | None] = mapped_column(
-        Uuid,
-        ForeignKey(f"{SCHEMA_TOO_GLOBAL}.zclient.id"),
-        index=True,
-    )
+    client_id: Mapped[UUID | None] = mapped_column(Uuid, index=True)
     client_number: Mapped[str | None] = mapped_column(String(64))
     client_company_name: Mapped[str | None] = mapped_column(String(256))
     client_contact_name: Mapped[str | None] = mapped_column(String(128))
@@ -73,5 +69,3 @@ class InvoiceDB(Base, BaseMixin):
     inv_pdf_template: Mapped[str | None] = mapped_column(String(64))
     inv_terms_conditions: Mapped[str | None] = mapped_column(String(1024))
 
-    items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
-    payments = relationship("InvoicePayment", back_populates="invoice", cascade="all, delete-orphan")

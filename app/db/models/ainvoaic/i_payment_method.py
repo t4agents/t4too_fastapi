@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import String, Uuid
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
 from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC
