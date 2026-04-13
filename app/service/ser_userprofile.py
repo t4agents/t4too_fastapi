@@ -37,6 +37,7 @@ async def _update_supabase_user_meta(zuid: UUID, updates: dict[str, Any]) -> Non
 
     settings = get_settings_singleton()
     service_key = (settings.SUPABASE_SERVICE_ROLE_KEY or "").strip()
+    print("------------service_key", service_key[:8])
     if not service_key:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
