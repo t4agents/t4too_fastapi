@@ -18,6 +18,7 @@ async def update_user_fields(db: AsyncSession, user: ZUserDB, updates: dict) -> 
     if updates:
         for key, value in updates.items():
             setattr(user, key, value)
-        async with db.begin():
-            db.add(user)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
     return user

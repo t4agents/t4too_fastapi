@@ -54,7 +54,8 @@ async def _update_supabase_user_meta(zuid: UUID, updates: dict[str, Any]) -> Non
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.put(admin_url, json=payload, headers=headers)
         if resp.status_code >= 300:
-            _log.error("supabase auth meta update failed status=%s body=%s", resp.status_code, resp.text)
+            _log.error("supabase auth meta update failed status=%s body=%s",
+                       resp.status_code, resp.text)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Supabase auth metadata update failed.",
