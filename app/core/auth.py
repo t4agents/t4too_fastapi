@@ -1,6 +1,7 @@
 import time
 import logging
 from typing import Any, Dict
+from uuid import UUID
 
 import httpx
 from fastapi import Depends, HTTPException, status
@@ -112,4 +113,20 @@ async def get_jwks_decoded(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token validation failed.",
+        ) from exc
+
+
+async def get_zuid(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
+    user_id_raw = decoded.get("sub") or decoded.get("id")
+    if not user_id_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT missing user id.",
+        )
+    try:
+        return UUID(str(user_id_raw))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT user id is not a valid UUID.",
         ) from exc
