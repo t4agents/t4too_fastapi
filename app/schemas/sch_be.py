@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
+import uuid
 
 from pydantic import BaseModel
 
@@ -29,7 +30,7 @@ class BizEntityOut(BaseModel):
     be_inv_integer: Optional[int] = None
     be_inv_integer_max: Optional[int] = None
     be_show_paid_stamp: Optional[bool] = None
-    be_plan_id: Optional[UUID] = None
+    be_plan_id: Optional[UUID] = uuid.UUID("00000000-0000-0000-0000-000000000001")
     be_plan_name: Optional[str] = None
     be_plan251_expired: Optional[datetime] = None
     be_plan252_expired: Optional[datetime] = None
