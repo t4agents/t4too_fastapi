@@ -6,6 +6,7 @@ from app.api.settings.client import clientRou
 from app.api.settings.fee import feeRou
 from app.api.settings.item import itemRou
 from app.api.settings.payment_method import paymentMethodRou
+from app.api.settings.seed import seedRou
 from app.api.settings.tax import taxRou
 from app.api.settings.userprofile import userProfileRou
 from app.api.r2_home import homeRou
@@ -20,3 +21,4 @@ rou.include_router(taxRou)
 rou.include_router(itemRou)
 rou.include_router(paymentMethodRou)
 rou.include_router(feeRou)
+rou.include_router(seedRou)
