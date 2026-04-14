@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.r1_new_user_provision import newUserRou
 from app.api.settings.be import beRou
+from app.api.settings.client import clientRou
 from app.api.settings.fee import feeRou
 from app.api.settings.item import itemRou
 from app.api.settings.payment_method import paymentMethodRou
@@ -12,6 +13,7 @@ rou = APIRouter()
 rou.include_router(newUserRou)
 rou.include_router(userProfileRou)
 rou.include_router(beRou)
+rou.include_router(clientRou)
 rou.include_router(taxRou)
 rou.include_router(itemRou)
 rou.include_router(paymentMethodRou)
