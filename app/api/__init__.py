@@ -8,9 +8,11 @@ from app.api.settings.item import itemRou
 from app.api.settings.payment_method import paymentMethodRou
 from app.api.settings.tax import taxRou
 from app.api.settings.userprofile import userProfileRou
+from app.api.r2_home import homeRou
 
 rou = APIRouter()
 rou.include_router(newUserRou)
+rou.include_router(homeRou)
 rou.include_router(userProfileRou)
 rou.include_router(beRou)
 rou.include_router(clientRou)
