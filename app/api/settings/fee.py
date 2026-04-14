@@ -1,0 +1,40 @@
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.auth import get_zuid
+from app.db.conn.db_async import get_db_admin
+from app.db.models.ainvoaic.i_fee import FeeDB
+from app.schemas.sch_fee import FeeCreate, FeeOut
+from app.service.ser_fee import create_or_update_fee, fetch_fees
+
+feeRou = APIRouter(prefix="/settings")
+
+
+def _to_out(fee: FeeDB) -> FeeOut:
+    return FeeOut(
+        id=fee.id,
+        fee_name=fee.fee_name,
+        fee_amount=fee.fee_amount,
+        fee_note=fee.fee_note,
+    )
+
+
+@feeRou.get("/ifee", response_model=list[FeeOut])
+async def get_fees(
+    zuid: UUID = Depends(get_zuid),
+    db: AsyncSession = Depends(get_db_admin),
+):
+    fees = await fetch_fees(zuid, db)
+    return [_to_out(fee) for fee in fees]
+
+
+@feeRou.post("/ifee", response_model=FeeOut)
+async def post_fee(
+    payload: FeeCreate,
+    zuid: UUID = Depends(get_zuid),
+    db: AsyncSession = Depends(get_db_admin),
+):
+    fee = await create_or_update_fee(zuid, db, payload.model_dump(exclude_unset=True))
+    return _to_out(fee)
