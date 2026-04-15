@@ -148,10 +148,8 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 
 async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
     _log.info("provision_new_user_with_seed start keys=%s", sorted(decoded.keys()))
-    await provision_new_user(decoded, db)
-    _log.info("provision_new_user_with_seed base_provision_complete")
-
     user_id_raw = decoded.get("sub") or decoded.get("id")
+    email = decoded.get("email") or DEFAULTS["email"]
     if not user_id_raw:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -165,11 +163,86 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
             detail="JWT user id is not a valid UUID.",
         ) from exc
 
-    _log.info("provision_new_user_with_seed seed_start sub=%s", user_id)
-    seed_summary = await apply_seed_defaults(user_id, db, reset=False)
-    _log.info(
-        "provision_new_user_with_seed seed_complete sub=%s summary=%s",
-        user_id,
-        seed_summary,
-    )
+    display_name = _email_to_display_name(email)
+    name_parts = _to_name_parts(display_name)
+
+    base_ids = {
+        "id": user_id,
+        "ten_id": user_id,
+        "biz_id": user_id,
+        "usr_id": user_id,
+        "cli_id": user_id,
+        "created_by": user_id,
+    }
+
+    zuser_payload = {
+        **base_ids,
+        "email": email,
+        "display_name": display_name,
+        "name": display_name,
+        "full_name": name_parts["fullName"],
+        "first_name": name_parts["firstName"],
+        "last_name": name_parts["lastName"],
+        "avatar": None,
+        "phone": DEFAULTS["phone"],
+        "position": DEFAULTS["position"],
+        "facebook": DEFAULTS["facebook"],
+        "twitter": DEFAULTS["twitter"],
+        "github": DEFAULTS["github"],
+        "reddit": DEFAULTS["reddit"],
+        "country": DEFAULTS["country"],
+        "state": DEFAULTS["state"],
+        "pin": DEFAULTS["pin"],
+        "zip": DEFAULTS["zip"],
+        "tax_no": DEFAULTS["taxNo"],
+    }
+
+    zbe_payload = {
+        **base_ids,
+        "be_name": "My Business",
+        "be_type": "ME",
+        "be_email": email,
+        "be_phone": DEFAULTS["phone"],
+        "be_contact": display_name,
+    }
+
+    zclient_payload = {
+        **base_ids,
+        "client_company_name": zbe_payload.get("be_name"),
+        "client_contact_name": zbe_payload.get("be_contact"),
+        "client_contact_title": zbe_payload.get("be_contact_title"),
+        "client_address": zbe_payload.get("be_address"),
+        "client_email": zbe_payload.get("be_email"),
+        "client_mainphone": zbe_payload.get("be_phone"),
+        "client_website": zbe_payload.get("be_website"),
+        "client_tax_id": zbe_payload.get("be_tax_id"),
+        "client_payment_term": zbe_payload.get("be_payment_term"),
+        "client_currency": zbe_payload.get("be_currency"),
+        "client_template_id": zbe_payload.get("be_inv_template_id"),
+        "client_terms_conditions": zbe_payload.get("be_description"),
+        "client_note": zbe_payload.get("be_note"),
+    }
+
+    z_user_client_payload = {**base_ids}
+
+    try:
+        async with db.begin():
+            _log.info("provision_new_user_with_seed base_insert_start sub=%s", user_id)
+            await db.execute(insert(ZUserDB).values(**zuser_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
+            _log.info("provision_new_user_with_seed base_insert_complete sub=%s", user_id)
+
+            _log.info("provision_new_user_with_seed seed_start sub=%s", user_id)
+            seed_summary = await apply_seed_defaults(user_id, db, reset=False)
+            _log.info(
+                "provision_new_user_with_seed seed_complete sub=%s summary=%s",
+                user_id,
+                seed_summary,
+            )
+    except Exception:
+        _log.exception("provision_new_user_with_seed db error")
+        raise
+
     _log.info("provision_new_user_with_seed complete")
