@@ -199,7 +199,7 @@ async def apply_seed_defaults(
         }
         tax_rows.append(row)
 
-    async with db.begin():
+    async def _run_seed_ops() -> None:
         if reset:
             summary["tables"]["clients"]["deleted"] = await _delete_rows_by_ids(
                 db, ZClientDB, zuid, [row["id"] for row in client_rows]
@@ -240,6 +240,12 @@ async def apply_seed_defaults(
         created, updated = await _upsert_rows(db, TaxDB, tax_rows)
         summary["tables"]["taxes"]["created"] = created
         summary["tables"]["taxes"]["updated"] = updated
+
+    if db.in_transaction():
+        await _run_seed_ops()
+    else:
+        async with db.begin():
+            await _run_seed_ops()
 
     _log.info("seed apply complete sub=%s reset=%s summary=%s", zuid, reset, summary)
     return summary
