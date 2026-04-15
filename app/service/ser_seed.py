@@ -55,15 +55,24 @@ async def _find_existing_ids(db: AsyncSession, model: Any, ids: list[UUID]) -> s
     if not ids:
         return set()
     result = await db.execute(select(model.id).where(model.id.in_(ids)))
-    return set(result.scalars().all())
+    existing = set(result.scalars().all())
+    _log.info(
+        "seed existing scan model=%s input_ids=%s existing_ids=%s",
+        model.__name__,
+        len(ids),
+        len(existing),
+    )
+    return existing
 
 
 async def _upsert_rows(
     db: AsyncSession,
     model: Any,
     rows: list[dict[str, Any]],
+    label: str,
 ) -> tuple[int, int]:
     if not rows:
+        _log.info("seed upsert skipped table=%s reason=no_rows", label)
         return 0, 0
 
     ids = [row["id"] for row in rows]
@@ -80,6 +89,13 @@ async def _upsert_rows(
 
     updated = len(existing_ids)
     created = len(rows) - updated
+    _log.info(
+        "seed upsert table=%s rows=%s created=%s updated=%s",
+        label,
+        len(rows),
+        created,
+        updated,
+    )
     return created, updated
 
 
@@ -90,6 +106,7 @@ async def _delete_rows_by_ids(
     ids: list[UUID],
 ) -> int:
     if not ids:
+        _log.info("seed delete skipped model=%s reason=no_ids", model.__name__)
         return 0
     stmt = (
         delete(model)
@@ -100,7 +117,14 @@ async def _delete_rows_by_ids(
         .returning(model.id)
     )
     result = await db.execute(stmt)
-    return len(result.scalars().all())
+    deleted = len(result.scalars().all())
+    _log.info(
+        "seed delete model=%s ids_requested=%s deleted=%s",
+        model.__name__,
+        len(ids),
+        deleted,
+    )
+    return deleted
 
 
 async def apply_seed_defaults(
@@ -109,9 +133,17 @@ async def apply_seed_defaults(
     *,
     reset: bool = False,
 ) -> dict[str, Any]:
+    _log.info("seed apply start sub=%s reset=%s", zuid, reset)
     user = await get_user_by_id(db, zuid)
     email = user.email if user and user.email else "invoaice@gmail.com"
     display_name = user.display_name if user and user.display_name else "My Business Owner"
+    _log.info(
+        "seed user context sub=%s user_found=%s email=%s display_name=%s",
+        zuid,
+        bool(user),
+        email,
+        display_name,
+    )
 
     base_ids = _base_ids(zuid)
     summary: dict[str, Any] = {
@@ -198,9 +230,20 @@ async def apply_seed_defaults(
             "extra": _seed_extra(seed_key),
         }
         tax_rows.append(row)
+    _log.info(
+        "seed catalog counts sub=%s biz=%s clients=%s items=%s payment_methods=%s fees=%s taxes=%s",
+        zuid,
+        1,
+        len(client_rows),
+        len(item_rows),
+        len(payment_rows),
+        len(fee_rows),
+        len(tax_rows),
+    )
 
     async def _run_seed_ops() -> None:
         if reset:
+            _log.info("seed reset enabled sub=%s", zuid)
             summary["tables"]["clients"]["deleted"] = await _delete_rows_by_ids(
                 db, ZClientDB, zuid, [row["id"] for row in client_rows]
             )
@@ -217,33 +260,35 @@ async def apply_seed_defaults(
                 db, TaxDB, zuid, [row["id"] for row in tax_rows]
             )
 
-        created, updated = await _upsert_rows(db, ZBizEntityDB, [be_row])
+        created, updated = await _upsert_rows(db, ZBizEntityDB, [be_row], "biz")
         summary["tables"]["biz"]["created"] = created
         summary["tables"]["biz"]["updated"] = updated
 
-        created, updated = await _upsert_rows(db, ZClientDB, client_rows)
+        created, updated = await _upsert_rows(db, ZClientDB, client_rows, "clients")
         summary["tables"]["clients"]["created"] = created
         summary["tables"]["clients"]["updated"] = updated
 
-        created, updated = await _upsert_rows(db, ItemDB, item_rows)
+        created, updated = await _upsert_rows(db, ItemDB, item_rows, "items")
         summary["tables"]["items"]["created"] = created
         summary["tables"]["items"]["updated"] = updated
 
-        created, updated = await _upsert_rows(db, PaymentMethodDB, payment_rows)
+        created, updated = await _upsert_rows(db, PaymentMethodDB, payment_rows, "payment_methods")
         summary["tables"]["payment_methods"]["created"] = created
         summary["tables"]["payment_methods"]["updated"] = updated
 
-        created, updated = await _upsert_rows(db, FeeDB, fee_rows)
+        created, updated = await _upsert_rows(db, FeeDB, fee_rows, "fees")
         summary["tables"]["fees"]["created"] = created
         summary["tables"]["fees"]["updated"] = updated
 
-        created, updated = await _upsert_rows(db, TaxDB, tax_rows)
+        created, updated = await _upsert_rows(db, TaxDB, tax_rows, "taxes")
         summary["tables"]["taxes"]["created"] = created
         summary["tables"]["taxes"]["updated"] = updated
 
     if db.in_transaction():
+        _log.info("seed txn mode=subtransaction sub=%s", zuid)
         await _run_seed_ops()
     else:
+        _log.info("seed txn mode=new_transaction sub=%s", zuid)
         async with db.begin():
             await _run_seed_ops()
 

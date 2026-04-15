@@ -149,6 +149,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
     _log.info("provision_new_user_with_seed start keys=%s", sorted(decoded.keys()))
     await provision_new_user(decoded, db)
+    _log.info("provision_new_user_with_seed base_provision_complete")
 
     user_id_raw = decoded.get("sub") or decoded.get("id")
     if not user_id_raw:
@@ -164,5 +165,11 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
             detail="JWT user id is not a valid UUID.",
         ) from exc
 
-    await apply_seed_defaults(user_id, db, reset=False)
+    _log.info("provision_new_user_with_seed seed_start sub=%s", user_id)
+    seed_summary = await apply_seed_defaults(user_id, db, reset=False)
+    _log.info(
+        "provision_new_user_with_seed seed_complete sub=%s summary=%s",
+        user_id,
+        seed_summary,
+    )
     _log.info("provision_new_user_with_seed complete")
