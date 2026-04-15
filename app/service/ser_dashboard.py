@@ -18,12 +18,12 @@ async def fetch_homeinfo(
     zuid: UUID,
     db: AsyncSession,
 ) -> tuple[ZUserDB, ZBizEntityDB | None]:
-    _log.info("homeinfo fetch start sub=%s", zuid)
+    _log.info("dashboard fetch start sub=%s", zuid)
     user = await get_user_by_id(db, zuid)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Home info not found.",
+            detail="get_user_by_id(db, zuid) not found." + f" zuid={zuid}" + f" db={db}",
         )
     be = await get_be_by_id(db, zuid)
     return user, be

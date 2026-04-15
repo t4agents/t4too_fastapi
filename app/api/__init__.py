@@ -9,7 +9,7 @@ from app.api.settings.payment_method import paymentMethodRou
 from app.api.settings.seed import seedRou
 from app.api.settings.tax import taxRou
 from app.api.settings.userprofile import userProfileRou
-from app.api.r2_home import homeRou
+from app.api.r2_dashboard import homeRou
 
 rou = APIRouter()
 rou.include_router(newUserRou)
