@@ -1,13 +1,20 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
 from app.db.conn.db_async import get_db_admin
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
-from app.schemas.sch_inv import InvOut
-from app.service.ser_inv import fetch_invoices
+from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
+from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
+from app.service.ser_inv import (
+    create_or_update_invoice,
+    create_or_update_invoice_payment,
+    fetch_invoice_by_id,
+    fetch_invoice_payments,
+    fetch_invoices,
+)
 
 invRou = APIRouter()
 
@@ -56,6 +63,26 @@ def _to_out(inv: InvoiceDB) -> InvOut:
     )
 
 
+def _to_payment_out(payment: InvoicePaymentDB) -> InvPaymentOut:
+    return InvPaymentOut(
+        id=payment.id,
+        inv_id=payment.inv_id,
+        pm_id=payment.pm_id,
+        pm_name=payment.pm_name,
+        pm_note=payment.pm_note,
+        pay_date=payment.pay_date,
+        pay_amount=payment.pay_amount,
+        pay_reference=payment.pay_reference,
+        pay_note=payment.pay_note,
+        status=payment.status,
+        is_active=0 if bool(payment.is_deleted) else 1,
+        is_locked=1 if bool(payment.is_flag) else 0,
+        is_deleted=1 if bool(payment.is_deleted) else 0,
+        created_at=payment.created_at,
+        updated_at=payment.created_at,
+    )
+
+
 @invRou.get("/r3_inv_list", response_model=list[InvOut])
 async def get_invoices(
     zuid: UUID = Depends(get_zuid),
@@ -64,3 +91,57 @@ async def get_invoices(
     invs = await fetch_invoices(zuid, db)
     return [_to_out(inv) for inv in invs]
 
+
+@invRou.get("/r3_inv_one", response_model=InvOut)
+async def get_invoice_one(
+    inv_id: str,
+    zuid: UUID = Depends(get_zuid),
+    db: AsyncSession = Depends(get_db_admin),
+):
+    try:
+        inv_uuid = UUID(str(inv_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
+    inv = await fetch_invoice_by_id(zuid, db, inv_uuid)
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return _to_out(inv)
+
+
+@invRou.post("/r3_inv_one", response_model=InvOut)
+async def post_invoice_one(
+    payload: InvCreate,
+    zuid: UUID = Depends(get_zuid),
+    db: AsyncSession = Depends(get_db_admin),
+):
+    inv = await create_or_update_invoice(zuid, db, payload.model_dump(exclude_unset=True))
+    return _to_out(inv)
+
+
+@invRou.get("/r3_inv_payment", response_model=list[InvPaymentOut])
+async def get_invoice_payment_list(
+    inv_id: str,
+    zuid: UUID = Depends(get_zuid),
+    db: AsyncSession = Depends(get_db_admin),
+):
+    try:
+        inv_uuid = UUID(str(inv_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
+    payments = await fetch_invoice_payments(zuid, db, inv_uuid)
+    return [_to_payment_out(payment) for payment in payments]
+
+
+@invRou.post("/r3_inv_payment", response_model=InvPaymentOut)
+async def post_invoice_payment(
+    payload: InvPaymentCreate,
+    zuid: UUID = Depends(get_zuid),
+    db: AsyncSession = Depends(get_db_admin),
+):
+    try:
+        payment = await create_or_update_invoice_payment(
+            zuid, db, payload.model_dump(exclude_unset=True)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_payment_out(payment)

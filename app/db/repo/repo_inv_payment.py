@@ -1,0 +1,51 @@
+from __future__ import annotations
+
+from typing import List, Optional
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
+
+
+async def list_invoice_payments(
+    db: AsyncSession, inv_id: UUID, zuid: UUID
+) -> List[InvoicePaymentDB]:
+    result = await db.execute(
+        select(InvoicePaymentDB)
+        .where(InvoicePaymentDB.inv_id == inv_id, InvoicePaymentDB.created_by == zuid)
+        .order_by(InvoicePaymentDB.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def get_invoice_payment_by_id(
+    db: AsyncSession, payment_id: UUID, zuid: UUID
+) -> Optional[InvoicePaymentDB]:
+    result = await db.execute(
+        select(InvoicePaymentDB).where(
+            InvoicePaymentDB.id == payment_id, InvoicePaymentDB.created_by == zuid
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def create_invoice_payment(db: AsyncSession, payload: dict) -> InvoicePaymentDB:
+    payment = InvoicePaymentDB(**payload)
+    db.add(payment)
+    await db.commit()
+    await db.refresh(payment)
+    return payment
+
+
+async def update_invoice_payment_fields(
+    db: AsyncSession, payment: InvoicePaymentDB, updates: dict
+) -> InvoicePaymentDB:
+    if updates:
+        for key, value in updates.items():
+            setattr(payment, key, value)
+        db.add(payment)
+        await db.commit()
+        await db.refresh(payment)
+    return payment
