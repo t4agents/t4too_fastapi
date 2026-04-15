@@ -12,6 +12,7 @@ from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
 from app.db.models.too.z_user import ZUserDB
 from app.db.models.too.z_user_client import ZUserClientDB
+from app.service.ser_seed import apply_seed_defaults
 
 DEFAULTS = {
     "email": "invoaice@gmail.com",
@@ -136,8 +137,32 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
             await db.execute(insert(ZUserDB).values(**zuser_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
-            # await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
     except Exception:
         _log.exception("provision_new_user db error")
         raise
     _log.info("provision_new_user complete")
+
+
+
+
+async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
+    _log.info("provision_new_user_with_seed start keys=%s", sorted(decoded.keys()))
+    await provision_new_user(decoded, db)
+
+    user_id_raw = decoded.get("sub") or decoded.get("id")
+    if not user_id_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT missing user id.",
+        )
+    try:
+        user_id = UUID(str(user_id_raw))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT user id is not a valid UUID.",
+        ) from exc
+
+    await apply_seed_defaults(user_id, db, reset=False)
+    _log.info("provision_new_user_with_seed complete")
