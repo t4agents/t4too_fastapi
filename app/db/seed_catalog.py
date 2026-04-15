@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 SEED_VERSION = "v1"
@@ -175,5 +176,102 @@ TAX_TEMPLATES: list[dict[str, Any]] = [
         "tax_rate": 8.875,
         "tax_type": "state",
         "tax_note": "US sample sales tax.",
+    },
+]
+
+
+INVOICE_TEMPLATES: list[dict[str, Any]] = [
+    {
+        "seed_key": "inv_demo_1",
+        "inv_number": "INV-1001",
+        "inv_title": "Invoice for Demo Client 1",
+        "inv_reference": "PO#-001",
+        "inv_currency": "USD",
+        "inv_payment_requirement": "Net 7 days",
+        "inv_payment_term": 7,
+        "inv_date": datetime.now(timezone.utc),
+        "inv_due_date": datetime.now(timezone.utc),
+        "inv_subtotal": 240.00,
+        "inv_discount": 0.00,
+        "inv_tax_label": "Tax",
+        "inv_tax_rate": 0.00,
+        "inv_tax_amount": 0.00,
+        "inv_shipping": 0.00,
+        "inv_handling": 0.00,
+        "inv_deposit": 0.00,
+        "inv_adjustment": 0.00,
+        "inv_other_charges_label": "Other Charges",
+        "inv_other_charges_amount": 0.00,
+        "inv_total": 240.00,
+        "inv_paid_total": 0.00,
+        "inv_balance_due": 240.00,
+        "inv_payment_status": "Unpaid",
+        "inv_flag_word": "Unpaid",
+        "inv_flag_emoji": "pending",
+        "inv_pdf_template": "default",
+        "inv_notes": "Thank you for your business!",
+        "inv_terms_conditions": "Thank you for your business!",
+        "client_seed_key": "client_demo_1",
+        "items": [
+            {
+                "item_seed_key": "item_consulting",
+                "item_quantity": 2,
+                "item_rate": 120.00,
+                "item_amount": 240.00,
+                "item_note": "notes",
+            }
+        ],
+        "payments": [],
+    },
+    {
+        "seed_key": "inv_demo_2",
+        "inv_number": "INV-1002",
+        "inv_title": "Invoice for Demo Client 2",
+        "inv_reference": "PO#-002",
+        "inv_currency": "USD",
+        "inv_payment_requirement": "Net 10 days",
+        "inv_payment_term": 10,
+        "inv_date": datetime.now(timezone.utc),
+        "inv_due_date": datetime.now(timezone.utc),
+        "inv_subtotal": 1500.00,
+        "inv_discount": 0.00,
+        "inv_tax_label": "Tax",
+        "inv_tax_rate": 0.13,
+        "inv_tax_amount": 195.00,
+        "inv_shipping": 0.00,
+        "inv_handling": 0.00,
+        "inv_deposit": 0.00,
+        "inv_adjustment": 0.00,
+        "inv_other_charges_label": "Other Charges",
+        "inv_other_charges_amount": 0.00,
+        "inv_total": 1695.00,
+        "inv_paid_total": 1695.00,
+        "inv_balance_due": 0.00,
+        "inv_payment_status": "Paid",
+        "inv_flag_word": "Paid",
+        "inv_flag_emoji": "paid",
+        "inv_pdf_template": "default",
+        "inv_notes": "Thank you for your business!",
+        "inv_terms_conditions": "Thank you for your business!",
+        "client_seed_key": "client_demo_2",
+        "items": [
+            {
+                "item_seed_key": "item_product",
+                "item_quantity": 1,
+                "item_rate": 1500.00,
+                "item_amount": 1500.00,
+                "item_note": "notes",
+            }
+        ],
+        "payments": [
+            {
+                "payment_seed_key": "inv_demo_2_pay_1",
+                "payment_method_seed_key": "pm_bank_transfer",
+                "pay_amount": 1695.00,
+                "pay_reference": "TRX001",
+                "pay_note": "Paid in full",
+                "pay_date": datetime.now(timezone.utc),
+            }
+        ],
     },
 ]

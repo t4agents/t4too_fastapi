@@ -9,6 +9,9 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_fee import FeeDB
+from app.db.models.ainvoaic.i_nvoice import InvoiceDB
+from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
+from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
 from app.db.models.ainvoaic.i_payment_method import PaymentMethodDB
 from app.db.models.ainvoaic.i_tax import TaxDB
 from app.db.models.ainvoaic.i_tem import ItemDB
@@ -19,6 +22,7 @@ from app.db.seed_catalog import (
     BIZ_DEFAULTS,
     CLIENT_TEMPLATES,
     FEE_TEMPLATES,
+    INVOICE_TEMPLATES,
     ITEM_TEMPLATES,
     PAYMENT_METHOD_TEMPLATES,
     SEED_VERSION,
@@ -155,6 +159,9 @@ async def apply_seed_defaults(
             "payment_methods": {"created": 0, "updated": 0, "deleted": 0},
             "fees": {"created": 0, "updated": 0, "deleted": 0},
             "taxes": {"created": 0, "updated": 0, "deleted": 0},
+            "invoices": {"created": 0, "updated": 0, "deleted": 0},
+            "invoice_items": {"created": 0, "updated": 0, "deleted": 0},
+            "invoice_payments": {"created": 0, "updated": 0, "deleted": 0},
         },
     }
 
@@ -230,8 +237,116 @@ async def apply_seed_defaults(
             "extra": _seed_extra(seed_key),
         }
         tax_rows.append(row)
+
+    client_by_seed_key = {str(t["seed_key"]): r for t, r in zip(CLIENT_TEMPLATES, client_rows)}
+    item_by_seed_key = {str(t["seed_key"]): r for t, r in zip(ITEM_TEMPLATES, item_rows)}
+    pm_by_seed_key = {str(t["seed_key"]): r for t, r in zip(PAYMENT_METHOD_TEMPLATES, payment_rows)}
+
+    invoice_rows: list[dict[str, Any]] = []
+    invoice_item_rows: list[dict[str, Any]] = []
+    invoice_payment_rows: list[dict[str, Any]] = []
+    for inv_template in INVOICE_TEMPLATES:
+        inv_seed_key = str(inv_template["seed_key"])
+        inv_id = _seed_uuid(zuid, inv_seed_key)
+        inv_client = client_by_seed_key[str(inv_template["client_seed_key"])]
+
+        invoice_row = {
+            "id": inv_id,
+            **base_ids,
+            "inv_number": inv_template["inv_number"],
+            "inv_date": inv_template["inv_date"],
+            "inv_due_date": inv_template["inv_due_date"],
+            "inv_title": inv_template["inv_title"],
+            "inv_reference": inv_template["inv_reference"],
+            "inv_currency": inv_template["inv_currency"],
+            "inv_payment_requirement": inv_template["inv_payment_requirement"],
+            "inv_payment_term": inv_template["inv_payment_term"],
+            "inv_subtotal": inv_template["inv_subtotal"],
+            "inv_discount": inv_template["inv_discount"],
+            "inv_tax_label": inv_template["inv_tax_label"],
+            "inv_tax_rate": inv_template["inv_tax_rate"],
+            "inv_tax_amount": inv_template["inv_tax_amount"],
+            "inv_shipping": inv_template["inv_shipping"],
+            "inv_handling": inv_template["inv_handling"],
+            "inv_deposit": inv_template["inv_deposit"],
+            "inv_adjustment": inv_template["inv_adjustment"],
+            "inv_other_charges_label": inv_template["inv_other_charges_label"],
+            "inv_other_charges_amount": inv_template["inv_other_charges_amount"],
+            "inv_total": inv_template["inv_total"],
+            "inv_paid_total": inv_template["inv_paid_total"],
+            "inv_balance_due": inv_template["inv_balance_due"],
+            "inv_payment_status": inv_template["inv_payment_status"],
+            "inv_flag_word": inv_template["inv_flag_word"],
+            "inv_flag_emoji": inv_template["inv_flag_emoji"],
+            "inv_pdf_template": inv_template["inv_pdf_template"],
+            "inv_notes": inv_template["inv_notes"],
+            "inv_terms_conditions": inv_template["inv_terms_conditions"],
+            "client_id": inv_client["id"],
+            "client_number": inv_client.get("client_number"),
+            "client_company_name": inv_client.get("client_company_name"),
+            "client_contact_name": inv_client.get("client_contact_name"),
+            "client_contact_title": inv_client.get("client_contact_title"),
+            "client_address": inv_client.get("client_address"),
+            "client_email": inv_client.get("client_email"),
+            "client_secondphone": inv_client.get("client_secondphone"),
+            "client_mainphone": inv_client.get("client_mainphone"),
+            "client_fax": inv_client.get("client_fax"),
+            "client_website": inv_client.get("client_website"),
+            "client_business_number": inv_client.get("client_business_number"),
+            "client_currency": inv_client.get("client_currency"),
+            "client_tax_id": inv_client.get("client_tax_id"),
+            "client_payment_term": inv_client.get("client_payment_term"),
+            "client_payment_method": inv_client.get("client_payment_method"),
+            "client_terms_conditions": inv_client.get("client_terms_conditions"),
+            "client_note": inv_client.get("client_note"),
+            "extra": _seed_extra(inv_seed_key),
+        }
+        invoice_rows.append(invoice_row)
+
+        for idx, item_template in enumerate(inv_template["items"], start=1):
+            item_seed_key = str(item_template["item_seed_key"])
+            inv_item_seed_key = f"{inv_seed_key}:item:{idx}"
+            seed_item = item_by_seed_key[item_seed_key]
+            invoice_item_rows.append(
+                {
+                    "id": _seed_uuid(zuid, inv_item_seed_key),
+                    **base_ids,
+                    "inv_id": inv_id,
+                    "item_id": seed_item["id"],
+                    "item_number": seed_item.get("item_number"),
+                    "item_name": seed_item.get("item_name"),
+                    "item_rate": item_template["item_rate"],
+                    "item_unit_of_measure": seed_item.get("item_unit_of_measure"),
+                    "item_unit": seed_item.get("item_unit"),
+                    "item_sku": seed_item.get("item_sku"),
+                    "item_description": seed_item.get("item_description"),
+                    "item_quantity": item_template["item_quantity"],
+                    "item_note": item_template.get("item_note"),
+                    "item_amount": item_template["item_amount"],
+                    "extra": _seed_extra(inv_item_seed_key),
+                }
+            )
+
+        for pay_template in inv_template["payments"]:
+            pay_seed_key = str(pay_template["payment_seed_key"])
+            pay_method = pm_by_seed_key[str(pay_template["payment_method_seed_key"])]
+            invoice_payment_rows.append(
+                {
+                    "id": _seed_uuid(zuid, pay_seed_key),
+                    **base_ids,
+                    "inv_id": inv_id,
+                    "pm_id": pay_method["id"],
+                    "pm_name": pay_method.get("pm_name"),
+                    "pm_note": pay_method.get("pm_note"),
+                    "pay_date": pay_template["pay_date"],
+                    "pay_amount": pay_template["pay_amount"],
+                    "pay_reference": pay_template.get("pay_reference"),
+                    "pay_note": pay_template.get("pay_note"),
+                    "extra": _seed_extra(pay_seed_key),
+                }
+            )
     _log.info(
-        "seed catalog counts sub=%s biz=%s clients=%s items=%s payment_methods=%s fees=%s taxes=%s",
+        "seed catalog counts sub=%s biz=%s clients=%s items=%s payment_methods=%s fees=%s taxes=%s invoices=%s invoice_items=%s invoice_payments=%s",
         zuid,
         1,
         len(client_rows),
@@ -239,6 +354,9 @@ async def apply_seed_defaults(
         len(payment_rows),
         len(fee_rows),
         len(tax_rows),
+        len(invoice_rows),
+        len(invoice_item_rows),
+        len(invoice_payment_rows),
     )
 
     async def _run_seed_ops() -> None:
@@ -258,6 +376,15 @@ async def apply_seed_defaults(
             )
             summary["tables"]["taxes"]["deleted"] = await _delete_rows_by_ids(
                 db, TaxDB, zuid, [row["id"] for row in tax_rows]
+            )
+            summary["tables"]["invoices"]["deleted"] = await _delete_rows_by_ids(
+                db, InvoiceDB, zuid, [row["id"] for row in invoice_rows]
+            )
+            summary["tables"]["invoice_items"]["deleted"] = await _delete_rows_by_ids(
+                db, InvoiceItemDB, zuid, [row["id"] for row in invoice_item_rows]
+            )
+            summary["tables"]["invoice_payments"]["deleted"] = await _delete_rows_by_ids(
+                db, InvoicePaymentDB, zuid, [row["id"] for row in invoice_payment_rows]
             )
 
         created, updated = await _upsert_rows(db, ZBizEntityDB, [be_row], "biz")
@@ -283,6 +410,18 @@ async def apply_seed_defaults(
         created, updated = await _upsert_rows(db, TaxDB, tax_rows, "taxes")
         summary["tables"]["taxes"]["created"] = created
         summary["tables"]["taxes"]["updated"] = updated
+
+        created, updated = await _upsert_rows(db, InvoiceDB, invoice_rows, "invoices")
+        summary["tables"]["invoices"]["created"] = created
+        summary["tables"]["invoices"]["updated"] = updated
+
+        created, updated = await _upsert_rows(db, InvoiceItemDB, invoice_item_rows, "invoice_items")
+        summary["tables"]["invoice_items"]["created"] = created
+        summary["tables"]["invoice_items"]["updated"] = updated
+
+        created, updated = await _upsert_rows(db, InvoicePaymentDB, invoice_payment_rows, "invoice_payments")
+        summary["tables"]["invoice_payments"]["created"] = created
+        summary["tables"]["invoice_payments"]["updated"] = updated
 
     if db.in_transaction():
         _log.info("seed txn mode=subtransaction sub=%s", zuid)
