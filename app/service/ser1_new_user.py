@@ -12,7 +12,6 @@ from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
 from app.db.models.too.z_user import ZUserDB
 from app.db.models.too.z_user_client import ZUserClientDB
-from app.service.ser_seed import apply_seed_defaults
 
 DEFAULTS = {
     "email": "invoaice@gmail.com",
@@ -129,14 +128,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
         "client_note": zbe_payload.get("be_note"),
     }
 
-    z_user_client_payload = {
-        **base_ids,
-        "be_name": "My Business",
-        "be_type": "ME",
-        "be_email": email,
-        "be_phone": DEFAULTS["phone"],
-        "be_contact": display_name,
-    }
+    z_user_client_payload = {**base_ids}
 
 
     try:
@@ -144,8 +136,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
             await db.execute(insert(ZUserDB).values(**zuser_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
-            await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
-        await apply_seed_defaults(user_id, db, reset=False)
+            # await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
     except Exception:
         _log.exception("provision_new_user db error")
         raise

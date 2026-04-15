@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
@@ -8,6 +8,7 @@ from app.db.conn.db_async import get_db_admin
 from app.db.models.too.z_be import ZBizEntityDB
 from app.schemas.sch_be import BizEntityOut, BizEntityUpdate
 from app.service.ser_be import fetch_be_profile, update_be_profile
+from app.service.ser_seed import apply_seed_defaults
 
 beRou = APIRouter(prefix="/settings")
 
@@ -56,7 +57,13 @@ async def get_be_profile(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_admin),
 ):
-    be = await fetch_be_profile(zuid, db)
+    try:
+        be = await fetch_be_profile(zuid, db)
+    except HTTPException as exc:
+        if exc.status_code != status.HTTP_404_NOT_FOUND:
+            raise
+        await apply_seed_defaults(zuid, db, reset=False)
+        be = await fetch_be_profile(zuid, db)
     return _to_out(be)
 
 
@@ -67,5 +74,11 @@ async def post_be_profile(
     db: AsyncSession = Depends(get_db_admin),
 ):
     updates = payload.model_dump(exclude_unset=True)
-    be = await update_be_profile(zuid, db, updates)
+    try:
+        be = await update_be_profile(zuid, db, updates)
+    except HTTPException as exc:
+        if exc.status_code != status.HTTP_404_NOT_FOUND:
+            raise
+        await apply_seed_defaults(zuid, db, reset=False)
+        be = await update_be_profile(zuid, db, updates)
     return _to_out(be)
