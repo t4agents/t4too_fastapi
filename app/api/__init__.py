@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.r1_new_user_provision import newUserRou
+from app.api.r3_inv import invRou
 from app.api.settings.be import beRou
 from app.api.settings.client import clientRou
 from app.api.settings.fee import feeRou
@@ -12,6 +13,7 @@ from app.api.settings.userprofile import userProfileRou
 from app.api.r2_dashboard import homeRou
 
 rou = APIRouter()
+rou.include_router(invRou)
 rou.include_router(newUserRou)
 rou.include_router(homeRou)
 rou.include_router(userProfileRou)
