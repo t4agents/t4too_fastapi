@@ -91,12 +91,16 @@ async def _delete_rows_by_ids(
 ) -> int:
     if not ids:
         return 0
-    stmt = delete(model).where(
+    stmt = (
+        delete(model)
+        .where(
         model.created_by == zuid,
         model.id.in_(ids),
     )
+        .returning(model.id)
+    )
     result = await db.execute(stmt)
-    return int(result.rowcount or 0)
+    return len(result.scalars().all())
 
 
 async def apply_seed_defaults(
