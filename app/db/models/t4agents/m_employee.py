@@ -4,16 +4,17 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import (Computed, String,Numeric,Date,Boolean, Uuid,)
+from sqlalchemy import (Computed, ForeignKey,String,Numeric,Date,Boolean, Uuid,)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
 from app.db.schemas.schemas import SCHEMA_TOO_T4AGENTS
 
 
-class T4EmployeeDB(Base, BaseMixin):
-    __tablename__ = "t4_employee"
+class EmployeeDB(Base, BaseMixin):
+    __tablename__ = "employees"
     __table_args__ = {"schema": SCHEMA_TOO_T4AGENTS}
+
     # --- Identity ---
     first_name: Mapped[str] = mapped_column(String, nullable=True)
     last_name: Mapped[str] = mapped_column(String, nullable=True)
