@@ -147,9 +147,10 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 
 
 async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
-    _log.info("provision_new_user_with_seed start keys=%s", sorted(decoded.keys()))
     user_id_raw = decoded.get("sub") or decoded.get("id")
     email = decoded.get("email") or DEFAULTS["email"]
+    sbu_user_type = decoded.get("sbu_user_type")
+    
     if not user_id_raw:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -180,6 +181,7 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
         "email": email,
         "display_name": display_name,
         "name": display_name,
+        "user_type": sbu_user_type,
         "full_name": name_parts["fullName"],
         "first_name": name_parts["firstName"],
         "last_name": name_parts["lastName"],

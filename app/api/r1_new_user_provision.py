@@ -17,20 +17,10 @@ async def post_profile(
     decoded: dict = Depends(get_jwks_decoded),
     db: AsyncSession = Depends(get_db_admin),
 ):
-    _log.info(
-        "new_user_provision start sub=%s id=%s email=%s",
-        decoded.get("sub"),
-        decoded.get("id"),
-        decoded.get("email"),
-    )
     try:
         await provision_new_user(decoded, db)
-    except Exception:
-        _log.exception("new_user_provision failed")
-        raise
-    _log.info("new_user_provision success")
+    except Exception:raise
     return "success"
-
 
 
 @newUserRou.post("/r1_new_user_provision_with_seed", response_class=PlainTextResponse)
@@ -38,17 +28,8 @@ async def post_profile2(
     decoded: dict = Depends(get_jwks_decoded),
     db: AsyncSession = Depends(get_db_admin),
 ):
-    _log.info(
-        "new_user_provision_with_seed start sub=%s id=%s email=%s",
-        decoded.get("sub"),
-        decoded.get("id"),
-        decoded.get("email"),
-    )
     try:
         await provision_new_user_with_seed(decoded, db)
-    except Exception:
-        _log.exception("new_user_provision_with_seed failed")
-        raise
-    _log.info("new_user_provision_with_seed success")
+    except Exception:raise
     return "success"
 
