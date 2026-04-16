@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict
+from typing import Any, Dict
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -17,6 +17,7 @@ from app.service.ser_seed import apply_seed_defaults
 DEFAULTS = {
     "email": "invoaice@gmail.com",
     "name": "Invoaice Agents",
+    "usr_type": "usr_type",
     "firstName": "Invoaice",
     "lastName": "Agents",
     "phone": "332-203-4114",
@@ -31,8 +32,6 @@ DEFAULTS = {
     "zip": "M5V 2T6",
     "taxNo": "invoaice123",
 }
-
-_log = logging.getLogger(__name__)
 
 def _to_name_parts(full_name: str | None) -> Dict[str, str]:
     safe_name = (full_name or "").strip() or DEFAULTS["name"]
@@ -50,11 +49,25 @@ def _email_to_display_name(email: str | None) -> str:
     return DEFAULTS["name"]
 
 
+def _extract_sbu_user_type(decoded: dict[str, Any]) -> str:
+    user_metadata = decoded.get("user_metadata")
+    if isinstance(user_metadata, dict):
+        meta_value = user_metadata.get("sbu_user_type")
+        if isinstance(meta_value, str) and meta_value.strip():
+            return meta_value.strip()
+
+    root_value = decoded.get("sbu_user_type")
+    if isinstance(root_value, str) and root_value.strip():
+        return root_value.strip()
+
+    return "SBU"
+
+
 async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
-    _log.info("provision_new_user start keys=%s", sorted(decoded.keys()))
     # Supabase access tokens use "sub" as the user UUID
     user_id_raw = decoded.get("sub") or decoded.get("id")
     email = decoded.get("email") or DEFAULTS["email"]
+    sbu_user_type = _extract_sbu_user_type(decoded)
     if not user_id_raw:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -90,6 +103,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
         "first_name": name_parts["firstName"],
         "last_name": name_parts["lastName"],
         "avatar": None,
+        "usr_type": sbu_user_type,
         "phone": DEFAULTS["phone"],
         "position": DEFAULTS["position"],
         "facebook": DEFAULTS["facebook"],
@@ -134,14 +148,18 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 
     try:
         async with db.begin():
-            await db.execute(insert(ZUserDB).values(**zuser_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await db.execute(
+                insert(ZUserDB)
+                .values(**zuser_payload)
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={"usr_type": sbu_user_type},
+                )
+            )
             await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
-    except Exception:
-        _log.exception("provision_new_user db error")
-        raise
-    _log.info("provision_new_user complete")
+    except Exception:        raise
 
 
 
@@ -149,7 +167,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
 async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
     user_id_raw = decoded.get("sub") or decoded.get("id")
     email = decoded.get("email") or DEFAULTS["email"]
-    sbu_user_type = decoded.get("sbu_user_type")
+    sbu_user_type = _extract_sbu_user_type(decoded)
     
     if not user_id_raw:
         raise HTTPException(
@@ -181,7 +199,7 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
         "email": email,
         "display_name": display_name,
         "name": display_name,
-        "user_type": sbu_user_type,
+        "usr_type": sbu_user_type,
         "full_name": name_parts["fullName"],
         "first_name": name_parts["firstName"],
         "last_name": name_parts["lastName"],
@@ -229,22 +247,16 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
 
     try:
         async with db.begin():
-            _log.info("provision_new_user_with_seed base_insert_start sub=%s", user_id)
-            await db.execute(insert(ZUserDB).values(**zuser_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await db.execute(
+                insert(ZUserDB)
+                .values(**zuser_payload)
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={"usr_type": sbu_user_type},
+                )
+            )
             await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
-            _log.info("provision_new_user_with_seed base_insert_complete sub=%s", user_id)
-
-            _log.info("provision_new_user_with_seed seed_start sub=%s", user_id)
             seed_summary = await apply_seed_defaults(user_id, db, reset=False)
-            _log.info(
-                "provision_new_user_with_seed seed_complete sub=%s summary=%s",
-                user_id,
-                seed_summary,
-            )
-    except Exception:
-        _log.exception("provision_new_user_with_seed db error")
-        raise
-
-    _log.info("provision_new_user_with_seed complete")
+    except Exception:        raise

@@ -27,6 +27,7 @@ class ZUserDB(Base, BaseMixin):
     last_name: Mapped[str] = mapped_column(String, nullable=True)
     name: Mapped[str] = mapped_column(String, nullable=True)        # for backward compatibility, can be removed later
     full_name: Mapped[str] = mapped_column(String, nullable=True) 
+    usr_type: Mapped[str] = mapped_column(String, nullable=True)
     avatar: Mapped[str] = mapped_column(String, nullable=True)    
     phone: Mapped[str] = mapped_column(String, nullable=True)
     position: Mapped[str] = mapped_column(String, nullable=True)
