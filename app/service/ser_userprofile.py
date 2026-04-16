@@ -14,9 +14,7 @@ from app.db.repo.repo_userprofile import get_user_by_id, update_user_fields
 
 _log = logging.getLogger(__name__)
 
-
 async def fetch_user_profile(zuid: UUID, db: AsyncSession) -> ZUserDB:
-    _log.info("userprofile fetch start sub=%s", zuid)
     user = await get_user_by_id(db, zuid)
     if not user:
         raise HTTPException(
