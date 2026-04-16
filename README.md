@@ -1,6 +1,5 @@
 # t4too_fastapi
 
-A project created with FastAPI CLI.
 
 ## Quick Start
 
