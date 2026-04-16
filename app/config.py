@@ -1,9 +1,15 @@
 # app/config.py
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
 class _Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
     TOO_SB_DB: str = "postgresql+asyncpg://username:pwd@local/icedb"
     JWKS_URL: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1/.well-known/jwks.json"
     JWKS_ISS: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1"
