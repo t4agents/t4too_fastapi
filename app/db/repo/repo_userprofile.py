@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.too.z_user import ZUserDB
+from app.db.repo.repo_utils import coerce_model_values
 
 _log = logging.getLogger(__name__)
     
@@ -20,7 +21,7 @@ async def update_user_fields(db: AsyncSession, user: ZUserDB, updates: dict) -> 
     _log.error("----------------failed", updates)
     _log.error("----------------aa")
     if updates:
-        for key, value in updates.items():
+        for key, value in coerce_model_values(user, updates).items():
             setattr(user, key, value)
         db.add(user)
         await db.commit()

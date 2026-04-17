@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_tax import TaxDB
+from app.db.repo.repo_utils import coerce_model_values
 
 
 async def list_taxes(db: AsyncSession, zuid: UUID) -> List[TaxDB]:
@@ -25,7 +26,7 @@ async def get_tax_by_id(db: AsyncSession, tax_id: UUID, zuid: UUID) -> Optional[
 
 
 async def create_tax(db: AsyncSession, payload: dict) -> TaxDB:
-    tax = TaxDB(**payload)
+    tax = TaxDB(**coerce_model_values(TaxDB, payload))
     db.add(tax)
     await db.commit()
     await db.refresh(tax)
@@ -34,7 +35,7 @@ async def create_tax(db: AsyncSession, payload: dict) -> TaxDB:
 
 async def update_tax_fields(db: AsyncSession, tax: TaxDB, updates: dict) -> TaxDB:
     if updates:
-        for key, value in updates.items():
+        for key, value in coerce_model_values(tax, updates).items():
             setattr(tax, key, value)
         db.add(tax)
         await db.commit()

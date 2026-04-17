@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_tem import ItemDB
+from app.db.repo.repo_utils import coerce_model_values
 
 
 async def list_items(db: AsyncSession, zuid: UUID) -> List[ItemDB]:
@@ -25,7 +26,7 @@ async def get_item_by_id(db: AsyncSession, item_id: UUID, zuid: UUID) -> Optiona
 
 
 async def create_item(db: AsyncSession, payload: dict) -> ItemDB:
-    item = ItemDB(**payload)
+    item = ItemDB(**coerce_model_values(ItemDB, payload))
     db.add(item)
     await db.commit()
     await db.refresh(item)
@@ -34,7 +35,7 @@ async def create_item(db: AsyncSession, payload: dict) -> ItemDB:
 
 async def update_item_fields(db: AsyncSession, item: ItemDB, updates: dict) -> ItemDB:
     if updates:
-        for key, value in updates.items():
+        for key, value in coerce_model_values(item, updates).items():
             setattr(item, key, value)
         db.add(item)
         await db.commit()

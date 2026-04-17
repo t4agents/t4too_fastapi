@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
+from app.db.repo.repo_utils import coerce_model_values
 
 
 async def list_invoice_payments(
@@ -32,7 +33,7 @@ async def get_invoice_payment_by_id(
 
 
 async def create_invoice_payment(db: AsyncSession, payload: dict) -> InvoicePaymentDB:
-    payment = InvoicePaymentDB(**payload)
+    payment = InvoicePaymentDB(**coerce_model_values(InvoicePaymentDB, payload))
     db.add(payment)
     await db.commit()
     await db.refresh(payment)
@@ -43,7 +44,7 @@ async def update_invoice_payment_fields(
     db: AsyncSession, payment: InvoicePaymentDB, updates: dict
 ) -> InvoicePaymentDB:
     if updates:
-        for key, value in updates.items():
+        for key, value in coerce_model_values(payment, updates).items():
             setattr(payment, key, value)
         db.add(payment)
         await db.commit()

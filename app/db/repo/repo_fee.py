@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_fee import FeeDB
+from app.db.repo.repo_utils import coerce_model_values
 
 
 async def list_fees(db: AsyncSession, zuid: UUID) -> List[FeeDB]:
@@ -25,7 +26,7 @@ async def get_fee_by_id(db: AsyncSession, fee_id: UUID, zuid: UUID) -> Optional[
 
 
 async def create_fee(db: AsyncSession, payload: dict) -> FeeDB:
-    fee = FeeDB(**payload)
+    fee = FeeDB(**coerce_model_values(FeeDB, payload))
     db.add(fee)
     await db.commit()
     await db.refresh(fee)
@@ -34,7 +35,7 @@ async def create_fee(db: AsyncSession, payload: dict) -> FeeDB:
 
 async def update_fee_fields(db: AsyncSession, fee: FeeDB, updates: dict) -> FeeDB:
     if updates:
-        for key, value in updates.items():
+        for key, value in coerce_model_values(fee, updates).items():
             setattr(fee, key, value)
         db.add(fee)
         await db.commit()

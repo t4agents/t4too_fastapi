@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.too.z_client import ZClientDB
+from app.db.repo.repo_utils import coerce_model_values
 
 
 async def list_clients(db: AsyncSession, zuid: UUID) -> List[ZClientDB]:
@@ -26,7 +27,7 @@ async def get_client_by_id(db: AsyncSession, client_id: UUID, zuid: UUID) -> Opt
 
 
 async def create_client(db: AsyncSession, payload: dict) -> ZClientDB:
-    client = ZClientDB(**payload)
+    client = ZClientDB(**coerce_model_values(ZClientDB, payload))
     db.add(client)
     await db.commit()
     await db.refresh(client)
@@ -35,7 +36,7 @@ async def create_client(db: AsyncSession, payload: dict) -> ZClientDB:
 
 async def update_client_fields(db: AsyncSession, client: ZClientDB, updates: dict) -> ZClientDB:
     if updates:
-        for key, value in updates.items():
+        for key, value in coerce_model_values(client, updates).items():
             setattr(client, key, value)
         db.add(client)
         await db.commit()
