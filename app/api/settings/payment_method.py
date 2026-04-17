@@ -12,7 +12,7 @@ from app.service.ser_payment_method import (
     fetch_payment_methods,
 )
 
-paymentMethodRou = APIRouter(prefix="/settings")
+paymentMethodRou = APIRouter()
 
 
 def _to_out(method: PaymentMethodDB) -> PaymentMethodOut:

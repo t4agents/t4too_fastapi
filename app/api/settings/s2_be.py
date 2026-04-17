@@ -10,7 +10,7 @@ from app.schemas.sch_be import BizEntityOut, BizEntityUpdate
 from app.service.ser_be import fetch_be_profile, update_be_profile
 from app.service.ser_seed import apply_seed_defaults
 
-beRou = APIRouter(prefix="/settings")
+beRou = APIRouter()
 
 
 def _to_out(be: ZBizEntityDB) -> BizEntityOut:
@@ -52,7 +52,7 @@ def _to_out(be: ZBizEntityDB) -> BizEntityOut:
     )
 
 
-@beRou.get("/be", response_model=BizEntityOut)
+@beRou.get("/getbe", response_model=BizEntityOut)
 async def get_be_profile(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_admin),
@@ -67,7 +67,7 @@ async def get_be_profile(
     return _to_out(be)
 
 
-@beRou.post("/be", response_model=BizEntityOut)
+@beRou.post("/savebe", response_model=BizEntityOut)
 async def post_be_profile(
     payload: BizEntityUpdate,
     zuid: UUID = Depends(get_zuid),

@@ -9,7 +9,7 @@ from app.db.models.ainvoaic.i_fee import FeeDB
 from app.schemas.sch_fee import FeeCreate, FeeOut
 from app.service.ser_fee import create_or_update_fee, fetch_fees
 
-feeRou = APIRouter(prefix="/settings")
+feeRou = APIRouter()
 
 
 def _to_out(fee: FeeDB) -> FeeOut:

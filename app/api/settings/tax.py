@@ -9,7 +9,7 @@ from app.db.models.ainvoaic.i_tax import TaxDB
 from app.schemas.sch_tax import TaxCreate, TaxOut
 from app.service.ser_tax import create_or_update_tax, fetch_taxes
 
-taxRou = APIRouter(prefix="/settings")
+taxRou = APIRouter()
 
 
 def _to_out(tax: TaxDB) -> TaxOut:

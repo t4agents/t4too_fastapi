@@ -9,7 +9,7 @@ from app.db.models.ainvoaic.i_tem import ItemDB
 from app.schemas.sch_item import ItemCreate, ItemOut
 from app.service.ser_item import create_or_update_item, fetch_items
 
-itemRou = APIRouter(prefix="/settings")
+itemRou = APIRouter()
 
 
 def _to_out(item: ItemDB) -> ItemOut:

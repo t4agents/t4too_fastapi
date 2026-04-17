@@ -31,6 +31,7 @@ class ZUserDB(Base, BaseMixin):
     avatar: Mapped[str] = mapped_column(String, nullable=True)    
     phone: Mapped[str] = mapped_column(String, nullable=True)
     position: Mapped[str] = mapped_column(String, nullable=True)
+    note: Mapped[str] = mapped_column(String, nullable=True)
 
     # Social links
     facebook: Mapped[str] = mapped_column(String, nullable=True)

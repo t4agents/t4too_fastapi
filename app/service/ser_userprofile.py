@@ -16,11 +16,7 @@ _log = logging.getLogger(__name__)
 
 async def fetch_user_profile(zuid: UUID, db: AsyncSession) -> ZUserDB:
     user = await get_user_by_id(db, zuid)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User profile not found.",
-        )
+    if not user:raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="User profile not found.",)
     return user
 
 

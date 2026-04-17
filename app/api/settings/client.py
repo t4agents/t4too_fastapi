@@ -9,7 +9,7 @@ from app.db.models.too.z_client import ZClientDB
 from app.schemas.sch_client import ClientCreate, ClientOut
 from app.service.ser_client import create_or_update_client, fetch_clients
 
-clientRou = APIRouter(prefix="/settings")
+clientRou = APIRouter()
 
 
 def _to_out(client: ZClientDB) -> ClientOut:

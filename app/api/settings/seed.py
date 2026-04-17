@@ -8,7 +8,7 @@ from app.db.conn.db_async import get_db_admin
 from app.schemas.sch_seed import SeedRefreshOut
 from app.service.ser_seed import apply_seed_defaults
 
-seedRou = APIRouter(prefix="/settings")
+seedRou = APIRouter()
 
 
 @seedRou.post("/seed/refresh", response_model=SeedRefreshOut)
