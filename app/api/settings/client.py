@@ -37,7 +37,7 @@ def _to_out(client: ZClientDB) -> ClientOut:
     )
 
 
-@clientRou.get("/client", response_model=list[ClientOut])
+@clientRou.get("/get_client_list", response_model=list[ClientOut])
 async def get_clients(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_admin),
@@ -46,7 +46,7 @@ async def get_clients(
     return [_to_out(client) for client in clients]
 
 
-@clientRou.post("/client", response_model=ClientOut)
+@clientRou.post("/post_client", response_model=ClientOut)
 async def post_client(
     payload: ClientCreate,
     zuid: UUID = Depends(get_zuid),
