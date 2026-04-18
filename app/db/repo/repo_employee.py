@@ -10,12 +10,12 @@ from app.db.models.t4agents.m_employee import EmployeeDB
 from app.db.repo.repo_utils import coerce_model_values
 
 
-async def list_employees(db: AsyncSession, zuid: UUID) -> List[EmployeeDB]:
+async def list_employees(db: AsyncSession, sbu_client_id: UUID) -> List[EmployeeDB]:
     result = await db.execute(
         select(EmployeeDB)
         .where(
-            EmployeeDB.created_by == zuid,
-            or_(EmployeeDB.is_deleted == False, EmployeeDB.is_deleted.is_(None)),
+            EmployeeDB.cli_id == sbu_client_id,
+            # or_(EmployeeDB.is_deleted == False, EmployeeDB.is_deleted.is_(None)),
         )
         .order_by(EmployeeDB.created_at.desc())
     )

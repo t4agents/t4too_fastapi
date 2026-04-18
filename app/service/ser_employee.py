@@ -13,8 +13,8 @@ from app.db.repo.repo_employee import (
 )
 
 
-async def fetch_employees(zuid: UUID, db: AsyncSession) -> list[EmployeeDB]:
-    return await list_employees(db, zuid)
+async def fetch_employees(sbu_client_id: UUID, db: AsyncSession) -> list[EmployeeDB]:
+    return await list_employees(db, sbu_client_id)
 
 
 async def create_or_update_employee(zuid: UUID, db: AsyncSession, payload: dict) -> EmployeeDB:

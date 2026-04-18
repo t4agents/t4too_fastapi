@@ -58,9 +58,7 @@ def _find_jwk(jwks: Dict[str, Any], kid: str | None) -> Dict[str, Any] | None:
     return None
 
 
-async def get_jwks_decoded(
-    credentials: HTTPAuthorizationCredentials = Depends(_security),
-) -> Dict[str, Any]:
+async def get_jwks_decoded(credentials: HTTPAuthorizationCredentials = Depends(_security),) -> Dict[str, Any]:
     if not credentials or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -130,3 +128,22 @@ async def get_zuid(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="JWT user id is not a valid UUID.",
         ) from exc
+
+
+async def get_sbu_client_id(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
+    user_metadata = decoded.get("user_metadata")
+    client_id_raw = user_metadata.get("sbu_client_id") if isinstance(user_metadata, dict) else None
+    if not client_id_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT missing user_metadata.sbu_client_id.",
+        )
+
+    try:
+        return UUID(str(client_id_raw))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT user_metadata.sbu_client_id is not a valid UUID.",
+        ) from exc
+
