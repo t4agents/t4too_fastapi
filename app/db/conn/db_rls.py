@@ -1,3 +1,15 @@
+# For other tables, the same pattern works if all 4 are true:
+
+# Role context is set per request (SET LOCAL ROLE authenticated)
+# JWT claims are set per request (request.jwt.claims) with required tenant keys
+# DB privileges exist for that schema/table (USAGE on schema + table grants)
+# RLS is enabled + policy exists on each table
+# For each new table, do:
+
+# ALTER TABLE ... ENABLE ROW LEVEL SECURITY
+# CREATE POLICY ... FOR SELECT ... USING (...)
+# Add INSERT/UPDATE/DELETE policies too (WITH CHECK for writes)
+# So yes, apply similar policy logic table-by-table, and it will work with your current backend RLS setup.
 import json
 import logging
 import re
