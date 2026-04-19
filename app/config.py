@@ -7,11 +7,13 @@ class _Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env",env_file_encoding="utf-8",extra="ignore",)
 
     TOO_SB_DB: str = "postgresql+asyncpg://username:pwd@local/icedb"
+    TOO_SB_DB_RLS: str = ""
     JWKS_URL: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1/.well-known/jwks.json"
     JWKS_ISS: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1"
     JWKS_AUD: str = "authenticated"
     JWKS_ALG: list[str] = ["ES256", "RS256"]
     SUPABASE_SERVICE_ROLE_KEY: str = ""
+    TOO_SB_RLS: str = ""
     # T4_ADMIN: str = "postgresql+asyncpg://username:pwd@local/icedb"
     # OPENAI_API_KEY: str =""
     # COHERE_API_KEY: str = ""

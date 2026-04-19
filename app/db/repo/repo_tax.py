@@ -12,9 +12,7 @@ from app.db.repo.repo_utils import coerce_model_values
 
 async def list_taxes(db: AsyncSession, zuid: UUID) -> List[TaxDB]:
     result = await db.execute(
-        select(TaxDB)
-        .where(TaxDB.created_by == zuid)
-        .order_by(TaxDB.created_at.desc())
+        select(TaxDB).order_by(TaxDB.created_at.desc())
     )
     return list(result.scalars().all())
 

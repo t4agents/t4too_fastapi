@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
 from app.db.conn.db_async import get_db_admin
+from app.db.conn.db_rls import get_db_rls
 from app.db.models.ainvoaic.i_tax import TaxDB
 from app.schemas.sch_tax import TaxCreate, TaxOut
 from app.service.ser_tax import create_or_update_tax, fetch_taxes
@@ -22,10 +23,10 @@ def _to_out(tax: TaxDB) -> TaxOut:
     )
 
 
-@taxRou.get("/itax", response_model=list[TaxOut])
+@taxRou.get("/get_tax_list", response_model=list[TaxOut])
 async def get_taxes(
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     taxes = await fetch_taxes(zuid, db)
     return [_to_out(tax) for tax in taxes]

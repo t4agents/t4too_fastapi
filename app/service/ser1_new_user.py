@@ -4,15 +4,19 @@ import logging
 from typing import Any, Dict
 from uuid import UUID
 
+import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings_singleton
 from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
 from app.db.models.too.z_user import ZUserDB
 from app.db.models.too.z_user_client import ZUserClientDB
 from app.service.ser_seed import apply_seed_defaults
+
+_log = logging.getLogger(__name__)
 
 DEFAULTS = {
     "email": "invoaice@gmail.com",
@@ -61,6 +65,38 @@ def _extract_sbu_user_type(decoded: dict[str, Any]) -> str:
         return root_value.strip()
 
     return "SBU"
+
+
+async def _update_supabase_app_metadata_ten_id(uid: UUID) -> None:
+    settings = get_settings_singleton()
+    service_key = (settings.SUPABASE_SERVICE_ROLE_KEY or "").strip()
+    if not service_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Supabase service role key missing.",
+        )
+
+    admin_url = f"{settings.JWKS_ISS.rstrip('/')}/admin/users/{uid}"
+    headers = {
+        "apikey": service_key,
+        "Authorization": f"Bearer {service_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {"app_metadata": {"sba_ten_id": str(uid)}}
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.put(admin_url, json=payload, headers=headers)
+        if resp.status_code >= 300:
+            _log.error(
+                "supabase app_metadata update failed uid=%s status=%s body=%s",
+                uid,
+                resp.status_code,
+                resp.text,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Supabase app_metadata update failed.",
+            )
 
 
 async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
@@ -161,6 +197,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
     except Exception:        raise
+    await _update_supabase_app_metadata_ten_id(user_id)
 
 
 
@@ -262,3 +299,4 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
             await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
             seed_summary = await apply_seed_defaults(user_id, db, reset=False)
     except Exception:        raise
+    await _update_supabase_app_metadata_ten_id(user_id)
