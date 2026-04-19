@@ -23,7 +23,7 @@ async def get_invoice_by_id(
     db: AsyncSession, inv_id: UUID, zuid: UUID
 ) -> Optional[InvoiceDB]:
     result = await db.execute(
-        select(InvoiceDB).where(InvoiceDB.id == inv_id, InvoiceDB.created_by == zuid)
+        select(InvoiceDB).where(InvoiceDB.id == inv_id)
     )
     return result.scalar_one_or_none()
 

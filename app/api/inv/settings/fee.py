@@ -21,7 +21,7 @@ def _to_out(fee: FeeDB) -> FeeOut:
     )
 
 
-@feeRou.get("/ifee", response_model=list[FeeOut])
+@feeRou.get("/get_fee_list", response_model=list[FeeOut])
 async def get_fees(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_admin),
@@ -30,7 +30,7 @@ async def get_fees(
     return [_to_out(fee) for fee in fees]
 
 
-@feeRou.post("/ifee", response_model=FeeOut)
+@feeRou.post("/create_fee", response_model=FeeOut)
 async def post_fee(
     payload: FeeCreate,
     zuid: UUID = Depends(get_zuid),

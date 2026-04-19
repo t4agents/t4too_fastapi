@@ -124,6 +124,7 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
         "be_email": email,
         "be_phone": DEFAULTS["phone"],
         "be_contact": display_name,
+        "be_logo": "https://raw.githubusercontent.com/ainvoaice/ainvoAIce/refs/heads/main/entrepreneurs.jpg",
     }
 
     zclient_payload = {
@@ -224,6 +225,7 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
         "be_email": email,
         "be_phone": DEFAULTS["phone"],
         "be_contact": display_name,
+        "be_logo": "https://raw.githubusercontent.com/ainvoaice/ainvoAIce/refs/heads/main/entrepreneurs.jpg",
     }
 
     zclient_payload = {

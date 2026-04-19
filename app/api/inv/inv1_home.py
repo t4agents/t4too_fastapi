@@ -11,7 +11,7 @@ from app.schemas.sch_homeinfo import HomeBizOut, HomeInfoOut
 from app.schemas.sch_userprofile import UserProfileOut
 from app.service.ser_dashboard import fetch_homeinfo
 
-homeRou = APIRouter(prefix="/home")
+homeRou = APIRouter()
 
 
 def _to_out(user: ZUserDB, be: ZBizEntityDB | None) -> HomeInfoOut:

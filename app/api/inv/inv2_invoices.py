@@ -8,16 +8,9 @@ from app.db.conn.db_async import get_db_admin
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
-from app.service.ser_inv import (
-    create_or_update_invoice,
-    create_or_update_invoice_payment,
-    fetch_invoice_by_id,
-    fetch_invoice_payments,
-    fetch_invoices,
-)
+from app.service.ser_inv import (create_or_update_invoice,create_or_update_invoice_payment,fetch_invoice_by_id,fetch_invoice_payments,fetch_invoices,)
 
-invRou = APIRouter()
-
+invMainRou = APIRouter()
 
 def _to_out(inv: InvoiceDB) -> InvOut:
     return InvOut(
@@ -83,7 +76,7 @@ def _to_payment_out(payment: InvoicePaymentDB) -> InvPaymentOut:
     )
 
 
-@invRou.get("/r3_inv_list", response_model=list[InvOut])
+@invMainRou.get("/get_inv_list", response_model=list[InvOut])
 async def get_invoices(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_admin),
@@ -92,7 +85,7 @@ async def get_invoices(
     return [_to_out(inv) for inv in invs]
 
 
-@invRou.get("/r3_inv_one", response_model=InvOut)
+@invMainRou.get("/get_inv_one", response_model=InvOut)
 async def get_invoice_one(
     inv_id: str,
     zuid: UUID = Depends(get_zuid),
@@ -108,7 +101,7 @@ async def get_invoice_one(
     return _to_out(inv)
 
 
-@invRou.post("/r3_inv_one", response_model=InvOut)
+@invMainRou.post("/post_inv_one", response_model=InvOut)
 async def post_invoice_one(
     payload: InvCreate,
     zuid: UUID = Depends(get_zuid),
@@ -118,7 +111,7 @@ async def post_invoice_one(
     return _to_out(inv)
 
 
-@invRou.get("/r3_inv_payment", response_model=list[InvPaymentOut])
+@invMainRou.get("/get_inv_payment_list", response_model=list[InvPaymentOut])
 async def get_invoice_payment_list(
     inv_id: str,
     zuid: UUID = Depends(get_zuid),
@@ -132,7 +125,7 @@ async def get_invoice_payment_list(
     return [_to_payment_out(payment) for payment in payments]
 
 
-@invRou.post("/r3_inv_payment", response_model=InvPaymentOut)
+@invMainRou.post("/post_inv_payment", response_model=InvPaymentOut)
 async def post_invoice_payment(
     payload: InvPaymentCreate,
     zuid: UUID = Depends(get_zuid),
