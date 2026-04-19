@@ -30,12 +30,27 @@ async def get_db_rls(decoded: dict = Depends(get_jwks_decoded),) -> AsyncGenerat
     async with AsyncSessionLocal_RLS() as session:
         async with session.begin():
             claims_for_rls = dict(decoded)
-            if not claims_for_rls.get("sba_ten_id") and claims_for_rls.get("sub"):
-                claims_for_rls["sba_ten_id"] = claims_for_rls["sub"]
-                _log.info(
-                    "RLS claims normalized: sba_ten_id was missing; copied from sub=%s",
-                    claims_for_rls["sub"],
-                )
+            if not claims_for_rls.get("sba_ten_id"):
+                app_metadata = claims_for_rls.get("app_metadata")
+                user_metadata = claims_for_rls.get("user_metadata")
+                app_ten_id = app_metadata.get("sba_ten_id") if isinstance(app_metadata, dict) else None
+                user_ten_id = user_metadata.get("sba_ten_id") if isinstance(user_metadata, dict) else None
+                fallback_ten_id = app_ten_id or user_ten_id
+                if fallback_ten_id:
+                    claims_for_rls["sba_ten_id"] = fallback_ten_id
+                    _log.info(
+                        "RLS claims normalized: sba_ten_id source=%s value=%s",
+                        "app_metadata"
+                        if app_ten_id
+                        else "user_metadata"
+                        if user_ten_id
+                        else "unknown",
+                        fallback_ten_id,
+                    )
+                else:
+                    raise RuntimeError(
+                        "RLS requires tenant claim 'sba_ten_id' (top-level or in app_metadata/user_metadata)."
+                    )
 
             claims_json = json.dumps(claims_for_rls)
             await session.execute(
