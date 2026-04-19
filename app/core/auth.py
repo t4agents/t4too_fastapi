@@ -1,5 +1,6 @@
 import time
 import logging
+import json
 from typing import Any, Dict
 from uuid import UUID
 
@@ -19,6 +20,17 @@ _JWKS_TTL_SECONDS = 3600
 _security = HTTPBearer(auto_error=False)
 _log = logging.getLogger(__name__)
 _http_log = logging.getLogger("app.http")
+_JWT_LOG_MAX_CHARS = 5000
+
+
+def _as_json_for_log(value: Any) -> str:
+    try:
+        text = json.dumps(value, ensure_ascii=False, default=str)
+    except Exception:
+        text = str(value)
+    if len(text) <= _JWT_LOG_MAX_CHARS:
+        return text
+    return f"{text[:_JWT_LOG_MAX_CHARS]} ...(truncated {len(text) - _JWT_LOG_MAX_CHARS} chars)"
 
 
 async def _fetch_jwks() -> Dict[str, Any]:
@@ -91,6 +103,19 @@ async def get_jwks_decoded(credentials: HTTPAuthorizationCredentials = Depends(_
             algorithms=settings.JWKS_ALG,
             audience=settings.JWKS_AUD,
             issuer=settings.JWKS_ISS,
+        )
+        app_metadata = decoded.get("app_metadata")
+        user_metadata = decoded.get("user_metadata")
+        _http_log.info(
+            "JWT decoded detail: sub=%s sba_ten_id=%s iss=%s aud=%s role=%s claims_keys=%s app_metadata=%s user_metadata=%s",
+            decoded.get("sub"),
+            decoded.get("sba_ten_id"),
+            decoded.get("iss"),
+            decoded.get("aud"),
+            decoded.get("role"),
+            sorted(list(decoded.keys())),
+            _as_json_for_log(app_metadata),
+            _as_json_for_log(user_metadata),
         )
         return decoded
     except JWTError as exc:

@@ -8,6 +8,7 @@ class _Settings(BaseSettings):
 
     TOO_SB_DB: str = "postgresql+asyncpg://username:pwd@local/icedb"
     TOO_SB_DB_RLS: str = ""
+    TOO_SB_RLS_ROLE: str = "authenticated"
     JWKS_URL: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1/.well-known/jwks.json"
     JWKS_ISS: str = "https://pjenyfvefvgbldgdegxs.supabase.co/auth/v1"
     JWKS_AUD: str = "authenticated"
