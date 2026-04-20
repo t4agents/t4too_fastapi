@@ -13,7 +13,6 @@ from app.db.repo.repo_utils import coerce_model_values
 async def list_payment_methods(db: AsyncSession, zuid: UUID) -> List[PaymentMethodDB]:
     result = await db.execute(
         select(PaymentMethodDB)
-        .where(PaymentMethodDB.created_by == zuid)
         .order_by(PaymentMethodDB.created_at.desc())
     )
     return list(result.scalars().all())

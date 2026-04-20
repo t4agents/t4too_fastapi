@@ -23,7 +23,7 @@ def _to_out(method: PaymentMethodDB) -> PaymentMethodOut:
     )
 
 
-@pmRou.get("/ipayment_method", response_model=list[PaymentMethodOut])
+@pmRou.get("/get_pm_list", response_model=list[PaymentMethodOut])
 async def get_payment_methods(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_admin),
@@ -32,7 +32,7 @@ async def get_payment_methods(
     return [_to_out(method) for method in methods]
 
 
-@pmRou.post("/ipayment_method", response_model=PaymentMethodOut)
+@pmRou.post("/post_pm", response_model=PaymentMethodOut)
 async def post_payment_method(
     payload: PaymentMethodCreate,
     zuid: UUID = Depends(get_zuid),
