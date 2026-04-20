@@ -13,7 +13,6 @@ from app.db.repo.repo_utils import coerce_model_values
 async def list_invoices(db: AsyncSession, zuid: UUID) -> List[InvoiceDB]:
     result = await db.execute(
         select(InvoiceDB)
-        .where(InvoiceDB.created_by == zuid)
         .order_by(InvoiceDB.created_at.desc())
     )
     return list(result.scalars().all())

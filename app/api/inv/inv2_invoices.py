@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
-from app.db.conn.db_async import get_db_admin
+from app.db.conn.db_rls import get_db_rls
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
@@ -79,7 +79,7 @@ def _to_payment_out(payment: InvoicePaymentDB) -> InvPaymentOut:
 @invMainRou.get("/get_inv_list", response_model=list[InvOut])
 async def get_invoices(
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     invs = await fetch_invoices(zuid, db)
     return [_to_out(inv) for inv in invs]
@@ -89,7 +89,7 @@ async def get_invoices(
 async def get_invoice_one(
     inv_id: str,
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     try:
         inv_uuid = UUID(str(inv_id))
@@ -105,7 +105,7 @@ async def get_invoice_one(
 async def post_invoice_one(
     payload: InvCreate,
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     inv = await create_or_update_invoice(zuid, db, payload.model_dump(exclude_unset=True))
     return _to_out(inv)
@@ -115,7 +115,7 @@ async def post_invoice_one(
 async def get_invoice_payment_list(
     inv_id: str,
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     try:
         inv_uuid = UUID(str(inv_id))
@@ -129,7 +129,7 @@ async def get_invoice_payment_list(
 async def post_invoice_payment(
     payload: InvPaymentCreate,
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     try:
         payment = await create_or_update_invoice_payment(
