@@ -1,6 +1,4 @@
 import time
-import logging
-import json
 from typing import Any, Dict
 from uuid import UUID
 
@@ -18,20 +16,6 @@ _JWKS_CACHE_TS: float | None = None
 _JWKS_TTL_SECONDS = 3600
 
 _security = HTTPBearer(auto_error=False)
-_log = logging.getLogger(__name__)
-_http_log = logging.getLogger("app.http")
-_JWT_LOG_MAX_CHARS = 5000
-
-
-def _as_json_for_log(value: Any) -> str:
-    try:
-        text = json.dumps(value, ensure_ascii=False, default=str)
-    except Exception:
-        text = str(value)
-    if len(text) <= _JWT_LOG_MAX_CHARS:
-        return text
-    return f"{text[:_JWT_LOG_MAX_CHARS]} ...(truncated {len(text) - _JWT_LOG_MAX_CHARS} chars)"
-
 
 async def _fetch_jwks() -> Dict[str, Any]:
     settings = get_settings_singleton()
@@ -71,27 +55,19 @@ def _find_jwk(jwks: Dict[str, Any], kid: str | None) -> Dict[str, Any] | None:
 
 
 async def get_jwks_decoded(credentials: HTTPAuthorizationCredentials = Depends(_security),) -> Dict[str, Any]:
-    if not credentials or credentials.scheme.lower() != "bearer":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing bearer token.",
-        )
+    
+    if not credentials or credentials.scheme.lower() != "bearer": raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Missing bearer token.",)
+   
     token = credentials.credentials
+    
     try:
         header = jose_jwt.get_unverified_header(token)
     except JWTError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token header.",
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid token header.",) from exc
 
     jwks = await _get_jwks_cached()
     jwk = _find_jwk(jwks, header.get("kid"))
-    if not jwk:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Signing key not found.",
-        )
+    if not jwk: raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Signing key not found.",)
 
     try:
         jwk_key = jose_jwk.construct(jwk)
@@ -104,40 +80,8 @@ async def get_jwks_decoded(credentials: HTTPAuthorizationCredentials = Depends(_
             audience=settings.JWKS_AUD,
             issuer=settings.JWKS_ISS,
         )
-        app_metadata = decoded.get("app_metadata")
-        user_metadata = decoded.get("user_metadata")
-        _http_log.info(
-            "JWT decoded detail: sub=%s sba_ten_id=%s iss=%s aud=%s role=%s claims_keys=%s app_metadata=%s user_metadata=%s",
-            decoded.get("sub"),
-            decoded.get("sba_ten_id"),
-            decoded.get("iss"),
-            decoded.get("aud"),
-            decoded.get("role"),
-            sorted(list(decoded.keys())),
-            _as_json_for_log(app_metadata),
-            _as_json_for_log(user_metadata),
-        )
         return decoded
-    except JWTError as exc:
-        try:
-            unverified_claims = jose_jwt.get_unverified_claims(token)
-        except JWTError:
-            unverified_claims = {}
-        settings = get_settings_singleton()
-        # Minimal diagnostics without leaking token contents
-        _log.info(
-            "JWT validation failed. kid=%s alg=%s iss=%s aud=%s error=%s",
-            header.get("kid"),
-            header.get("alg"),
-            unverified_claims.get("iss"),
-            unverified_claims.get("aud"),
-            str(exc),
-        )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token validation failed.",
-        ) from exc
-
+    except JWTError: raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token validation failed.")
 
 async def get_zuid(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
     user_id_raw = decoded.get("sub") or decoded.get("id")

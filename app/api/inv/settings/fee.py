@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
-from app.db.conn.db_async import get_db_admin
+from app.db.conn.db_async import get_db_rls
 from app.db.models.ainvoaic.i_fee import FeeDB
 from app.schemas.sch_fee import FeeCreate, FeeOut
 from app.service.ser_fee import create_or_update_fee, fetch_fees
@@ -24,7 +24,7 @@ def _to_out(fee: FeeDB) -> FeeOut:
 @feeRou.get("/get_fee_list", response_model=list[FeeOut])
 async def get_fees(
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     fees = await fetch_fees(zuid, db)
     return [_to_out(fee) for fee in fees]
@@ -34,7 +34,7 @@ async def get_fees(
 async def post_fee(
     payload: FeeCreate,
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     fee = await create_or_update_fee(zuid, db, payload.model_dump(exclude_unset=True))
     return _to_out(fee)

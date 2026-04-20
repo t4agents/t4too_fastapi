@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
-from app.db.conn.db_async import get_db_admin
+from app.db.conn.db_async import get_db_rls
 from app.db.models.too.z_be import ZBizEntityDB
 from app.service.ser_be import fetch_be_profile, update_be_profile
 from app.service.ser_seed import apply_seed_defaults
@@ -20,7 +20,7 @@ def _to_db_dict(be: ZBizEntityDB) -> dict[str, Any]:
 @beRou.get("/getbe", response_model=dict)
 async def get_be_profile(
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     try:
         be = await fetch_be_profile(zuid, db)
@@ -36,7 +36,7 @@ async def get_be_profile(
 async def post_be_profile(
     payload: dict[str, Any],
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload
     try:

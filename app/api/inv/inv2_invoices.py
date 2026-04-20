@@ -8,9 +8,11 @@ from app.db.conn.db_rls import get_db_rls
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
-from app.service.ser_inv import (create_or_update_invoice,create_or_update_invoice_payment,fetch_invoice_by_id,fetch_invoice_payments,fetch_invoices,)
+from app.service.ser_inv import (create_or_update_invoice, create_or_update_invoice_payment,
+                                 fetch_invoice_by_id, fetch_invoice_payments, fetch_invoices,)
 
 invMainRou = APIRouter()
+
 
 def _to_out(inv: InvoiceDB) -> InvOut:
     return InvOut(
@@ -81,7 +83,7 @@ async def get_invoices(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    invs = await fetch_invoices(zuid, db)
+    invs = await fetch_invoices(db)
     return [_to_out(inv) for inv in invs]
 
 
@@ -94,7 +96,8 @@ async def get_invoice_one(
     try:
         inv_uuid = UUID(str(inv_id))
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
+        raise HTTPException(
+            status_code=400, detail="inv_id must be a valid UUID") from exc
     inv = await fetch_invoice_by_id(zuid, db, inv_uuid)
     if not inv:
         raise HTTPException(status_code=404, detail="Invoice not found")
@@ -120,7 +123,8 @@ async def get_invoice_payment_list(
     try:
         inv_uuid = UUID(str(inv_id))
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
+        raise HTTPException(
+            status_code=400, detail="inv_id must be a valid UUID") from exc
     payments = await fetch_invoice_payments(zuid, db, inv_uuid)
     return [_to_payment_out(payment) for payment in payments]
 

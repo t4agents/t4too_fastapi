@@ -13,7 +13,6 @@ from app.db.repo.repo_utils import coerce_model_values
 async def list_clients(db: AsyncSession, zuid: UUID) -> List[ZClientDB]:
     result = await db.execute(
         select(ZClientDB)
-        .where(ZClientDB.created_by == zuid)
         .order_by(ZClientDB.created_at.desc())
     )
     return list(result.scalars().all())

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
-from app.db.conn.db_async import get_db_admin
+from app.db.conn.db_async import get_db_rls
 from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_user import ZUserDB
 from app.schemas.sch_homeinfo import HomeBizOut, HomeInfoOut
@@ -34,7 +34,7 @@ def _to_out(user: ZUserDB, be: ZBizEntityDB | None) -> HomeInfoOut:
 @homeRou.get("/dashboard", response_model=HomeInfoOut)
 async def get_user_profile(
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     user, be = await fetch_homeinfo(zuid, db)
     return _to_out(user, be)

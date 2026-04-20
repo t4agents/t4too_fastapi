@@ -7,25 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
-from app.db.repo.repo_inv import (
-    create_invoice,
-    get_invoice_by_id,
-    list_invoices,
-    update_invoice_fields,
-)
-from app.db.repo.repo_inv_payment import (
-    create_invoice_payment,
-    get_invoice_payment_by_id,
-    list_invoice_payments,
-    update_invoice_payment_fields,
-)
+from app.db.repo.repo_inv import (create_invoice,get_invoice_by_id,list_invoices,update_invoice_fields,)
+from app.db.repo.repo_inv_payment import (create_invoice_payment,get_invoice_payment_by_id,list_invoice_payments,update_invoice_payment_fields,)
 
 _INVOICE_COLUMNS = set(InvoiceDB.__table__.columns.keys())
 _INVOICE_PAYMENT_COLUMNS = set(InvoicePaymentDB.__table__.columns.keys())
 
-
-async def fetch_invoices(zuid: UUID, db: AsyncSession) -> list[InvoiceDB]:
-    return await list_invoices(db, zuid)
+async def fetch_invoices(db: AsyncSession) -> list[InvoiceDB]:
+    return await list_invoices(db)
 
 
 def _to_uuid(value: Any) -> UUID | None:

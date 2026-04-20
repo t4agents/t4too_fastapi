@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_jwks_decoded, get_zuid
-from app.db.conn.db_async import get_db_admin
+from app.db.conn.db_async import get_db_rls
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.ainvoaic.i_tax import TaxDB
 from app.schemas.sch_tax import TaxCreate, TaxOut
@@ -45,7 +45,7 @@ async def get_taxes(
 async def post_tax(
     payload: TaxCreate,
     zuid: UUID = Depends(get_zuid),
-    db: AsyncSession = Depends(get_db_admin),
+    db: AsyncSession = Depends(get_db_rls),
 ):
     tax = await create_or_update_tax(zuid, db, payload.model_dump(exclude_unset=True))
     return _to_out(tax)

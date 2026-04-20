@@ -30,6 +30,6 @@ AsyncSessionLocal_Admin = async_sessionmaker(
     expire_on_commit=False,
 )
 
-async def get_db_admin() -> AsyncGenerator[AsyncSession, None]:
+async def get_db_rls() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal_Admin() as session:
         yield session

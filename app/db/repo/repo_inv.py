@@ -10,11 +10,8 @@ from app.db.models.ainvoaic.i_nvoice import InvoiceDB
 from app.db.repo.repo_utils import coerce_model_values
 
 
-async def list_invoices(db: AsyncSession, zuid: UUID) -> List[InvoiceDB]:
-    result = await db.execute(
-        select(InvoiceDB)
-        .order_by(InvoiceDB.created_at.desc())
-    )
+async def list_invoices(db: AsyncSession) -> List[InvoiceDB]:
+    result = await db.execute(select(InvoiceDB).order_by(InvoiceDB.created_at.desc()))
     return list(result.scalars().all())
 
 
