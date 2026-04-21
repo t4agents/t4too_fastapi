@@ -16,11 +16,16 @@ _log = logging.getLogger(__name__)
 
 async def fetch_user_profile(zjwt: dict, db: AsyncSession) -> ZUserDB:
     user = await get_user_by_id(db, zjwt["zuid"])
-    if not user:raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="User profile not found.",)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User profile not found.",
+        )
     return user
 
 
 async def _update_supabase_user_meta(zjwt: dict, updates: dict[str, Any]) -> None:
+    zuid = zjwt["zuid"]
     meta_updates = {}
     if "display_name" in updates:
         meta_updates["display_name"] = updates["display_name"]
@@ -58,7 +63,7 @@ async def _update_supabase_user_meta(zjwt: dict, updates: dict[str, Any]) -> Non
 
 
 async def update_user_profile(zjwt: dict, db: AsyncSession, updates: dict) -> ZUserDB:
-    user = await fetch_user_profile(zjwt["zuid"], db)
+    user = await fetch_user_profile(zjwt, db)
     user = await update_user_fields(db, user, updates)
-    await _update_supabase_user_meta(zjwt["zuid"], updates)
+    await _update_supabase_user_meta(zjwt, updates)
     return user
