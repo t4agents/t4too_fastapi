@@ -24,6 +24,6 @@ async def fetch_be_profile(zjwt: dict, db: AsyncSession) -> ZBizEntityDB:
 
 
 async def update_be_profile(zjwt: dict, db: AsyncSession, updates: dict) -> ZBizEntityDB:
-    be = await fetch_be_profile(zuid, db)
+    be = await fetch_be_profile(zjwt["zuid"], db)
     be = await update_be_fields(db, be, updates)
     return be

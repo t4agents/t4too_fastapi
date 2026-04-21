@@ -33,7 +33,7 @@ async def get_items(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    items = await fetch_items(zuid, db)
+    items = await fetch_items(zjwt["zuid"], db)
     return [_to_out(item) for item in items]
 
 
@@ -43,5 +43,5 @@ async def post_item(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    item = await create_or_update_item(zuid, db, payload.model_dump(exclude_unset=True))
+    item = await create_or_update_item(zjwt["zuid"], db, payload.model_dump(exclude_unset=True))
     return _to_out(item)

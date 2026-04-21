@@ -38,7 +38,7 @@ async def get_user_profile2(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    user = await fetch_user_profile(zuid, db)
+    user = await fetch_user_profile(zjwt["zuid"], db)
     return _to_out(user)
 
 
@@ -47,7 +47,7 @@ async def get_user_profile(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    user = await fetch_user_profile(zuid, db)
+    user = await fetch_user_profile(zjwt["zuid"], db)
     return _to_out(user)
 
 
@@ -58,7 +58,7 @@ async def post_user_profile(
     db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload.model_dump(exclude_unset=True)
-    user = await update_user_profile(zuid, db, updates)
+    user = await update_user_profile(zjwt["zuid"], db, updates)
     return _to_out(user)
 
 
@@ -69,5 +69,5 @@ async def post_user_profile2(
     db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload.model_dump(exclude_unset=True)
-    user = await update_user_profile(zuid, db, updates)
+    user = await update_user_profile(zjwt["zuid"], db, updates)
     return _to_out(user)

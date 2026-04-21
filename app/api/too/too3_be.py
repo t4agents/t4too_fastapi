@@ -24,12 +24,12 @@ async def get_be_profile(
 ):
     zuid = UUID(zjwt["zuid"])
     try:
-        be = await fetch_be_profile(zuid, db)
+        be = await fetch_be_profile(zjwt["zuid"], db)
     except HTTPException as exc:
         if exc.status_code != status.HTTP_404_NOT_FOUND:
             raise
-        await apply_seed_defaults(zuid, db, reset=False)
-        be = await fetch_be_profile(zuid, db)
+        await apply_seed_defaults(zjwt["zuid"], db, reset=False)
+        be = await fetch_be_profile(zjwt["zuid"], db)
     return _to_db_dict(be)
 
 
@@ -41,10 +41,10 @@ async def post_be_profile(
 ):
     updates = payload
     try:
-        be = await update_be_profile(zuid, db, updates)
+        be = await update_be_profile(zjwt["zuid"], db, updates)
     except HTTPException as exc:
         if exc.status_code != status.HTTP_404_NOT_FOUND:
             raise
-        await apply_seed_defaults(zuid, db, reset=False)
-        be = await update_be_profile(zuid, db, updates)
+        await apply_seed_defaults(zjwt["zuid"], db, reset=False)
+        be = await update_be_profile(zjwt["zuid"], db, updates)
     return _to_db_dict(be)

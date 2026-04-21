@@ -37,7 +37,7 @@ async def get_taxes(
         decoded.get("sba_ten_id"),
         zuid,
     )
-    taxes = await fetch_taxes(zuid, db)
+    taxes = await fetch_taxes(zjwt["zuid"], db)
     return [_to_out(tax) for tax in taxes]
 
 
@@ -47,5 +47,5 @@ async def post_tax(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    tax = await create_or_update_tax(zuid, db, payload.model_dump(exclude_unset=True))
+    tax = await create_or_update_tax(zjwt["zuid"], db, payload.model_dump(exclude_unset=True))
     return _to_out(tax)

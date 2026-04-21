@@ -58,7 +58,7 @@ async def _update_supabase_user_meta(zjwt: dict, updates: dict[str, Any]) -> Non
 
 
 async def update_user_profile(zjwt: dict, db: AsyncSession, updates: dict) -> ZUserDB:
-    user = await fetch_user_profile(zuid, db)
+    user = await fetch_user_profile(zjwt["zuid"], db)
     user = await update_user_fields(db, user, updates)
-    await _update_supabase_user_meta(zuid, updates)
+    await _update_supabase_user_meta(zjwt["zuid"], updates)
     return user
