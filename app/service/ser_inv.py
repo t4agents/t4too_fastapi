@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -120,6 +121,49 @@ async def fetch_invoice_payments(db: AsyncSession, inv_id: UUID) -> list[Invoice
     return await list_invoice_payments(db, inv_id)
 
 
+def _to_decimal(value: Any) -> Decimal:
+    if value is None:
+        return Decimal("0")
+    if isinstance(value, Decimal):
+        return value
+    return Decimal(str(value))
+
+
+def _compute_payment_status(total: Decimal, paid: Decimal) -> str:
+    if paid <= Decimal("0"):
+        return "unpaid"
+    if paid < total:
+        return "partial"
+    if paid == total:
+        return "paid"
+    return "overpaid"
+
+
+async def _recalculate_invoice_payment_summary(db: AsyncSession, inv_id: UUID) -> None:
+    inv = await get_invoice_by_id(db, inv_id)
+    if not inv:
+        raise ValueError("Invoice not found for payment update")
+
+    payments = await list_invoice_payments(db, inv_id)
+    paid_total = Decimal("0")
+    for payment in payments:
+        if _to_bool(getattr(payment, "is_deleted", False)):
+            continue
+        paid_total += _to_decimal(payment.pay_amount)
+
+    inv_total = _to_decimal(inv.inv_total)
+    balance_due = inv_total - paid_total
+    if balance_due < Decimal("0"):
+        balance_due = Decimal("0")
+
+    updates = {
+        "inv_paid_total": float(paid_total),
+        "inv_balance_due": float(balance_due),
+        "inv_payment_status": _compute_payment_status(inv_total, paid_total),
+    }
+    await update_invoice_fields(db, inv, updates)
+
+
 async def create_inv_payment(zjwt: dict, db: AsyncSession, payload: dict) -> InvoicePaymentDB:
     data = dict(payload)
 
@@ -151,4 +195,6 @@ async def create_inv_payment(zjwt: dict, db: AsyncSession, payload: dict) -> Inv
         "cli_id": zjwt["zuid"],
         "created_by": zjwt["zuid"],
     }
-    return await create_invoice_payment(db, create_payload)
+    payment = await create_invoice_payment(db, create_payload)
+    await _recalculate_invoice_payment_summary(db, inv_id)
+    return payment

@@ -23,9 +23,7 @@ async def get_invoice_payment_by_id(
     db: AsyncSession, payment_id: UUID, zjwt: dict
 ) -> Optional[InvoicePaymentDB]:
     result = await db.execute(
-        select(InvoicePaymentDB).where(
-            InvoicePaymentDB.id == payment_id, InvoicePaymentDB.created_by == zuid
-        )
+        select(InvoicePaymentDB).where(InvoicePaymentDB.id == payment_id)
     )
     return result.scalar_one_or_none()
 
