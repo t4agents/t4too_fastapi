@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
-from app.db.conn.db_async import get_db_rls
+from app.db.conn.db_async import get_db_admin
 from app.db.models.too.z_user import ZUserDB
 from app.schemas.sch_userprofile import UserProfileOut, UserProfileUpdate
 from app.service.ser_userprofile import fetch_user_profile, update_user_profile
@@ -36,7 +36,7 @@ def _to_out(user: ZUserDB) -> UserProfileOut:
 @meRou.get("/getme", response_model=UserProfileOut)
 async def get_user_profile2(
     zjwt: dict = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
+    db: AsyncSession = Depends(get_db_admin),
 ):
     user = await fetch_user_profile(zjwt, db)
     return _to_out(user)
@@ -46,7 +46,7 @@ async def get_user_profile2(
 async def post_user_profile2(
     payload: UserProfileUpdate,
     zjwt: dict = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
+    db: AsyncSession = Depends(get_db_admin),
 ):
     updates = payload.model_dump(exclude_unset=True)
     user = await update_user_profile(zjwt, db, updates)

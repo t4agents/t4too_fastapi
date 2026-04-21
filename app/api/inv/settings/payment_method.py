@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
-from app.db.conn.db_async import get_db_rls
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.inv.i_payment_method import PaymentMethodDB
 from app.schemas.sch_payment_method import PaymentMethodCreate, PaymentMethodOut

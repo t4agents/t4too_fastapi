@@ -13,7 +13,6 @@ from app.db.repo.repo_utils import coerce_model_values
 async def list_fees(db: AsyncSession, zjwt: dict) -> List[FeeDB]:
     result = await db.execute(
         select(FeeDB)
-        .where(FeeDB.created_by == zjwt["zuid"])
         .order_by(FeeDB.created_at.desc())
     )
     return list(result.scalars().all())

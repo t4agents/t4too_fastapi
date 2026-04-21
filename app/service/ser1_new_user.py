@@ -4,12 +4,11 @@ import logging
 from typing import Any, Dict
 from uuid import UUID
 
-import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import get_settings_singleton
+from app.core.supabase_admin import get_supabase_admin_client
 from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
 from app.db.models.too.z_user import ZUserDB
@@ -68,35 +67,18 @@ def _extract_sbu_user_type(decoded: dict[str, Any]) -> str:
 
 
 async def _update_supabase_app_metadata_ten_id(uid: UUID) -> None:
-    settings = get_settings_singleton()
-    service_key = (settings.SUPABASE_SERVICE_ROLE_KEY or "").strip()
-    if not service_key:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Supabase service role key missing.",
+    supabase = get_supabase_admin_client()
+    try:
+        supabase.auth.admin.update_user_by_id(
+            str(uid),
+            {"app_metadata": {"sba_ten_id": str(uid)}},
         )
-
-    admin_url = f"{settings.JWKS_ISS.rstrip('/')}/admin/users/{uid}"
-    headers = {
-        "apikey": service_key,
-        "Authorization": f"Bearer {service_key}",
-        "Content-Type": "application/json",
-    }
-    payload = {"app_metadata": {"sba_ten_id": str(uid)}}
-
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.put(admin_url, json=payload, headers=headers)
-        if resp.status_code >= 300:
-            _log.error(
-                "supabase app_metadata update failed uid=%s status=%s body=%s",
-                uid,
-                resp.status_code,
-                resp.text,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Supabase app_metadata update failed.",
-            )
+    except Exception as exc:
+        _log.error("supabase app_metadata update failed uid=%s err=%s", uid, exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Supabase app_metadata update failed.",
+        ) from exc
 
 
 async def provision_new_user(decoded: dict, db: AsyncSession) -> None:

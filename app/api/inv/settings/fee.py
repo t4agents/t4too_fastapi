@@ -4,8 +4,8 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zjwt, get_zjwt
-from app.db.conn.db_async import get_db_rls
+from app.core.auth import get_zjwt
+from app.db.conn.db_rls import get_db_rls
 from app.db.models.inv.i_fee import FeeDB
 from app.schemas.sch_fee import FeeCreate, FeeOut
 from app.service.ser_fee import create_or_update_fee, fetch_fees

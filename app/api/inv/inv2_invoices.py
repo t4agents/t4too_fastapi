@@ -12,7 +12,7 @@ from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentO
 from app.service.ser_inv import (create_or_update_invoice, create_inv_payment,
                                  fetch_invoice_by_id, fetch_invoice_payments, fetch_invoices,)
 
-invMainRou = APIRouter()
+inv2Rou = APIRouter()
 
 
 def _to_out(inv: InvoiceDB) -> InvOut:
@@ -103,7 +103,7 @@ def _to_item_out(item: InvoiceItemDB) -> dict:
     }
 
 
-@invMainRou.get("/get_inv_list", response_model=list[InvOut])
+@inv2Rou.get("/get_inv_list", response_model=list[InvOut])
 async def get_invoices(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
@@ -112,7 +112,7 @@ async def get_invoices(
     return [_to_out(inv) for inv in invs]
 
 
-@invMainRou.get("/get_inv_one", response_model=InvOut)
+@inv2Rou.get("/get_inv_one", response_model=InvOut)
 async def get_invoice_one(
     inv_id: str,
     zjwt: dict = Depends(get_zjwt),
@@ -131,7 +131,7 @@ async def get_invoice_one(
     return out
 
 
-@invMainRou.post("/post_inv_one", response_model=InvOut)
+@inv2Rou.post("/post_inv_one", response_model=InvOut)
 async def post_invoice_one(
     payload: InvCreate,
     zjwt: dict = Depends(get_zjwt),
@@ -141,7 +141,7 @@ async def post_invoice_one(
     return _to_out(inv)
 
 
-@invMainRou.get("/get_inv_payment_list", response_model=list[InvPaymentOut])
+@inv2Rou.get("/get_inv_payment_list", response_model=list[InvPaymentOut])
 async def get_invoice_payment_list(
     inv_id: str,
     zjwt: dict = Depends(get_zjwt),
@@ -156,17 +156,15 @@ async def get_invoice_payment_list(
     return [_to_payment_out(payment) for payment in payments]
 
 
-# @invMainRou.post("/create_inv_payment", response_model=InvPaymentOut)
-# async def post_invoice_payment(
-#     payload: InvPaymentCreate,
-#     zjwt: dict = Depends(get_zjwt),
-#     db: AsyncSession = Depends(get_db_rls),
-# ):
-#     try:
-#         payment = await create_inv_payment(
-#             db, payload.model_dump(exclude_unset=True), zuid, ten_id
-#         )
-#     except ValueError as exc:
-#         raise HTTPException(status_code=400, detail=str(exc)) from exc
-#     return _to_payment_out(payment)
+@inv2Rou.post("/create_inv_payment", response_model=InvPaymentOut)
+async def post_invoice_payment(
+    payload: InvPaymentCreate,
+    zjwt: dict = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+):
+    try:
+        payment = await create_inv_payment(zjwt, db, payload.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _to_payment_out(payment)
 

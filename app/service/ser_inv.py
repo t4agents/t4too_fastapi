@@ -52,11 +52,11 @@ def _to_bool(value: Any) -> bool:
 
 def _base_ids(zjwt: dict) -> dict[str, UUID]:
     return {
-        "ten_id": zuid,
-        "biz_id": zuid,
-        "usr_id": zuid,
-        "cli_id": zuid,
-        "created_by": zuid,
+        "ten_id": zjwt["app_metadata"]["sba_ten_id"],
+        "biz_id": zjwt["zuid"],
+        "usr_id": zjwt["zuid"],
+        "cli_id": zjwt["zuid"],
+        "created_by": zjwt["zuid"],
     }
 
 
@@ -94,7 +94,7 @@ async def create_or_update_invoice(zjwt: dict, db: AsyncSession, payload: dict) 
     filtered = {k: v for k, v in data.items() if k in _INVOICE_COLUMNS}
     inv_id = _to_uuid(filtered.get("id"))
     if inv_id:
-        existing = await get_invoice_by_id(db, inv_id, zjwt["zuid"])
+        existing = await get_invoice_by_id(db, inv_id)
         if existing:
             updates = {
                 k: v
@@ -120,12 +120,11 @@ async def fetch_invoice_payments(db: AsyncSession, inv_id: UUID) -> list[Invoice
     return await list_invoice_payments(db, inv_id)
 
 
-async def create_inv_payment(db: AsyncSession, payload: dict, zjwt: dict, ten_id: UUID) -> InvoicePaymentDB:
+async def create_inv_payment(zjwt: dict, db: AsyncSession, payload: dict) -> InvoicePaymentDB:
     data = dict(payload)
 
     inv_id = _to_uuid(data.get("inv_id"))
-    if not inv_id:
-        raise ValueError("inv_id is required and must be a valid UUID")
+    if not inv_id: raise ValueError("inv_id is required and must be a valid UUID")
     data["inv_id"] = inv_id
 
     # Payment creation is owned by JWT context, not request payload.
@@ -137,10 +136,8 @@ async def create_inv_payment(db: AsyncSession, payload: dict, zjwt: dict, ten_id
     data.pop("created_by", None)
 
     data["pm_id"] = _to_uuid(data.get("pm_id"))
-    if "is_locked" in data:
-        data["is_flag"] = _to_bool(data.pop("is_locked"))
-    if "is_deleted" in data:
-        data["is_deleted"] = _to_bool(data.get("is_deleted"))
+    if "is_locked" in data:data["is_flag"] = _to_bool(data.pop("is_locked"))
+    if "is_deleted" in data:data["is_deleted"] = _to_bool(data.get("is_deleted"))
 
     data.pop("is_active", None)
     data.pop("updated_at", None)
@@ -148,9 +145,10 @@ async def create_inv_payment(db: AsyncSession, payload: dict, zjwt: dict, ten_id
     filtered = {k: v for k, v in data.items() if k in _INVOICE_PAYMENT_COLUMNS}
     create_payload = {
         **filtered,
-        "ten_id": ten_id,
-        "biz_id": ten_id,
-        "usr_id": zuid,
-        "created_by": zuid,
+        "ten_id": zjwt["app_metadata"]["sba_ten_id"],
+        "biz_id": zjwt["zuid"],
+        "usr_id": zjwt["zuid"],
+        "cli_id": zjwt["zuid"],
+        "created_by": zjwt["zuid"],
     }
     return await create_invoice_payment(db, create_payload)

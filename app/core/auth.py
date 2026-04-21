@@ -88,8 +88,8 @@ async def get_zjwt(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> dict[
 
     return {
         "zuid": user_id,
-        "za_m": app_metadata,
-        "zu_m": user_metadata,
+        "app_metadata": app_metadata,
+        "user_metadata": user_metadata,
     }
 
     # print("1------------", zjwt["zuid"])
