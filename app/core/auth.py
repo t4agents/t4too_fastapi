@@ -99,6 +99,35 @@ async def get_zuid(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
         ) from exc
 
 
+async def get_ten_id(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
+    ten_id_raw = decoded.get("sba_ten_id")
+    if not ten_id_raw:
+        app_metadata = decoded.get("app_metadata")
+        user_metadata = decoded.get("user_metadata")
+        ten_id_raw = (
+            app_metadata.get("sba_ten_id")
+            if isinstance(app_metadata, dict)
+            else None
+        ) or (
+            user_metadata.get("sba_ten_id")
+            if isinstance(user_metadata, dict)
+            else None
+        )
+    if not ten_id_raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT missing tenant id (sba_ten_id).",
+        )
+
+    try:
+        return UUID(str(ten_id_raw))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="JWT tenant id (sba_ten_id) is not a valid UUID.",
+        ) from exc
+
+
 async def get_sbu_client_id(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> UUID:
     user_metadata = decoded.get("user_metadata")
     client_id_raw = user_metadata.get("sbu_client_id") if isinstance(user_metadata, dict) else None

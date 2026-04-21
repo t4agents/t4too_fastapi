@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zuid
+from app.core.auth import get_ten_id, get_zuid
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.inv.i_nvoice import InvoiceDB
 from app.db.models.inv.i_nvoice_item import InvoiceItemDB
@@ -112,7 +112,7 @@ async def get_invoices(
     return [_to_out(inv) for inv in invs]
 
 
-@invMainRou.get("/get_inv_one_w_payments_items", response_model=InvOut)
+@invMainRou.get("/get_inv_one", response_model=InvOut)
 async def get_invoice_one(
     inv_id: str,
     zuid: UUID = Depends(get_zuid),
@@ -152,7 +152,7 @@ async def get_invoice_payment_list(
     except ValueError as exc:
         raise HTTPException(
             status_code=400, detail="inv_id must be a valid UUID") from exc
-    payments = await fetch_invoice_payments(zuid, db, inv_uuid)
+    payments = await fetch_invoice_payments(db, inv_uuid)
     return [_to_payment_out(payment) for payment in payments]
 
 
@@ -160,11 +160,12 @@ async def get_invoice_payment_list(
 async def post_invoice_payment(
     payload: InvPaymentCreate,
     zuid: UUID = Depends(get_zuid),
+    ten_id: UUID = Depends(get_ten_id),
     db: AsyncSession = Depends(get_db_rls),
 ):
     try:
         payment = await create_inv_payment(
-            db, payload.model_dump(exclude_unset=True), zuid
+            db, payload.model_dump(exclude_unset=True), zuid, ten_id
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

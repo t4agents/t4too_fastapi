@@ -120,13 +120,21 @@ async def fetch_invoice_payments(db: AsyncSession, inv_id: UUID) -> list[Invoice
     return await list_invoice_payments(db, inv_id)
 
 
-async def create_inv_payment(db: AsyncSession, payload: dict, zuid: UUID) -> InvoicePaymentDB:
+async def create_inv_payment(db: AsyncSession, payload: dict, zuid: UUID, ten_id: UUID) -> InvoicePaymentDB:
     data = dict(payload)
 
     inv_id = _to_uuid(data.get("inv_id"))
     if not inv_id:
         raise ValueError("inv_id is required and must be a valid UUID")
     data["inv_id"] = inv_id
+
+    # Payment creation is owned by JWT context, not request payload.
+    data.pop("id", None)
+    data.pop("payment_id", None)
+    data.pop("ten_id", None)
+    data.pop("biz_id", None)
+    data.pop("usr_id", None)
+    data.pop("created_by", None)
 
     data["pm_id"] = _to_uuid(data.get("pm_id"))
     if "is_locked" in data:
@@ -138,4 +146,11 @@ async def create_inv_payment(db: AsyncSession, payload: dict, zuid: UUID) -> Inv
     data.pop("updated_at", None)
 
     filtered = {k: v for k, v in data.items() if k in _INVOICE_PAYMENT_COLUMNS}
-    return await create_invoice_payment(db, filtered)
+    create_payload = {
+        **filtered,
+        "ten_id": ten_id,
+        "biz_id": ten_id,
+        "usr_id": zuid,
+        "created_by": zuid,
+    }
+    return await create_invoice_payment(db, create_payload)
