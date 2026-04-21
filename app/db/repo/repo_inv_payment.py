@@ -31,8 +31,7 @@ async def get_invoice_payment_by_id(
 async def create_invoice_payment(db: AsyncSession, payload: dict) -> InvoicePaymentDB:
     payment = InvoicePaymentDB(**coerce_model_values(InvoicePaymentDB, payload))
     db.add(payment)
-    await db.commit()
-    # await db.refresh(payment)
+    await db.flush()
     return payment
 
 
@@ -43,6 +42,10 @@ async def update_invoice_payment_fields(
         for key, value in coerce_model_values(payment, updates).items():
             setattr(payment, key, value)
         db.add(payment)
-        await db.commit()
-        # await db.refresh(payment)
+        await db.flush()
     return payment
+
+
+async def delete_invoice_payment(db: AsyncSession, payment: InvoicePaymentDB) -> None:
+    await db.delete(payment)
+    await db.flush()

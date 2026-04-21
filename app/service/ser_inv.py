@@ -14,6 +14,7 @@ from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
 from app.db.repo.repo_inv_item import list_invoice_items
 from app.db.repo.repo_inv import (create_invoice,get_invoice_by_id,list_invoices,update_invoice_fields,)
 from app.db.repo.repo_inv_payment import (create_invoice_payment,list_invoice_payments,)
+from app.db.repo.repo_inv_payment import (delete_invoice_payment,get_invoice_payment_by_id,)
 
 _INVOICE_COLUMNS = set(InvoiceDB.__table__.columns.keys())
 _INVOICE_PAYMENT_COLUMNS = set(InvoicePaymentDB.__table__.columns.keys())
@@ -134,12 +135,10 @@ def _compute_payment_status(total: Decimal, paid: Decimal) -> str:
         return "unpaid"
     if paid < total:
         return "partial"
-    if paid == total:
-        return "paid"
-    return "overpaid"
+    return "Paid"
 
 
-async def _recalculate_invoice_payment_summary(db: AsyncSession, inv_id: UUID) -> None:
+async def recalculate_invoice_payment_summary(db: AsyncSession, inv_id: UUID) -> None:
     inv = await get_invoice_by_id(db, inv_id)
     if not inv:
         raise ValueError("Invoice not found for payment update")
@@ -195,6 +194,14 @@ async def create_inv_payment(zjwt: dict, db: AsyncSession, payload: dict) -> Inv
         "cli_id": zjwt["zuid"],
         "created_by": zjwt["zuid"],
     }
-    payment = await create_invoice_payment(db, create_payload)
-    await _recalculate_invoice_payment_summary(db, inv_id)
-    return payment
+    return await create_invoice_payment(db, create_payload)
+
+
+async def delete_inv_payment(zjwt: dict, db: AsyncSession, payment_id: UUID) -> UUID:
+    payment = await get_invoice_payment_by_id(db, payment_id, zjwt)
+    if not payment:
+        raise ValueError("Invoice payment not found")
+    inv_id = payment.inv_id
+    await delete_invoice_payment(db, payment)
+    await recalculate_invoice_payment_summary(db, inv_id)
+    return inv_id

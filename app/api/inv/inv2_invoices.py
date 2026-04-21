@@ -10,9 +10,20 @@ from app.db.models.inv.i_nvoice_item import InvoiceItemDB
 from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
 from app.service.ser_inv import (create_or_update_invoice, create_inv_payment,
-                                 fetch_invoice_by_id, fetch_invoice_payments, fetch_invoices,)
+                                 delete_inv_payment,
+                                 fetch_invoice_by_id, fetch_invoice_payments, fetch_invoices,
+                                 recalculate_invoice_payment_summary,)
 
 inv2Rou = APIRouter()
+
+
+def _parse_uuid_or_400(value: str, field_name: str) -> UUID:
+    try:
+        return UUID(str(value))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"{field_name} must be a valid UUID"
+        ) from exc
 
 
 def _to_out(inv: InvoiceDB) -> InvOut:
@@ -118,9 +129,7 @@ async def get_invoice_one(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    try:
-        inv_uuid = UUID(str(inv_id))
-    except ValueError as exc:raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
+    inv_uuid = _parse_uuid_or_400(inv_id, "inv_id")
     
     inv = await fetch_invoice_by_id(zjwt, db, inv_uuid)
     if not inv:raise HTTPException(status_code=404, detail="Invoice not found")
@@ -147,11 +156,7 @@ async def get_invoice_payment_list(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    try:
-        inv_uuid = UUID(str(inv_id))
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400, detail="inv_id must be a valid UUID") from exc
+    inv_uuid = _parse_uuid_or_400(inv_id, "inv_id")
     payments = await fetch_invoice_payments(db, inv_uuid)
     return [_to_payment_out(payment) for payment in payments]
 
@@ -164,7 +169,22 @@ async def post_invoice_payment(
 ):
     try:
         payment = await create_inv_payment(zjwt, db, payload.model_dump(exclude_unset=True))
+        await recalculate_invoice_payment_summary(db, payment.inv_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_payment_out(payment)
+
+
+@inv2Rou.delete("/delete_inv_payment")
+async def delete_invoice_payment(
+    payment_id: str,
+    zjwt: dict = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+):
+    payment_uuid = _parse_uuid_or_400(payment_id, "payment_id")
+    try:
+        inv_id = await delete_inv_payment(zjwt, db, payment_uuid)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {"ok": True, "payment_id": str(payment_uuid), "inv_id": str(inv_id)}
 

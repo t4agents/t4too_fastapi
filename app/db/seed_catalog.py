@@ -249,7 +249,7 @@ INVOICE_TEMPLATES: list[dict[str, Any]] = [
         "inv_balance_due": 0.00,
         "inv_payment_status": "Paid",
         "inv_flag_word": "Paid",
-        "inv_flag_emoji": "paid",
+        "inv_flag_emoji": "Paid",
         "inv_pdf_template": "default",
         "inv_notes": "Thank you for your business!",
         "inv_terms_conditions": "Thank you for your business!",
