@@ -31,7 +31,7 @@ async def create_or_update_payment_method(
     }
     method_id = payload.get("id")
     if method_id:
-        existing = await get_payment_method_by_id(db, method_id, zuid)
+        existing = await get_payment_method_by_id(db, method_id, zjwt["zuid"])
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_payment_method_fields(db, existing, updates)

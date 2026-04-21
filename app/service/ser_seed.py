@@ -138,7 +138,7 @@ async def apply_seed_defaults(
     reset: bool = False,
 ) -> dict[str, Any]:
     _log.info("seed apply start sub=%s reset=%s", zuid, reset)
-    user = await get_user_by_id(db, zuid)
+    user = await get_user_by_id(db, zjwt["zuid"])
     email = user.email if user and user.email else "invoaice@gmail.com"
     display_name = user.display_name if user and user.display_name else "My Business Owner"
     _log.info(
@@ -361,7 +361,7 @@ async def apply_seed_defaults(
 
     async def _run_seed_ops() -> None:
         if reset:
-            _log.info("seed reset enabled sub=%s", zuid)
+            _log.info("seed reset enabled sub=%s", zjwt["zuid"])
             summary["tables"]["clients"]["deleted"] = await _delete_rows_by_ids(
                 db, ZClientDB, zuid, [row["id"] for row in client_rows]
             )
@@ -424,10 +424,10 @@ async def apply_seed_defaults(
         summary["tables"]["invoice_payments"]["updated"] = updated
 
     if db.in_transaction():
-        _log.info("seed txn mode=subtransaction sub=%s", zuid)
+        _log.info("seed txn mode=subtransaction sub=%s", zjwt["zuid"])
         await _run_seed_ops()
     else:
-        _log.info("seed txn mode=new_transaction sub=%s", zuid)
+        _log.info("seed txn mode=new_transaction sub=%s", zjwt["zuid"])
         async with db.begin():
             await _run_seed_ops()
 

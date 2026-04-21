@@ -10,7 +10,7 @@ from app.db.repo.repo_client import get_client_by_id, list_clients, update_clien
 
 
 async def fetch_clients(zjwt: dict, db: AsyncSession) -> list[ZClientDB]:
-    return await list_clients(db, zuid)
+    return await list_clients(db, zjwt["zuid"])
 
 
 async def create_or_update_client(zjwt: dict, db: AsyncSession, payload: dict) -> ZClientDB:
@@ -23,7 +23,7 @@ async def create_or_update_client(zjwt: dict, db: AsyncSession, payload: dict) -
     }
     client_id = payload.get("id")
     if client_id:
-        existing = await get_client_by_id(db, client_id, zuid)
+        existing = await get_client_by_id(db, client_id, zjwt["zuid"])
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_client_fields(db, existing, updates)

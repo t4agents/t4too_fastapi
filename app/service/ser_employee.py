@@ -30,7 +30,7 @@ async def create_or_update_employee(zjwt: dict, db: AsyncSession, payload: dict)
     employee_id = payload.get("id")
     updates = {k: v for k, v in payload.items() if k not in {"id", "full_name"}}
     if employee_id:
-        existing = await get_employee_by_id(db, employee_id, zuid)
+        existing = await get_employee_by_id(db, employee_id, zjwt["zuid"])
         if existing:
             return await update_employee_fields(db, existing, updates)
     data = {**base_ids, **updates}

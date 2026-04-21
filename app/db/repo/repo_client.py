@@ -20,7 +20,7 @@ async def list_clients(db: AsyncSession, zjwt: dict) -> List[ZClientDB]:
 
 async def get_client_by_id(db: AsyncSession, client_id: UUID, zjwt: dict) -> Optional[ZClientDB]:
     result = await db.execute(
-        select(ZClientDB).where(ZClientDB.id == client_id, ZClientDB.created_by == zuid)
+        select(ZClientDB).where(ZClientDB.id == client_id, ZClientDB.created_by == zjwt["zuid"])
     )
     return result.scalar_one_or_none()
 

@@ -15,7 +15,7 @@ from app.db.repo.repo_userprofile import get_user_by_id, update_user_fields
 _log = logging.getLogger(__name__)
 
 async def fetch_user_profile(zjwt: dict, db: AsyncSession) -> ZUserDB:
-    user = await get_user_by_id(db, zuid)
+    user = await get_user_by_id(db, zjwt["zuid"])
     if not user:raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="User profile not found.",)
     return user
 

@@ -94,7 +94,7 @@ async def create_or_update_invoice(zjwt: dict, db: AsyncSession, payload: dict) 
     filtered = {k: v for k, v in data.items() if k in _INVOICE_COLUMNS}
     inv_id = _to_uuid(filtered.get("id"))
     if inv_id:
-        existing = await get_invoice_by_id(db, inv_id, zuid)
+        existing = await get_invoice_by_id(db, inv_id, zjwt["zuid"])
         if existing:
             updates = {
                 k: v

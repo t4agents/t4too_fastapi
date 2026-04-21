@@ -10,7 +10,7 @@ from app.db.repo.repo_fee import get_fee_by_id, list_fees, update_fee_fields
 
 
 async def fetch_fees(zjwt: dict, db: AsyncSession) -> list[FeeDB]:
-    return await list_fees(db, zuid)
+    return await list_fees(db, zjwt["zuid"])
 
 
 async def create_or_update_fee(zjwt: dict, db: AsyncSession, payload: dict) -> FeeDB:
@@ -23,7 +23,7 @@ async def create_or_update_fee(zjwt: dict, db: AsyncSession, payload: dict) -> F
     }
     fee_id = payload.get("id")
     if fee_id:
-        existing = await get_fee_by_id(db, fee_id, zuid)
+        existing = await get_fee_by_id(db, fee_id, zjwt["zuid"])
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_fee_fields(db, existing, updates)

@@ -18,12 +18,12 @@ async def list_taxes(db: AsyncSession, zjwt: dict) -> List[TaxDB]:
         select(TaxDB).order_by(TaxDB.created_at.desc())
     )
     rows = list(result.scalars().all())
-    _log.info("list_taxes result_count=%s zuid=%s", len(rows), zuid)
+    _log.info("list_taxes result_count=%s zuid=%s", len(rows), zjwt["zuid"])
     return rows
 
 async def get_tax_by_id(db: AsyncSession, tax_id: UUID, zjwt: dict) -> Optional[TaxDB]:
     result = await db.execute(
-        select(TaxDB).where(TaxDB.id == tax_id, TaxDB.created_by == zuid)
+        select(TaxDB).where(TaxDB.id == tax_id, TaxDB.created_by == zjwt["zuid"])
     )
     return result.scalar_one_or_none()
 

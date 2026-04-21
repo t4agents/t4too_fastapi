@@ -10,7 +10,7 @@ from app.db.repo.repo_tax import get_tax_by_id, list_taxes, update_tax_fields
 
 
 async def fetch_taxes(zjwt: dict, db: AsyncSession) -> list[TaxDB]:
-    return await list_taxes(db, zuid)
+    return await list_taxes(db, zjwt["zuid"])
 
 
 async def create_or_update_tax(zjwt: dict, db: AsyncSession, payload: dict) -> TaxDB:
@@ -23,7 +23,7 @@ async def create_or_update_tax(zjwt: dict, db: AsyncSession, payload: dict) -> T
     }
     tax_id = payload.get("id")
     if tax_id:
-        existing = await get_tax_by_id(db, tax_id, zuid)
+        existing = await get_tax_by_id(db, tax_id, zjwt["zuid"])
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_tax_fields(db, existing, updates)

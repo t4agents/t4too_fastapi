@@ -13,14 +13,14 @@ from app.db.repo.repo_utils import coerce_model_values
 async def list_fees(db: AsyncSession, zjwt: dict) -> List[FeeDB]:
     result = await db.execute(
         select(FeeDB)
-        .where(FeeDB.created_by == zuid)
+        .where(FeeDB.created_by == zjwt["zuid"])
         .order_by(FeeDB.created_at.desc())
     )
     return list(result.scalars().all())
 
 async def get_fee_by_id(db: AsyncSession, fee_id: UUID, zjwt: dict) -> Optional[FeeDB]:
     result = await db.execute(
-        select(FeeDB).where(FeeDB.id == fee_id, FeeDB.created_by == zuid)
+        select(FeeDB).where(FeeDB.id == fee_id, FeeDB.created_by == zjwt["zuid"])
     )
     return result.scalar_one_or_none()
 

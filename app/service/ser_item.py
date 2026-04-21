@@ -10,7 +10,7 @@ from app.db.repo.repo_item import get_item_by_id, list_items, update_item_fields
 
 
 async def fetch_items(zjwt: dict, db: AsyncSession) -> list[ItemDB]:
-    return await list_items(db, zuid)
+    return await list_items(db, zjwt["zuid"])
 
 
 async def create_or_update_item(zjwt: dict, db: AsyncSession, payload: dict) -> ItemDB:
@@ -23,7 +23,7 @@ async def create_or_update_item(zjwt: dict, db: AsyncSession, payload: dict) -> 
     }
     item_id = payload.get("id")
     if item_id:
-        existing = await get_item_by_id(db, item_id, zuid)
+        existing = await get_item_by_id(db, item_id, zjwt["zuid"])
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_item_fields(db, existing, updates)
