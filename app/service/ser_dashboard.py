@@ -21,9 +21,6 @@ async def fetch_homeinfo(
     _log.info("dashboard fetch start sub=%s", zjwt["zuid"])
     user = await get_user_by_id(db, zjwt["zuid"])
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="get_user_by_id(db, zjwt["zuid"]) not found." + f" zuid={zuid}" + f" db={db}",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     be = await get_be_by_id(db, zjwt["zuid"])
     return user, be

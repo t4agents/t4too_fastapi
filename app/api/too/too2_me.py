@@ -12,7 +12,7 @@ from app.service.ser_userprofile import fetch_user_profile, update_user_profile
 
 _log = logging.getLogger(__name__)
     
-userProfileRou = APIRouter()
+meRou = APIRouter()
 
 
 def _to_out(user: ZUserDB) -> UserProfileOut:
@@ -33,16 +33,16 @@ def _to_out(user: ZUserDB) -> UserProfileOut:
     )
 
 
-@userProfileRou.get("/getme", response_model=UserProfileOut)
+@meRou.get("/getme", response_model=UserProfileOut)
 async def get_user_profile2(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    user = await fetch_user_profile(zjwt["zuid"], db)
+    user = await fetch_user_profile(zjwt, db)
     return _to_out(user)
 
 
-@userProfileRou.get("/userprofile", response_model=UserProfileOut)
+@meRou.get("/userprofile", response_model=UserProfileOut)
 async def get_user_profile(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
@@ -51,7 +51,7 @@ async def get_user_profile(
     return _to_out(user)
 
 
-@userProfileRou.post("/userprofile", response_model=UserProfileOut)
+@meRou.post("/userprofile", response_model=UserProfileOut)
 async def post_user_profile(
     payload: UserProfileUpdate,
     zjwt: dict = Depends(get_zjwt),
@@ -62,7 +62,7 @@ async def post_user_profile(
     return _to_out(user)
 
 
-@userProfileRou.post("/saveme", response_model=UserProfileOut)
+@meRou.post("/saveme", response_model=UserProfileOut)
 async def post_user_profile2(
     payload: UserProfileUpdate,
     zjwt: dict = Depends(get_zjwt),
