@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zuid
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
+from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
 from app.service.ser_inv import (create_or_update_invoice, create_or_update_invoice_payment,
@@ -78,6 +79,30 @@ def _to_payment_out(payment: InvoicePaymentDB) -> InvPaymentOut:
     )
 
 
+def _to_item_out(item: InvoiceItemDB) -> dict:
+    return {
+        "id": item.id,
+        "inv_id": item.inv_id,
+        "item_id": item.item_id,
+        "item_number": item.item_number,
+        "item_name": item.item_name,
+        "item_rate": item.item_rate,
+        "item_unit_of_measure": item.item_unit_of_measure,
+        "item_unit": item.item_unit,
+        "item_sku": item.item_sku,
+        "item_description": item.item_description,
+        "item_quantity": item.item_quantity,
+        "item_note": item.item_note,
+        "item_amount": item.item_amount,
+        "status": item.status,
+        "is_active": 0 if bool(item.is_deleted) else 1,
+        "is_locked": 1 if bool(item.is_flag) else 0,
+        "is_deleted": 1 if bool(item.is_deleted) else 0,
+        "created_at": item.created_at,
+        "updated_at": item.created_at,
+    }
+
+
 @invMainRou.get("/get_inv_list", response_model=list[InvOut])
 async def get_invoices(
     zuid: UUID = Depends(get_zuid),
@@ -95,13 +120,15 @@ async def get_invoice_one(
 ):
     try:
         inv_uuid = UUID(str(inv_id))
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400, detail="inv_id must be a valid UUID") from exc
+    except ValueError as exc:raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
+    
     inv = await fetch_invoice_by_id(zuid, db, inv_uuid)
-    if not inv:
-        raise HTTPException(status_code=404, detail="Invoice not found")
-    return _to_out(inv)
+    if not inv:raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    out = _to_out(inv.invoice)
+    out.inv_items = [_to_item_out(item) for item in inv.items]
+    out.inv_payments = [_to_payment_out(payment).model_dump() for payment in inv.payments]
+    return out
 
 
 @invMainRou.post("/post_inv_one", response_model=InvOut)

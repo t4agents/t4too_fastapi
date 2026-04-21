@@ -29,7 +29,7 @@ async def get_payment_methods(
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    methods = await fetch_payment_methods(zuid, db)
+    methods = await fetch_payment_methods(db)
     return [_to_out(method) for method in methods]
 
 

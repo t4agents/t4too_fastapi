@@ -1,17 +1,29 @@
 from __future__ import annotations
 
+import asyncio
+from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ainvoaic.i_nvoice import InvoiceDB
+from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
 from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
+from app.db.repo.repo_inv_item import list_invoice_items
 from app.db.repo.repo_inv import (create_invoice,get_invoice_by_id,list_invoices,update_invoice_fields,)
 from app.db.repo.repo_inv_payment import (create_invoice_payment,get_invoice_payment_by_id,list_invoice_payments,update_invoice_payment_fields,)
 
 _INVOICE_COLUMNS = set(InvoiceDB.__table__.columns.keys())
 _INVOICE_PAYMENT_COLUMNS = set(InvoicePaymentDB.__table__.columns.keys())
+
+
+@dataclass(slots=True)
+class InvoiceAggregate:
+    invoice: InvoiceDB
+    items: list[InvoiceItemDB]
+    payments: list[InvoicePaymentDB]
+
 
 async def fetch_invoices(db: AsyncSession) -> list[InvoiceDB]:
     return await list_invoices(db)
@@ -48,8 +60,14 @@ def _base_ids(zuid: UUID) -> dict[str, UUID]:
     }
 
 
-async def fetch_invoice_by_id(zuid: UUID, db: AsyncSession, inv_id: UUID) -> InvoiceDB | None:
-    return await get_invoice_by_id(db, inv_id, zuid)
+async def fetch_invoice_by_id(zuid: UUID, db: AsyncSession, inv_id: UUID) -> InvoiceAggregate | None:
+    inv = await get_invoice_by_id(db, inv_id)
+    if not inv:return None
+    items, payments = await asyncio.gather(
+        list_invoice_items(db, inv_id),
+        list_invoice_payments(db, inv_id),
+    )
+    return InvoiceAggregate(invoice=inv, items=items, payments=payments)
 
 
 async def create_or_update_invoice(zuid: UUID, db: AsyncSession, payload: dict) -> InvoiceDB:
@@ -98,15 +116,11 @@ async def create_or_update_invoice(zuid: UUID, db: AsyncSession, payload: dict) 
     return await create_invoice(db, create_payload)
 
 
-async def fetch_invoice_payments(
-    zuid: UUID, db: AsyncSession, inv_id: UUID
-) -> list[InvoicePaymentDB]:
-    return await list_invoice_payments(db, inv_id, zuid)
+async def fetch_invoice_payments(db: AsyncSession, inv_id: UUID) -> list[InvoicePaymentDB]:
+    return await list_invoice_payments(db, inv_id)
 
 
-async def create_or_update_invoice_payment(
-    zuid: UUID, db: AsyncSession, payload: dict
-) -> InvoicePaymentDB:
+async def create_or_update_invoice_payment(db: AsyncSession, payload: dict) -> InvoicePaymentDB:
     data = dict(payload)
 
     inv_id = _to_uuid(data.get("inv_id"))

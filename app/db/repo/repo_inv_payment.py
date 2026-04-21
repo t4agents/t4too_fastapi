@@ -10,12 +10,10 @@ from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
 from app.db.repo.repo_utils import coerce_model_values
 
 
-async def list_invoice_payments(
-    db: AsyncSession, inv_id: UUID, zuid: UUID
-) -> List[InvoicePaymentDB]:
+async def list_invoice_payments(db: AsyncSession, inv_id: UUID) -> List[InvoicePaymentDB]:
     result = await db.execute(
         select(InvoicePaymentDB)
-        .where(InvoicePaymentDB.inv_id == inv_id, InvoicePaymentDB.created_by == zuid)
+        .where(InvoicePaymentDB.inv_id == inv_id)
         .order_by(InvoicePaymentDB.created_at.desc())
     )
     return list(result.scalars().all())

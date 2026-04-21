@@ -10,7 +10,7 @@ from app.db.models.ainvoaic.i_payment_method import PaymentMethodDB
 from app.db.repo.repo_utils import coerce_model_values
 
 
-async def list_payment_methods(db: AsyncSession, zuid: UUID) -> List[PaymentMethodDB]:
+async def list_payment_methods(db: AsyncSession) -> List[PaymentMethodDB]:
     result = await db.execute(
         select(PaymentMethodDB)
         .order_by(PaymentMethodDB.created_at.desc())

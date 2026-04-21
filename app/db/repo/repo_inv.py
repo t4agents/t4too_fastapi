@@ -15,9 +15,7 @@ async def list_invoices(db: AsyncSession) -> List[InvoiceDB]:
     return list(result.scalars().all())
 
 
-async def get_invoice_by_id(
-    db: AsyncSession, inv_id: UUID, zuid: UUID
-) -> Optional[InvoiceDB]:
+async def get_invoice_by_id(db: AsyncSession, inv_id: UUID,) -> Optional[InvoiceDB]:
     result = await db.execute(
         select(InvoiceDB).where(InvoiceDB.id == inv_id)
     )

@@ -41,7 +41,7 @@ async def get_taxes(
     return [_to_out(tax) for tax in taxes]
 
 
-@taxRou.post("/itax", response_model=TaxOut)
+@taxRou.post("/post_tax", response_model=TaxOut)
 async def post_tax(
     payload: TaxCreate,
     zuid: UUID = Depends(get_zuid),

@@ -15,8 +15,8 @@ from app.db.repo.repo_payment_method import (
 )
 
 
-async def fetch_payment_methods(zuid: UUID, db: AsyncSession) -> list[PaymentMethodDB]:
-    return await list_payment_methods(db, zuid)
+async def fetch_payment_methods(db: AsyncSession) -> list[PaymentMethodDB]:
+    return await list_payment_methods(db)
 
 
 async def create_or_update_payment_method(
