@@ -28,7 +28,7 @@ async def create_fee(db: AsyncSession, payload: dict) -> FeeDB:
     fee = FeeDB(**coerce_model_values(FeeDB, payload))
     db.add(fee)
     await db.commit()
-    await db.refresh(fee)
+    # await db.refresh(fee)
     return fee
 
 
@@ -38,5 +38,5 @@ async def update_fee_fields(db: AsyncSession, fee: FeeDB, updates: dict) -> FeeD
             setattr(fee, key, value)
         db.add(fee)
         await db.commit()
-        await db.refresh(fee)
+        # await db.refresh(fee)
     return fee

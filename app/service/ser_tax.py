@@ -23,7 +23,7 @@ async def create_or_update_tax(zjwt: dict, db: AsyncSession, payload: dict) -> T
     }
     tax_id = payload.get("id")
     if tax_id:
-        existing = await get_tax_by_id(db, tax_id, zjwt["zuid"])
+        existing = await get_tax_by_id(db, tax_id, zjwt)
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_tax_fields(db, existing, updates)

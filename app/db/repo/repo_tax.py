@@ -32,7 +32,7 @@ async def create_tax(db: AsyncSession, payload: dict) -> TaxDB:
     tax = TaxDB(**coerce_model_values(TaxDB, payload))
     db.add(tax)
     await db.commit()
-    await db.refresh(tax)
+    # # await db.refresh(tax)
     return tax
 
 
@@ -42,5 +42,5 @@ async def update_tax_fields(db: AsyncSession, tax: TaxDB, updates: dict) -> TaxD
             setattr(tax, key, value)
         db.add(tax)
         await db.commit()
-        await db.refresh(tax)
+        # # await db.refresh(tax)
     return tax

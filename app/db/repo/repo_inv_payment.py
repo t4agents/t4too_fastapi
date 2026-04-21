@@ -34,7 +34,7 @@ async def create_invoice_payment(db: AsyncSession, payload: dict) -> InvoicePaym
     payment = InvoicePaymentDB(**coerce_model_values(InvoicePaymentDB, payload))
     db.add(payment)
     await db.commit()
-    await db.refresh(payment)
+    # await db.refresh(payment)
     return payment
 
 
@@ -46,5 +46,5 @@ async def update_invoice_payment_fields(
             setattr(payment, key, value)
         db.add(payment)
         await db.commit()
-        await db.refresh(payment)
+        # await db.refresh(payment)
     return payment

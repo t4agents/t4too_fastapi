@@ -21,5 +21,5 @@ async def update_be_fields(db: AsyncSession, be: ZBizEntityDB, updates: dict) ->
             setattr(be, key, value)
         db.add(be)
         await db.commit()
-        await db.refresh(be)
+        # await db.refresh(be)
     return be

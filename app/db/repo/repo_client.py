@@ -29,7 +29,7 @@ async def create_client(db: AsyncSession, payload: dict) -> ZClientDB:
     client = ZClientDB(**coerce_model_values(ZClientDB, payload))
     db.add(client)
     await db.commit()
-    await db.refresh(client)
+    # await db.refresh(client)
     return client
 
 
@@ -39,5 +39,5 @@ async def update_client_fields(db: AsyncSession, client: ZClientDB, updates: dic
             setattr(client, key, value)
         db.add(client)
         await db.commit()
-        await db.refresh(client)
+        # await db.refresh(client)
     return client

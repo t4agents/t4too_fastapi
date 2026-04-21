@@ -29,7 +29,7 @@ async def create_item(db: AsyncSession, payload: dict) -> ItemDB:
     item = ItemDB(**coerce_model_values(ItemDB, payload))
     db.add(item)
     await db.commit()
-    await db.refresh(item)
+    # await db.refresh(item)
     return item
 
 
@@ -39,5 +39,5 @@ async def update_item_fields(db: AsyncSession, item: ItemDB, updates: dict) -> I
             setattr(item, key, value)
         db.add(item)
         await db.commit()
-        await db.refresh(item)
+        # await db.refresh(item)
     return item

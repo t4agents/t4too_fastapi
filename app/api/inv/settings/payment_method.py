@@ -28,7 +28,7 @@ async def get_payment_methods(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    methods = await fetch_payment_methods(db)
+    methods = await fetch_payment_methods(zjwt, db)
     return [_to_out(method) for method in methods]
 
 

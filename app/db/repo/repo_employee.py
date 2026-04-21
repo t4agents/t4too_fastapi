@@ -34,7 +34,7 @@ async def create_employee(db: AsyncSession, payload: dict) -> EmployeeDB:
     employee = EmployeeDB(**coerce_model_values(EmployeeDB, payload))
     db.add(employee)
     await db.commit()
-    await db.refresh(employee)
+    # await db.refresh(employee)
     return employee
 
 
@@ -44,5 +44,5 @@ async def update_employee_fields(db: AsyncSession, employee: EmployeeDB, updates
             setattr(employee, key, value)
         db.add(employee)
         await db.commit()
-        await db.refresh(employee)
+        # await db.refresh(employee)
     return employee
