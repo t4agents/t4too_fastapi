@@ -9,11 +9,11 @@ from app.db.repo.repo_fee import create_fee as repo_create_fee
 from app.db.repo.repo_fee import get_fee_by_id, list_fees, update_fee_fields
 
 
-async def fetch_fees(zuid: UUID, db: AsyncSession) -> list[FeeDB]:
+async def fetch_fees(zjwt: dict, db: AsyncSession) -> list[FeeDB]:
     return await list_fees(db, zuid)
 
 
-async def create_or_update_fee(zuid: UUID, db: AsyncSession, payload: dict) -> FeeDB:
+async def create_or_update_fee(zjwt: dict, db: AsyncSession, payload: dict) -> FeeDB:
     base_ids = {
         "ten_id": zuid,
         "biz_id": zuid,

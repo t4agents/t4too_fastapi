@@ -35,7 +35,7 @@ async def get_fees(
 @feeRou.post("/create_fee", response_model=FeeOut)
 async def post_fee(
     payload: FeeCreate,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     fee = await create_or_update_fee(zuid, db, payload.model_dump(exclude_unset=True))

@@ -36,7 +36,7 @@ async def get_be_profile(
 @beRou.post("/savebe", response_model=dict)
 async def post_be_profile(
     payload: dict[str, Any],
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload

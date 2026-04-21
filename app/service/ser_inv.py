@@ -50,7 +50,7 @@ def _to_bool(value: Any) -> bool:
     return bool(value)
 
 
-def _base_ids(zuid: UUID) -> dict[str, UUID]:
+def _base_ids(zjwt: dict) -> dict[str, UUID]:
     return {
         "ten_id": zuid,
         "biz_id": zuid,
@@ -60,7 +60,7 @@ def _base_ids(zuid: UUID) -> dict[str, UUID]:
     }
 
 
-async def fetch_invoice_by_id(zuid: UUID, db: AsyncSession, inv_id: UUID) -> InvoiceAggregate | None:
+async def fetch_invoice_by_id(zjwt: dict, db: AsyncSession, inv_id: UUID) -> InvoiceAggregate | None:
     inv = await get_invoice_by_id(db, inv_id)
     if not inv:return None
     items, payments = await asyncio.gather(
@@ -70,7 +70,7 @@ async def fetch_invoice_by_id(zuid: UUID, db: AsyncSession, inv_id: UUID) -> Inv
     return InvoiceAggregate(invoice=inv, items=items, payments=payments)
 
 
-async def create_or_update_invoice(zuid: UUID, db: AsyncSession, payload: dict) -> InvoiceDB:
+async def create_or_update_invoice(zjwt: dict, db: AsyncSession, payload: dict) -> InvoiceDB:
     data = dict(payload)
     inv_id = _to_uuid(data.pop("inv_id", None) or data.get("id"))
     if inv_id:
@@ -120,7 +120,7 @@ async def fetch_invoice_payments(db: AsyncSession, inv_id: UUID) -> list[Invoice
     return await list_invoice_payments(db, inv_id)
 
 
-async def create_inv_payment(db: AsyncSession, payload: dict, zuid: UUID, ten_id: UUID) -> InvoicePaymentDB:
+async def create_inv_payment(db: AsyncSession, payload: dict, zjwt: dict, ten_id: UUID) -> InvoicePaymentDB:
     data = dict(payload)
 
     inv_id = _to_uuid(data.get("inv_id"))

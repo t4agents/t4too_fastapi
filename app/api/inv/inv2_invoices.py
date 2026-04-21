@@ -105,7 +105,7 @@ def _to_item_out(item: InvoiceItemDB) -> dict:
 
 @invMainRou.get("/get_inv_list", response_model=list[InvOut])
 async def get_invoices(
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     invs = await fetch_invoices(db)
@@ -115,7 +115,7 @@ async def get_invoices(
 @invMainRou.get("/get_inv_one", response_model=InvOut)
 async def get_invoice_one(
     inv_id: str,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     try:
@@ -134,7 +134,7 @@ async def get_invoice_one(
 @invMainRou.post("/post_inv_one", response_model=InvOut)
 async def post_invoice_one(
     payload: InvCreate,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     inv = await create_or_update_invoice(zuid, db, payload.model_dump(exclude_unset=True))
@@ -144,7 +144,7 @@ async def post_invoice_one(
 @invMainRou.get("/get_inv_payment_list", response_model=list[InvPaymentOut])
 async def get_invoice_payment_list(
     inv_id: str,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     try:
@@ -159,7 +159,7 @@ async def get_invoice_payment_list(
 # @invMainRou.post("/create_inv_payment", response_model=InvPaymentOut)
 # async def post_invoice_payment(
 #     payload: InvPaymentCreate,
-#     zuid: UUID = Depends(get_zjwt),
+#     zjwt: dict = Depends(get_zjwt),
 #     db: AsyncSession = Depends(get_db_rls),
 # ):
 #     try:

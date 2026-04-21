@@ -30,7 +30,7 @@ def _to_out(item: ItemDB) -> ItemOut:
 
 @itemRou.get("/item", response_model=list[ItemOut])
 async def get_items(
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     items = await fetch_items(zuid, db)
@@ -40,7 +40,7 @@ async def get_items(
 @itemRou.post("/item", response_model=ItemOut)
 async def post_item(
     payload: ItemCreate,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     item = await create_or_update_item(zuid, db, payload.model_dump(exclude_unset=True))

@@ -26,7 +26,7 @@ def _to_out(method: PaymentMethodDB) -> PaymentMethodOut:
 
 @pmRou.get("/get_pm_list", response_model=list[PaymentMethodOut])
 async def get_payment_methods(
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     methods = await fetch_payment_methods(db)
@@ -36,7 +36,7 @@ async def get_payment_methods(
 @pmRou.post("/post_pm", response_model=PaymentMethodOut)
 async def post_payment_method(
     payload: PaymentMethodCreate,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     method = await create_or_update_payment_method(

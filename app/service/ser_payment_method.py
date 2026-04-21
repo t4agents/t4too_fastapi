@@ -20,7 +20,7 @@ async def fetch_payment_methods(db: AsyncSession) -> list[PaymentMethodDB]:
 
 
 async def create_or_update_payment_method(
-    zuid: UUID, db: AsyncSession, payload: dict
+    zjwt: dict, db: AsyncSession, payload: dict
 ) -> PaymentMethodDB:
     base_ids = {
         "ten_id": zuid,

@@ -35,7 +35,7 @@ def _to_out(user: ZUserDB) -> UserProfileOut:
 
 @userProfileRou.get("/getme", response_model=UserProfileOut)
 async def get_user_profile2(
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     user = await fetch_user_profile(zuid, db)
@@ -44,7 +44,7 @@ async def get_user_profile2(
 
 @userProfileRou.get("/userprofile", response_model=UserProfileOut)
 async def get_user_profile(
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     user = await fetch_user_profile(zuid, db)
@@ -54,7 +54,7 @@ async def get_user_profile(
 @userProfileRou.post("/userprofile", response_model=UserProfileOut)
 async def post_user_profile(
     payload: UserProfileUpdate,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload.model_dump(exclude_unset=True)
@@ -65,7 +65,7 @@ async def post_user_profile(
 @userProfileRou.post("/saveme", response_model=UserProfileOut)
 async def post_user_profile2(
     payload: UserProfileUpdate,
-    zuid: UUID = Depends(get_zjwt),
+    zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload.model_dump(exclude_unset=True)

@@ -33,7 +33,7 @@ SEED_NAMESPACE = UUID("a9c57b13-0f0b-4ef2-b154-27b5957b08db")
 _log = logging.getLogger(__name__)
 
 
-def _seed_uuid(zuid: UUID, seed_key: str) -> UUID:
+def _seed_uuid(zjwt: dict, seed_key: str) -> UUID:
     return uuid5(SEED_NAMESPACE, f"{zuid}:{seed_key}")
 
 
@@ -45,7 +45,7 @@ def _seed_extra(seed_key: str) -> dict[str, Any]:
     }
 
 
-def _base_ids(zuid: UUID) -> dict[str, Any]:
+def _base_ids(zjwt: dict) -> dict[str, Any]:
     return {
         "ten_id": zuid,
         "biz_id": zuid,
@@ -106,7 +106,7 @@ async def _upsert_rows(
 async def _delete_rows_by_ids(
     db: AsyncSession,
     model: Any,
-    zuid: UUID,
+    zjwt: dict,
     ids: list[UUID],
 ) -> int:
     if not ids:
@@ -132,7 +132,7 @@ async def _delete_rows_by_ids(
 
 
 async def apply_seed_defaults(
-    zuid: UUID,
+    zjwt: dict,
     db: AsyncSession,
     *,
     reset: bool = False,

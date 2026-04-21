@@ -14,13 +14,13 @@ from app.db.repo.repo_userprofile import get_user_by_id, update_user_fields
 
 _log = logging.getLogger(__name__)
 
-async def fetch_user_profile(zuid: UUID, db: AsyncSession) -> ZUserDB:
+async def fetch_user_profile(zjwt: dict, db: AsyncSession) -> ZUserDB:
     user = await get_user_by_id(db, zuid)
     if not user:raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="User profile not found.",)
     return user
 
 
-async def _update_supabase_user_meta(zuid: UUID, updates: dict[str, Any]) -> None:
+async def _update_supabase_user_meta(zjwt: dict, updates: dict[str, Any]) -> None:
     meta_updates = {}
     if "display_name" in updates:
         meta_updates["display_name"] = updates["display_name"]
@@ -57,7 +57,7 @@ async def _update_supabase_user_meta(zuid: UUID, updates: dict[str, Any]) -> Non
             )
 
 
-async def update_user_profile(zuid: UUID, db: AsyncSession, updates: dict) -> ZUserDB:
+async def update_user_profile(zjwt: dict, db: AsyncSession, updates: dict) -> ZUserDB:
     user = await fetch_user_profile(zuid, db)
     user = await update_user_fields(db, user, updates)
     await _update_supabase_user_meta(zuid, updates)

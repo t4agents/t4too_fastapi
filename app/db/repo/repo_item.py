@@ -10,7 +10,7 @@ from app.db.models.inv.i_tem import ItemDB
 from app.db.repo.repo_utils import coerce_model_values
 
 
-async def list_items(db: AsyncSession, zuid: UUID) -> List[ItemDB]:
+async def list_items(db: AsyncSession, zjwt: dict) -> List[ItemDB]:
     result = await db.execute(
         select(ItemDB)
         .where(ItemDB.created_by == zuid)
@@ -18,7 +18,7 @@ async def list_items(db: AsyncSession, zuid: UUID) -> List[ItemDB]:
     )
     return list(result.scalars().all())
 
-async def get_item_by_id(db: AsyncSession, item_id: UUID, zuid: UUID) -> Optional[ItemDB]:
+async def get_item_by_id(db: AsyncSession, item_id: UUID, zjwt: dict) -> Optional[ItemDB]:
     result = await db.execute(
         select(ItemDB).where(ItemDB.id == item_id, ItemDB.created_by == zuid)
     )

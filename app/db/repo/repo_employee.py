@@ -22,7 +22,7 @@ async def list_employees(db: AsyncSession, sbu_client_id: UUID) -> List[Employee
     return list(result.scalars().all())
 
 
-async def get_employee_by_id(db: AsyncSession, employee_id: UUID, zuid: UUID) -> Optional[EmployeeDB]:
+async def get_employee_by_id(db: AsyncSession, employee_id: UUID, zjwt: dict) -> Optional[EmployeeDB]:
     result = await db.execute(
         select(EmployeeDB)
         .where(EmployeeDB.id == employee_id, EmployeeDB.created_by == zuid)
