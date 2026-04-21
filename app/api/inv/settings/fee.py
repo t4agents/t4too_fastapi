@@ -1,9 +1,10 @@
 from uuid import UUID
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zuid
+from app.core.auth import get_zuid, get_jwt
 from app.db.conn.db_async import get_db_rls
 from app.db.models.inv.i_fee import FeeDB
 from app.schemas.sch_fee import FeeCreate, FeeOut
@@ -23,9 +24,10 @@ def _to_out(fee: FeeDB) -> FeeOut:
 
 @feeRou.get("/get_fee_list", response_model=list[FeeOut])
 async def get_fees(
-    zuid: UUID = Depends(get_zuid),
+    zjwt: dict[str, Any] = Depends(get_jwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
+    zuid = UUID(zjwt["zuid"])
     fees = await fetch_fees(zuid, db)
     return [_to_out(fee) for fee in fees]
 
