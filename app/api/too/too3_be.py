@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zuid
+from app.core.auth import get_zjwt
 from app.db.conn.db_async import get_db_rls
 from app.db.models.too.z_be import ZBizEntityDB
 from app.service.ser_be import fetch_be_profile, update_be_profile
@@ -19,9 +19,10 @@ def _to_db_dict(be: ZBizEntityDB) -> dict[str, Any]:
 
 @beRou.get("/getbe", response_model=dict)
 async def get_be_profile(
-    zuid: UUID = Depends(get_zuid),
+    zjwt: dict[str, Any] = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
+    zuid = UUID(zjwt["zuid"])
     try:
         be = await fetch_be_profile(zuid, db)
     except HTTPException as exc:
@@ -35,7 +36,7 @@ async def get_be_profile(
 @beRou.post("/savebe", response_model=dict)
 async def post_be_profile(
     payload: dict[str, Any],
-    zuid: UUID = Depends(get_zuid),
+    zuid: UUID = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     updates = payload

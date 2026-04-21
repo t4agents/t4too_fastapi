@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zuid
+from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.too.z_client import ZClientDB
 from app.schemas.sch_client import ClientCreate, ClientOut
@@ -39,7 +39,7 @@ def _to_out(client: ZClientDB) -> ClientOut:
 
 @clientRou.get("/get_client_list", response_model=list[ClientOut])
 async def get_clients(
-    zuid: UUID = Depends(get_zuid),
+    zuid: UUID = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     clients = await fetch_clients(zuid, db)
@@ -49,7 +49,7 @@ async def get_clients(
 @clientRou.post("/post_client", response_model=ClientOut)
 async def post_client(
     payload: ClientCreate,
-    zuid: UUID = Depends(get_zuid),
+    zuid: UUID = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     client = await create_or_update_client(zuid, db, payload.model_dump(exclude_unset=True))

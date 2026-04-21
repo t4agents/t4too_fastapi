@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zuid
+from app.core.auth import get_zjwt
 from app.db.conn.db_async import get_db_rls
 from app.db.models.inv.i_tem import ItemDB
 from app.schemas.sch_item import ItemCreate, ItemOut
@@ -30,7 +30,7 @@ def _to_out(item: ItemDB) -> ItemOut:
 
 @itemRou.get("/item", response_model=list[ItemOut])
 async def get_items(
-    zuid: UUID = Depends(get_zuid),
+    zuid: UUID = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     items = await fetch_items(zuid, db)
@@ -40,7 +40,7 @@ async def get_items(
 @itemRou.post("/item", response_model=ItemOut)
 async def post_item(
     payload: ItemCreate,
-    zuid: UUID = Depends(get_zuid),
+    zuid: UUID = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     item = await create_or_update_item(zuid, db, payload.model_dump(exclude_unset=True))

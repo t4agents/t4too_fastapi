@@ -78,7 +78,7 @@ async def get_jwks_decoded(credentials: HTTPAuthorizationCredentials = Depends(_
 
 
 
-async def get_jwt(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> dict[str, Any]:
+async def get_zjwt(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> dict[str, Any]:
     user_id = decoded.get("sub") or decoded.get("id")
     app_metadata = decoded.get("app_metadata")
     user_metadata = decoded.get("user_metadata")
