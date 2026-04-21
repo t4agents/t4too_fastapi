@@ -27,8 +27,8 @@ async def get_fees(
     zjwt: dict[str, Any] = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    zuid = UUID(zjwt["zuid"])
-    fees = await fetch_fees(zjwt["zuid"], db)
+    zuid = UUID(zjwt)
+    fees = await fetch_fees(zjwt, db)
     return [_to_out(fee) for fee in fees]
 
 
@@ -38,5 +38,5 @@ async def post_fee(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    fee = await create_or_update_fee(zjwt["zuid"], db, payload.model_dump(exclude_unset=True))
+    fee = await create_or_update_fee(zjwt, db, payload.model_dump(exclude_unset=True))
     return _to_out(fee)

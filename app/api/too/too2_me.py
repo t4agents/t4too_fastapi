@@ -42,27 +42,6 @@ async def get_user_profile2(
     return _to_out(user)
 
 
-@meRou.get("/userprofile", response_model=UserProfileOut)
-async def get_user_profile(
-    zjwt: dict = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
-):
-    _log.info("Fetching user profile for zuid=%s", zjwt["zuid"])
-    user = await fetch_user_profile(zjwt, db)
-    return _to_out(user)
-
-
-@meRou.post("/userprofile", response_model=UserProfileOut)
-async def post_user_profile(
-    payload: UserProfileUpdate,
-    zjwt: dict = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
-):
-    updates = payload.model_dump(exclude_unset=True)
-    user = await update_user_profile(zjwt, db, updates)
-    return _to_out(user)
-
-
 @meRou.post("/saveme", response_model=UserProfileOut)
 async def post_user_profile2(
     payload: UserProfileUpdate,

@@ -42,7 +42,7 @@ async def get_clients(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    clients = await fetch_clients(zjwt["zuid"], db)
+    clients = await fetch_clients(zjwt, db)
     return [_to_out(client) for client in clients]
 
 
@@ -52,5 +52,5 @@ async def post_client(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    client = await create_or_update_client(zjwt["zuid"], db, payload.model_dump(exclude_unset=True))
+    client = await create_or_update_client(zjwt, db, payload.model_dump(exclude_unset=True))
     return _to_out(client)

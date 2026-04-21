@@ -112,7 +112,7 @@ async def create_or_update_invoice(zjwt: dict, db: AsyncSession, payload: dict) 
             }
             return await update_invoice_fields(db, existing, updates)
 
-    create_payload = {**_base_ids(zjwt["zuid"]), **filtered}
+    create_payload = {**_base_ids(zjwt), **filtered}
     return await create_invoice(db, create_payload)
 
 

@@ -122,7 +122,7 @@ async def get_invoice_one(
         inv_uuid = UUID(str(inv_id))
     except ValueError as exc:raise HTTPException(status_code=400, detail="inv_id must be a valid UUID") from exc
     
-    inv = await fetch_invoice_by_id(zjwt["zuid"], db, inv_uuid)
+    inv = await fetch_invoice_by_id(zjwt, db, inv_uuid)
     if not inv:raise HTTPException(status_code=404, detail="Invoice not found")
     
     out = _to_out(inv.invoice)
@@ -137,7 +137,7 @@ async def post_invoice_one(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    inv = await create_or_update_invoice(zjwt["zuid"], db, payload.model_dump(exclude_unset=True))
+    inv = await create_or_update_invoice(zjwt, db, payload.model_dump(exclude_unset=True))
     return _to_out(inv)
 
 

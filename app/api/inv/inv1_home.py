@@ -37,6 +37,6 @@ async def get_user_profile(
     zjwt: dict[str, Any] = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    zuid = UUID(zjwt["zuid"])
-    user, be = await fetch_homeinfo(zjwt["zuid"], db)
+    zuid = UUID(zjwt)
+    user, be = await fetch_homeinfo(zjwt, db)
     return _to_out(user, be)
