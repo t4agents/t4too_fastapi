@@ -31,12 +31,6 @@ async def get_taxes(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    _log.info(
-        "GET /inv/settings/get_tax_list claims: sub=%s sba_ten_id=%s zuid=%s",
-        decoded.get("sub"),
-        decoded.get("sba_ten_id"),
-        zuid,
-    )
     taxes = await fetch_taxes(zjwt, db)
     return [_to_out(tax) for tax in taxes]
 

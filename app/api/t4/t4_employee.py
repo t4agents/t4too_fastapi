@@ -22,7 +22,7 @@ async def get_employee_list(
     zjwt: dict[str, Any] = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    zuid = UUID(zjwt)
+    # zuid = UUID(zjwt)
     employees = await fetch_employees(zjwt, db)
     print(f"Fetched employees: {employees}")
     return [EmployeeOut(**_to_db_dict(employee)) for employee in employees]
@@ -34,6 +34,6 @@ async def post_employee(
     zjwt: dict[str, Any] = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    zuid = UUID(zjwt)
+    # zuid = UUID(zjwt)
     employee = await create_or_update_employee(zjwt, db, payload.model_dump(exclude_unset=True))
     return EmployeeOut(**_to_db_dict(employee))
