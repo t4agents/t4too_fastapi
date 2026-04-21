@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import UUID, Boolean, Date, DateTime, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL
+from app.db.schemas.schemas import SCHEMA_TOO_INV, SCHEMA_TOO_GLOBAL
 
 from .z_base import Base, BaseMixin
 

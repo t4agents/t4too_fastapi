@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zuid
 from app.db.conn.db_async import get_db_rls
 from app.db.conn.db_rls import get_db_rls
-from app.db.models.ainvoaic.i_payment_method import PaymentMethodDB
+from app.db.models.inv.i_payment_method import PaymentMethodDB
 from app.schemas.sch_payment_method import PaymentMethodCreate, PaymentMethodOut
 from app.service.ser_payment_method import (
     create_or_update_payment_method,

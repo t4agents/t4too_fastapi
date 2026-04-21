@@ -4,12 +4,12 @@ from sqlalchemy import Integer, Numeric, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC
+from app.db.schemas.schemas import SCHEMA_TOO_INV
 
 
 class ItemDB(Base, BaseMixin):
     __tablename__ = "item"
-    __table_args__ = {"schema": SCHEMA_TOO_AINVOAIC}
+    __table_args__ = {"schema": SCHEMA_TOO_INV}
     
     item_number: Mapped[str | None] = mapped_column(String(64))
     item_name: Mapped[str | None] = mapped_column(String(256))

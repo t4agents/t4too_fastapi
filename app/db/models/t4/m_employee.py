@@ -8,12 +8,12 @@ from sqlalchemy import (Computed, ForeignKey,String,Numeric,Date,Boolean, Uuid,)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas.schemas import SCHEMA_TOO_T4AGENTS
+from app.db.schemas.schemas import SCHEMA_TOO_T4
 
 
 class EmployeeDB(Base, BaseMixin):
     __tablename__ = "employees"
-    __table_args__ = {"schema": SCHEMA_TOO_T4AGENTS}
+    __table_args__ = {"schema": SCHEMA_TOO_T4}
 
     # --- Identity ---
     first_name: Mapped[str] = mapped_column(String, nullable=True)

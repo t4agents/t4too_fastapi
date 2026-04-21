@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_tem import ItemDB
+from app.db.models.inv.i_tem import ItemDB
 from app.db.repo.repo_item import create_item as repo_create_item
 from app.db.repo.repo_item import get_item_by_id, list_items, update_item_fields
 

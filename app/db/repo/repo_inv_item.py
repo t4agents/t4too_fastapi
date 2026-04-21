@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
+from app.db.models.inv.i_nvoice_item import InvoiceItemDB
 
 
 async def list_invoice_items(db: AsyncSession, inv_id: UUID) -> List[InvoiceItemDB]:

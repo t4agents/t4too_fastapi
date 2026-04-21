@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.t4agents.m_employee import EmployeeDB
+from app.db.models.t4.m_employee import EmployeeDB
 from app.db.repo.repo_utils import coerce_model_values
 
 

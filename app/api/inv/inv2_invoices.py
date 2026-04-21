@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
 from app.db.conn.db_rls import get_db_rls
-from app.db.models.ainvoaic.i_nvoice import InvoiceDB
-from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
-from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
+from app.db.models.inv.i_nvoice import InvoiceDB
+from app.db.models.inv.i_nvoice_item import InvoiceItemDB
+from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
-from app.service.ser_inv import (create_or_update_invoice, create_or_update_invoice_payment,
+from app.service.ser_inv import (create_or_update_invoice, create_inv_payment,
                                  fetch_invoice_by_id, fetch_invoice_payments, fetch_invoices,)
 
 invMainRou = APIRouter()
@@ -112,7 +112,7 @@ async def get_invoices(
     return [_to_out(inv) for inv in invs]
 
 
-@invMainRou.get("/get_inv_one", response_model=InvOut)
+@invMainRou.get("/get_inv_one_w_payments_items", response_model=InvOut)
 async def get_invoice_one(
     inv_id: str,
     zuid: UUID = Depends(get_zuid),
@@ -156,16 +156,17 @@ async def get_invoice_payment_list(
     return [_to_payment_out(payment) for payment in payments]
 
 
-@invMainRou.post("/post_inv_payment", response_model=InvPaymentOut)
+@invMainRou.post("/create_inv_payment", response_model=InvPaymentOut)
 async def post_invoice_payment(
     payload: InvPaymentCreate,
     zuid: UUID = Depends(get_zuid),
     db: AsyncSession = Depends(get_db_rls),
 ):
     try:
-        payment = await create_or_update_invoice_payment(
-            zuid, db, payload.model_dump(exclude_unset=True)
+        payment = await create_inv_payment(
+            db, payload.model_dump(exclude_unset=True), zuid
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_payment_out(payment)
+

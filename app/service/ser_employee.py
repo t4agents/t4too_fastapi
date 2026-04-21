@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.t4agents.m_employee import EmployeeDB
+from app.db.models.t4.m_employee import EmployeeDB
 from app.db.repo.repo_employee import (
     create_employee,
     get_employee_by_id,
@@ -18,6 +18,8 @@ async def fetch_employees(sbu_client_id: UUID, db: AsyncSession) -> list[Employe
 
 
 async def create_or_update_employee(zuid: UUID, db: AsyncSession, payload: dict) -> EmployeeDB:
+
+    
     base_ids = {
         "ten_id": zuid,
         "biz_id": zuid,

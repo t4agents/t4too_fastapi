@@ -9,13 +9,13 @@ from sqlalchemy.sql import func
 import enum
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas.schemas import SCHEMA_TOO_T4AGENTS
+from app.db.schemas.schemas import SCHEMA_TOO_T4
 
 
 # --- T4 Record ---
 class T4Record(Base, BaseMixin):
     __tablename__ = "t4_records"
-    __table_args__ = {"schema": SCHEMA_TOO_T4AGENTS}
+    __table_args__ = {"schema": SCHEMA_TOO_T4}
 
     employee_id: Mapped[UUID] = mapped_column(ForeignKey("employees.id"), nullable=False)
     tax_year: Mapped[int] = mapped_column(Integer, nullable=False)

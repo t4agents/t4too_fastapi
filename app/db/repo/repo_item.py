@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_tem import ItemDB
+from app.db.models.inv.i_tem import ItemDB
 from app.db.repo.repo_utils import coerce_model_values
 
 

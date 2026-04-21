@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_tax import TaxDB
+from app.db.models.inv.i_tax import TaxDB
 from app.db.repo.repo_utils import coerce_model_values
 
 _log = logging.getLogger("app.http")

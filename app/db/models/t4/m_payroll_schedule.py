@@ -4,11 +4,11 @@ from sqlalchemy import ForeignKey, Numeric, String, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas.schemas import SCHEMA_TOO_T4AGENTS
+from app.db.schemas.schemas import SCHEMA_TOO_T4
 
 class PayrollScheduleDB(Base, BaseMixin):
     __tablename__ = "payroll_schedules"
-    __table_args__ = {"schema": SCHEMA_TOO_T4AGENTS}
+    __table_args__ = {"schema": SCHEMA_TOO_T4}
 
     frequency: Mapped[str] = mapped_column(String, nullable=False, default="monthly")
     period: Mapped[str] = mapped_column(String, nullable=False, default="Mon-Fri")

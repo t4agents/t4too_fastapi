@@ -7,12 +7,12 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_nvoice import InvoiceDB
-from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
-from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
+from app.db.models.inv.i_nvoice import InvoiceDB
+from app.db.models.inv.i_nvoice_item import InvoiceItemDB
+from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
 from app.db.repo.repo_inv_item import list_invoice_items
 from app.db.repo.repo_inv import (create_invoice,get_invoice_by_id,list_invoices,update_invoice_fields,)
-from app.db.repo.repo_inv_payment import (create_invoice_payment,get_invoice_payment_by_id,list_invoice_payments,update_invoice_payment_fields,)
+from app.db.repo.repo_inv_payment import (create_invoice_payment,list_invoice_payments,)
 
 _INVOICE_COLUMNS = set(InvoiceDB.__table__.columns.keys())
 _INVOICE_PAYMENT_COLUMNS = set(InvoicePaymentDB.__table__.columns.keys())
@@ -120,17 +120,13 @@ async def fetch_invoice_payments(db: AsyncSession, inv_id: UUID) -> list[Invoice
     return await list_invoice_payments(db, inv_id)
 
 
-async def create_or_update_invoice_payment(db: AsyncSession, payload: dict) -> InvoicePaymentDB:
+async def create_inv_payment(db: AsyncSession, payload: dict, zuid: UUID) -> InvoicePaymentDB:
     data = dict(payload)
 
     inv_id = _to_uuid(data.get("inv_id"))
     if not inv_id:
         raise ValueError("inv_id is required and must be a valid UUID")
     data["inv_id"] = inv_id
-
-    payment_id = _to_uuid(data.pop("payment_id", None) or data.get("id"))
-    if payment_id:
-        data["id"] = payment_id
 
     data["pm_id"] = _to_uuid(data.get("pm_id"))
     if "is_locked" in data:
@@ -142,25 +138,4 @@ async def create_or_update_invoice_payment(db: AsyncSession, payload: dict) -> I
     data.pop("updated_at", None)
 
     filtered = {k: v for k, v in data.items() if k in _INVOICE_PAYMENT_COLUMNS}
-    payment_id = _to_uuid(filtered.get("id"))
-    if payment_id:
-        existing = await get_invoice_payment_by_id(db, payment_id, zuid)
-        if existing:
-            updates = {
-                k: v
-                for k, v in filtered.items()
-                if k
-                not in {
-                    "id",
-                    "ten_id",
-                    "biz_id",
-                    "usr_id",
-                    "cli_id",
-                    "created_by",
-                    "created_at",
-                }
-            }
-            return await update_invoice_payment_fields(db, existing, updates)
-
-    create_payload = {**_base_ids(zuid), **filtered}
-    return await create_invoice_payment(db, create_payload)
+    return await create_invoice_payment(db, filtered)

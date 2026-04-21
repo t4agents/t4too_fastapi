@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid
 from app.db.conn.db_async import get_db_rls
-from app.db.models.ainvoaic.i_fee import FeeDB
+from app.db.models.inv.i_fee import FeeDB
 from app.schemas.sch_fee import FeeCreate, FeeOut
 from app.service.ser_fee import create_or_update_fee, fetch_fees
 

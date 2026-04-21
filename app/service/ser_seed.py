@@ -8,13 +8,13 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_fee import FeeDB
-from app.db.models.ainvoaic.i_nvoice import InvoiceDB
-from app.db.models.ainvoaic.i_nvoice_item import InvoiceItemDB
-from app.db.models.ainvoaic.i_nvoice_payment import InvoicePaymentDB
-from app.db.models.ainvoaic.i_payment_method import PaymentMethodDB
-from app.db.models.ainvoaic.i_tax import TaxDB
-from app.db.models.ainvoaic.i_tem import ItemDB
+from app.db.models.inv.i_fee import FeeDB
+from app.db.models.inv.i_nvoice import InvoiceDB
+from app.db.models.inv.i_nvoice_item import InvoiceItemDB
+from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
+from app.db.models.inv.i_payment_method import PaymentMethodDB
+from app.db.models.inv.i_tax import TaxDB
+from app.db.models.inv.i_tem import ItemDB
 from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
 from app.db.repo.repo_userprofile import get_user_by_id

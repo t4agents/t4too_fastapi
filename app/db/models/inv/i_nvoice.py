@@ -5,12 +5,12 @@ from sqlalchemy import DateTime, Integer, Numeric, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas.schemas import SCHEMA_TOO_AINVOAIC, SCHEMA_TOO_GLOBAL
+from app.db.schemas.schemas import SCHEMA_TOO_INV, SCHEMA_TOO_GLOBAL
 
 
 class InvoiceDB(Base, BaseMixin):
     __tablename__ = "invoice"
-    __table_args__ = {"schema": SCHEMA_TOO_AINVOAIC}
+    __table_args__ = {"schema": SCHEMA_TOO_INV}
     
     inv_number: Mapped[str | None] = mapped_column(String(64))
     inv_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

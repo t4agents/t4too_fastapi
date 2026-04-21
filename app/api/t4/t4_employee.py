@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zuid, get_sbu_client_id
 from app.db.conn.db_async import get_db_rls
-from app.db.models.t4agents.m_employee import EmployeeDB
+from app.db.models.t4.m_employee import EmployeeDB
 from app.schemas.sch_employee import EmployeeCreate, EmployeeOut
 from app.service.ser_employee import create_or_update_employee, fetch_employees
 

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_fee import FeeDB
+from app.db.models.inv.i_fee import FeeDB
 from app.db.repo.repo_fee import create_fee as repo_create_fee
 from app.db.repo.repo_fee import get_fee_by_id, list_fees, update_fee_fields
 

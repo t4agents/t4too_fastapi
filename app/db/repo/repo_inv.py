@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_nvoice import InvoiceDB
+from app.db.models.inv.i_nvoice import InvoiceDB
 from app.db.repo.repo_utils import coerce_model_values
 
 

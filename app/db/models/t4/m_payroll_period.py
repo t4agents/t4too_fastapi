@@ -5,7 +5,7 @@ from sqlalchemy import Date, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.models.too.z_base import Base, BaseMixin
-from app.db.schemas.schemas import SCHEMA_TOO_T4AGENTS
+from app.db.schemas.schemas import SCHEMA_TOO_T4
 
 
 class PayrollPeriodDB(Base, BaseMixin):
@@ -16,11 +16,11 @@ class PayrollPeriodDB(Base, BaseMixin):
             "period_key",
             name="uq_payroll_period_key",
         ),
-        {"schema": SCHEMA_TOO_T4AGENTS}
+        {"schema": SCHEMA_TOO_T4}
     )
 
     payroll_schedule_id: Mapped[UUID] = mapped_column(
-        ForeignKey(f"{SCHEMA_TOO_T4AGENTS}.payroll_schedules.id"),
+        ForeignKey(f"{SCHEMA_TOO_T4}.payroll_schedules.id"),
         nullable=False,
         index=True,
     )

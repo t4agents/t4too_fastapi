@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_payment_method import PaymentMethodDB
+from app.db.models.inv.i_payment_method import PaymentMethodDB
 from app.db.repo.repo_payment_method import (
     create_payment_method as repo_create_payment_method,
 )

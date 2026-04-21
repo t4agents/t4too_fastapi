@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.ainvoaic.i_tax import TaxDB
+from app.db.models.inv.i_tax import TaxDB
 from app.db.repo.repo_tax import create_tax as repo_create_tax
 from app.db.repo.repo_tax import get_tax_by_id, list_taxes, update_tax_fields
 
