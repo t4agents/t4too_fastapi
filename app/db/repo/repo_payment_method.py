@@ -21,9 +21,7 @@ async def get_payment_method_by_id(
     db: AsyncSession, method_id: UUID, zjwt: dict
 ) -> Optional[PaymentMethodDB]:
     result = await db.execute(
-        select(PaymentMethodDB).where(
-            PaymentMethodDB.id == method_id, PaymentMethodDB.created_by == zuid
-        )
+        select(PaymentMethodDB).where(PaymentMethodDB.id == method_id)
     )
     return result.scalar_one_or_none()
 

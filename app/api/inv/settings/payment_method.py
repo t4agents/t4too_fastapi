@@ -38,7 +38,5 @@ async def post_payment_method(
     zjwt: dict = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    method = await create_or_update_payment_method(
-        zuid, db, payload.model_dump(exclude_unset=True)
-    )
+    method = await create_or_update_payment_method(zjwt, db, payload.model_dump(exclude_unset=True))
     return _to_out(method)

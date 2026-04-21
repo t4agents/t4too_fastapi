@@ -23,11 +23,11 @@ async def create_or_update_payment_method(
     zjwt: dict, db: AsyncSession, payload: dict
 ) -> PaymentMethodDB:
     base_ids = {
-        "ten_id": zuid,
-        "biz_id": zuid,
-        "usr_id": zuid,
-        "cli_id": zuid,
-        "created_by": zuid,
+        "ten_id": zjwt["app_metadata"]["sba_ten_id"],
+        "biz_id": zjwt["zuid"],
+        "usr_id": zjwt["zuid"],
+        "cli_id": zjwt["zuid"],
+        "created_by": zjwt["zuid"],
     }
     method_id = payload.get("id")
     if method_id:
