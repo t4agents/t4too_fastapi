@@ -33,7 +33,7 @@ SEED_NAMESPACE = UUID("a9c57b13-0f0b-4ef2-b154-27b5957b08db")
 _log = logging.getLogger(__name__)
 
 
-def _seed_uuid(zjwt: dict, seed_key: str) -> UUID:
+def _seed_uuid(zuid: UUID, seed_key: str) -> UUID:
     return uuid5(SEED_NAMESPACE, f"{zuid}:{seed_key}")
 
 
@@ -45,7 +45,7 @@ def _seed_extra(seed_key: str) -> dict[str, Any]:
     }
 
 
-def _base_ids(zjwt: dict) -> dict[str, Any]:
+def _base_ids(zuid: UUID) -> dict[str, Any]:
     return {
         "ten_id": zuid,
         "biz_id": zuid,
@@ -106,7 +106,7 @@ async def _upsert_rows(
 async def _delete_rows_by_ids(
     db: AsyncSession,
     model: Any,
-    zjwt: dict,
+    zuid: UUID,
     ids: list[UUID],
 ) -> int:
     if not ids:
@@ -132,13 +132,13 @@ async def _delete_rows_by_ids(
 
 
 async def apply_seed_defaults(
-    zjwt: dict,
+    zuid: UUID,
     db: AsyncSession,
     *,
     reset: bool = False,
 ) -> dict[str, Any]:
     _log.info("seed apply start sub=%s reset=%s", zuid, reset)
-    user = await get_user_by_id(db, zjwt["zuid"])
+    user = await get_user_by_id(db, zuid)
     email = user.email if user and user.email else "invoaice@gmail.com"
     display_name = user.display_name if user and user.display_name else "My Business Owner"
     _log.info(
@@ -149,7 +149,7 @@ async def apply_seed_defaults(
         display_name,
     )
 
-    base_ids = _base_ids(zjwt)
+    base_ids = _base_ids(zuid)
     summary: dict[str, Any] = {
         "seed_version": SEED_VERSION,
         "tables": {
@@ -187,7 +187,7 @@ async def apply_seed_defaults(
     for template in CLIENT_TEMPLATES:
         seed_key = str(template["seed_key"])
         row = {
-            "id": _seed_uuid(zjwt, seed_key),
+            "id": _seed_uuid(zuid, seed_key),
             **base_ids,
             **{k: v for k, v in template.items() if k != "seed_key"},
             "extra": _seed_extra(seed_key),
@@ -198,7 +198,7 @@ async def apply_seed_defaults(
     for template in ITEM_TEMPLATES:
         seed_key = str(template["seed_key"])
         row = {
-            "id": _seed_uuid(zjwt, seed_key),
+            "id": _seed_uuid(zuid, seed_key),
             **base_ids,
             **{k: v for k, v in template.items() if k != "seed_key"},
             "extra": _seed_extra(seed_key),
@@ -209,7 +209,7 @@ async def apply_seed_defaults(
     for template in PAYMENT_METHOD_TEMPLATES:
         seed_key = str(template["seed_key"])
         row = {
-            "id": _seed_uuid(zjwt, seed_key),
+            "id": _seed_uuid(zuid, seed_key),
             **base_ids,
             **{k: v for k, v in template.items() if k != "seed_key"},
             "extra": _seed_extra(seed_key),
@@ -220,7 +220,7 @@ async def apply_seed_defaults(
     for template in FEE_TEMPLATES:
         seed_key = str(template["seed_key"])
         row = {
-            "id": _seed_uuid(zjwt, seed_key),
+            "id": _seed_uuid(zuid, seed_key),
             **base_ids,
             **{k: v for k, v in template.items() if k != "seed_key"},
             "extra": _seed_extra(seed_key),
@@ -231,7 +231,7 @@ async def apply_seed_defaults(
     for template in TAX_TEMPLATES:
         seed_key = str(template["seed_key"])
         row = {
-            "id": _seed_uuid(zjwt, seed_key),
+            "id": _seed_uuid(zuid, seed_key),
             **base_ids,
             **{k: v for k, v in template.items() if k != "seed_key"},
             "extra": _seed_extra(seed_key),
@@ -247,7 +247,7 @@ async def apply_seed_defaults(
     invoice_payment_rows: list[dict[str, Any]] = []
     for inv_template in INVOICE_TEMPLATES:
         inv_seed_key = str(inv_template["seed_key"])
-        inv_id = _seed_uuid(zjwt, inv_seed_key)
+        inv_id = _seed_uuid(zuid, inv_seed_key)
         inv_client = client_by_seed_key[str(inv_template["client_seed_key"])]
 
         invoice_row = {
@@ -309,7 +309,7 @@ async def apply_seed_defaults(
             seed_item = item_by_seed_key[item_seed_key]
             invoice_item_rows.append(
                 {
-                    "id": _seed_uuid(zjwt, inv_item_seed_key),
+                    "id": _seed_uuid(zuid, inv_item_seed_key),
                     **base_ids,
                     "inv_id": inv_id,
                     "item_id": seed_item["id"],
@@ -332,7 +332,7 @@ async def apply_seed_defaults(
             pay_method = pm_by_seed_key[str(pay_template["payment_method_seed_key"])]
             invoice_payment_rows.append(
                 {
-                    "id": _seed_uuid(zjwt, pay_seed_key),
+                    "id": _seed_uuid(zuid, pay_seed_key),
                     **base_ids,
                     "inv_id": inv_id,
                     "pm_id": pay_method["id"],
@@ -361,7 +361,7 @@ async def apply_seed_defaults(
 
     async def _run_seed_ops() -> None:
         if reset:
-            _log.info("seed reset enabled sub=%s", zjwt["zuid"])
+            _log.info("seed reset enabled sub=%s", zuid)
             summary["tables"]["clients"]["deleted"] = await _delete_rows_by_ids(
                 db, ZClientDB, zuid, [row["id"] for row in client_rows]
             )
@@ -424,10 +424,10 @@ async def apply_seed_defaults(
         summary["tables"]["invoice_payments"]["updated"] = updated
 
     if db.in_transaction():
-        _log.info("seed txn mode=subtransaction sub=%s", zjwt["zuid"])
+        _log.info("seed txn mode=subtransaction sub=%s", zuid)
         await _run_seed_ops()
     else:
-        _log.info("seed txn mode=new_transaction sub=%s", zjwt["zuid"])
+        _log.info("seed txn mode=new_transaction sub=%s", zuid)
         async with db.begin():
             await _run_seed_ops()
 

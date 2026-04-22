@@ -22,8 +22,8 @@ async def get_employee_list(
     zjwt: dict[str, Any] = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
-    # zuid = UUID(zjwt)
-    employees = await fetch_employees(zjwt, db)
+    sbu_client_id = zjwt["user_metadata"]["sbu_client_id"]
+    employees = await fetch_employees(sbu_client_id, db)
     print(f"Fetched employees: {employees}")
     return [EmployeeOut(**_to_db_dict(employee)) for employee in employees]
 
