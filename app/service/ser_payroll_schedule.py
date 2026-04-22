@@ -94,7 +94,20 @@ async def create_or_update_payroll_schedule(
     await db.flush()
 
     incoming_status = (schedule.status or "").lower()
-    if previous_status == "inactive" and incoming_status == "active":
+    if previous_status == "active" and incoming_status == "inactive":
+        has_entries_result = await db.execute(
+            select(PayrollEntryDB.id).where(
+                PayrollEntryDB.schedule_id == schedule.id,
+                PayrollEntryDB.cli_id == sbu_client_id,
+            )
+        )
+        has_entries = has_entries_result.scalars().first() is not None
+        if has_entries:
+            raise HTTPException(
+                status_code=409,
+                detail="Cannot set schedule to inactive while payroll entries exist for this schedule",
+            )
+    elif previous_status == "inactive" and incoming_status == "active":
         await _reset_entries_for_schedule(schedule, db, sbu_client_id)
     elif incoming_status == "active":
         await _recalculate_entries_for_schedule(schedule, db, sbu_client_id)

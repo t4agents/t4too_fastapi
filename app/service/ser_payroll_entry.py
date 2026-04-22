@@ -218,6 +218,11 @@ async def finalize_payroll_entries(zjwt: dict, db: AsyncSession) -> dict[str, st
     schedule = schedule_result.scalar_one_or_none()
     if not schedule:
         raise HTTPException(status_code=404, detail="Payroll schedule not found")
+    if (schedule.status or "").lower() != "active":
+        raise HTTPException(
+            status_code=409,
+            detail="Payroll schedule must be active to finalize and continue payroll entries",
+        )
 
     period: PayrollPeriodDB | None = None
     if first_entry.payroll_period_id:
