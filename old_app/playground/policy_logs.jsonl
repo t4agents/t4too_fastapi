@@ -1,0 +1,5 @@
+{"policy_id": "P1001", "timestamp": "2026-04-01T10:00:00Z", "amount": 120.50}
+{"policy_id": "P1002", "timestamp": "2026-04-01T11:00:00Z", "amount": 200.00}
+{"policy_id": "P1001", "timestamp": "2026-04-02T09:15:00Z", "amount": -20.50}
+{"policy_id": "P1003", "timestamp": "2026-04-02T12:30:00Z", "amount": 75.00}
+{"policy_id": "P1002", "timestamp": "2026-04-03T08:05:00Z", "amount": -50.00}

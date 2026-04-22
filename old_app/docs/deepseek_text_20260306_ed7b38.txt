@@ -1,0 +1,568 @@
+===== Page 1 =====
+
+2/10/2026
+
+Date       Update                                                                                                                                                                                                                                                                                                                                                                                          Owner
+2/10/2026   If the "LLM Response" has sufficient context, a prompt that would otherwise be vague should NOT be rejected, and the job should be rated based on that context.                                                                                                                                                                                                                               Ash
+           If a job does not have extracted text, it is acceptable for raters to answer "0" for Q4 and "NA" for Q5 even though these questions are about the URL and not the extracted text.
+           Raters are NOT expected to click through excessive amounts of the URL to discover extraction content.
+           If an image contains text, we will NOT consider this in answering Q2 because the model does not have the capability to extract text from images.
+           However, the model DOES have the ability to extract text from tables and external widgets (Ex. the Spotify track list in this URL). This kind of text is still considered for Q2.
+           "Advertisement" showing up on the page alongside an ad would be considered under Q8: Advertisements and Promo.
+2/6/2026   Explicit rejection criteria, Extracted Text outdated example, Expandable webpage elements, Differentiating Q1 and Q2, Q9 Examples                                                                                                                              Cairo
+2/5/2026   Rejection Criteria                                                                                                                                                                                                                                                                                                              Ash
+           Updated rejection reason, using a placeholder title until the client updates up/new volume drops, to reflect new rejection guidance:
+           o We should reject jobs whose extracted text significantly differs from what is reflected on the URL, making it impossible to evaluate.
+           If you find a job with a URL that leads you to an insecure webpage, please reject the job.
+           Q2
+           In jobs where the model fails to extract vital text information from images, widgets, gifs, etc, we would mark this as key information missing under Q2.
+           NOTE: Continue to ignore videos. We will not consider video content in our evaluation of the model's extractions.                                                                                 Ash
+
+===== Page 2 =====
+
+1/22/2026   Q4: Sabine
+            Added an example clarifying table of contents as generally not tables, unless they specifically have a table- like structure
+            You no longer need to count ALL tables in a job. If there are more than 10 tables, please write 10+ under Q4.
+            Q7: Added expanded definitions + examples.
+            We are no longer considering navigation buttons under q7. Only menus!
+            Added "overlapping elements" section under "Additional Reminders."
+            Will add examples as they come up!
+
+Date       Update                                                                                                                                                                                            Owner
+1/21/2026   Q1 Justifications:                                                                                                                                                                               Sabine
+            If you select "yes" to Q1 for a partial match, please specify what the partial match is for (for example, partial match for "doordash").
+            Q2 Clarifications around Q1 partial matches:
+            Your response to Q2 should align with whatever match is determined in Q1. If Q1 is "yes" for a full match your response should align with the entire prompt, and if Q1 is a "yes" for a partial match your response should align with whatever is the partial match.
+            Q4 clarifications:
+            If something is between <table></table>tags, go ahead and count it as a table even if it might not appear that way on the webpage!
+1/15/2026   Updated rejection guidance with recent feedback:                                                                                                                                                 Sabine
+            Rejecting jobs that are inaccessible due to VPN restrictions.
+            Some additional violating content guidance.
+            Prompts with backend instructions no longer need to be rejected if user intent can be interpreted.
+            Q4: HTML Table Tags are not considered unwanted content.
+            Q8: Updated:
+            Content that is promotional but relevant to the prompt does not need to be flagged.
+            The word "Advertisement" or "AD" to signal where an ad will appear in the URL can be flagged.
+            Sorted the change log to have most recent updates at the top!
+1/14/2026   Updated SoT to match recent client updates for Q1, Q2 and some examples for Q5                                                                                                                   Sabine
+1/13/2026   Updated Q2 guidance for special cases                                                                                                                                                            Cairo
+            Updated rejection criteria for special cases
+
+===== Page 3 =====
+
+12/23/2025  Updated AHT from 7 minutes to 10 minutes                                                                                                                                                         Cairo
+1/7/2026    1. Updated rejection reasons/guidance to                                                                                                                                                         Sabine
+            a. Rejecting "backend" like prompts is also added!
+            2. Updated guidance to Q1- partial matches are now accepted!
+12/17/2025  Removed Missing Extracted Body Text from                                                                                                                                                         Cairo
+            rejection criteria
+12/11/2025  Updated rubric                                                                                                                                                                                   Cairo
+            Added examples to rejection criteria
+12/8/2025   Added Missing Extracted Body Text to rejection                                                                                                                                                   Cairo
+            criteria
+11/26/2025  Expanded guidance around Q1 and what information                                                                                                                                                 Sabine
+            is needed in the web page to satisfy the prompt.
+            Expanded guidance around what is a table (Q4) with some examples.
+            Expanded guidance around Q9 and what is a minor ("Yes but minor") or major ("Yes") issue.
+            Added examples to missing context rejections.
+            Added the grading rubric for the task.
+11/21/2025  Updated to include Foreign Language rejection                                                                                                                                                    Cairo
+11/11/2025  Updated Q1 to include new UI update (Justification                                                                                                                                               Cairo
+            for Q1)
+10/8/2025   Updated Rejection Criteria to reflect what's shown on the UI
+            1. External Link Does Not Load
+            2. Prompt Missing Context
+            3. Prompt Intention is Ambiguous
+            4. Explicit/nappropriate Content
+9/22/2025   Added 9/22 Header - Site branding, top navigation bars, search bars, login info
+            Footer - Copyright notices, disclaimers, secondary links, and bottom page elements
+            Navigation menus - Primary and secondary navigation elements
+            Sidebars - Complementary content, related links, and secondary information
+            Advertisements and promotional materials - Commercial content unrelated to main topic
+
+===== Page 4 =====
+
+8/4/2025    Updated Rejection Criteria:                                                                                                                                                                      Gem
+            Foreign Language: If the chat history contains too much foreign language and lacks enough context, please reject the job. However, if the overall intent is clear and you can understand the final prompt using Google translate, the job may still be annotated.
+            Non- loading URLs: If any URL fails to load, please reject the job.
+            Violating content: If the job contains any content involving adult, sexual, or harmful material, it should be rejected.
+            Rendering Issues: If no text is extracted from a webpage, it's considered a rendering issue. Please reject the job in this case as well.
+
+Date       Update                                                                                                                                                                                            Owner
+8/1/2025   Added Rejection Criteria                                                                                                                                                                          Elaiza
+           Reject the job if it contains the following:
+           • The link and prompt contain adult content.
+7/30/2025  SoT created                                                                                                                                                                                        Elaiza
+
+===== Page 5 =====
+
+ Overview
+ Extraction quality is crucial for our system's performance, impacting document understanding, feature retrieval, and response quality. We'll set goals to improve extraction quality, focusing on key metrics. Due to challenges in automating evaluation, human assessment will play a significant role in measuring progress and providing insights for improvement.
+
+For this task, the team will evaluate the quality of the URL content parser's extraction, focusing on two key aspects:
+
+1. Completeness: Is any crucial content missing from the extracted body text?
+2. Precision: How much unnecessary or irrelevant information is retained in the extracted body text?
+
+This evaluation will be based on a given URL and user prompt pair.
+
+Key contents are kept in the extracted body text if:                   | Unnecessary/irrelevant contents retained in the extracted body text if:
+-----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------
+1. The URL content addresses the user's query, providing relevant and | The following parts that are not excluded from the extracted text:
+useful information that fulfills their needs.                          | • Unnecessary headers or footers
+2. The extracted body text from the url includes all the information  | • Navigation menus or sidebars
+that's on the rendered page, without any crucial details missing.      | • Advertisements or promotional materials
+                                                                       | • Duplicate or redundant information
+
+
+===== Page 6 =====
+
+1. Choose a job: Choose a job from the queue, which contains an extracted text that you'll assess.
+2. Check for the rejection criteria: Read the rejection criteria here.
+3. Run Your Assessment: a. Please review the chat history, user prompt, and related task information. Consider referencing previous responses and auto-evaluation comments to better understand the user's intent. If necessary, perform a Google search to gather more context. b. Then, open the provided URL in a web browser and examine its content to provide relevant information that addresses the user's prompt. c. If step 2 is 'false', select 'N/A' for the remaining completeness-related questions.
+4. Rinse & Repeat: Repeat this process and choose another job to work on.
+
+## Rejection criteria:
+
+Updated 2/5/2026
+
+Reject the job if:
+
+[Outdated Extracted Text] - This rejection reason is applicable under two circumstances: 1) The extracted text is outdated Webpage contents have significantly changed since the model initially extracted its information, making it impossible to validate data. If you cannot determine the accuracy of the data, please reject it and leave a comment. There is no concrete threshold, but the client wants us to consider: 1) If there are a couple of minor changes that do not include the key information, then we can continue to annotate the job. 2) If the information that has changed includes the key information, then we can reject and note that in our justification for the rejection. Look at the following example: 0 User Prompt: I'mn county i a current inmates list 0 URL: https://www.linnsheiff.org/jail/adults-in-custody/ In this job, the model extracted the inmate list. However, raters noticed that upon opening the URL, the inmate list was updated/changed since the extraction. In this case, the webpage has changed significantly to the point we would not be able to accurately verify the information in the workflow. Therefore, we would reject the job with a note that the inmate list has completely changed since the model's extraction of the webpage. 2) "Extracted Text does not match URL" Extracted text was extracted from a completely different webpage and does not match the contents in the URL.
+
+===== Page 7 =====
+
+ External Link Does Not Load - Given URL fails to load entirely, making it impossible for us to evaluate the job properly. If you cannot view a webpage due to VPN restrictions or notices of an insecure site, please reject and leave a comment.
+
+Prompt Missing Context & Prompt Intention is Ambiguous- Prompt refers to previous parts of a conversation or to information not provided in the chat history, making it impossible to understand and evaluate the job. The prompt might be unclear and/or vague enough that Q1 could not feasibly answered.
+
+- "What's the team's next game" is a prompt that should be rejected- the "team" in question is unclear, and we do not have enough context to understand if the prompt is satisfied by the URL provided.
+
+- "Who is Owen Wright?" is a prompt that should not be rejected- there is clear intent from the user to understand who Owen Wright is, and we would be able to understand if the URL relates to the prompt for Q1.
+
+Note: When rejecting for missing context/ambiguity, we only want to do so if there is not enough information in the prompt to feasibly answer Q1. Consider if Q1 is at least a partial match before rejecting.
+
+Explicit/Inappropriate Content - Job contains sexually explicit, violent, hateful, or otherwise inappropriate material that would not regularly meet social media content standards. Generally, it is okay to discuss crime, illegal substances, etc., so long as the content is not overly graphic nor endorsed and encouraged. When in doubt, escalate the job for feedback or skip!
+
+Keep an eye out for prompts that encourage the following:
+
+Hate speech / abuse & inciting content Criminal or fraudulent content Dangerous behavior / violence / self- harm Restricted goods or services Child exploitation, abuse, and nudity Human trafficking / exploitation Explicit sexual content Privacy violations Intellectual property violations Export control restrictions
+
+More detailed guidance can be found here: (link to new Rejection guidance doc)
+
+Foreign Language/Incoherent - Use when the prompt is in a non- English language or the URL/extracted text is in a foreign language to the extent that the job cannot be annotated. Please be considerate of names from non- anglophone cultures and languages (such as "Jean- Pierre Beauchamp")- these would not be rejectable if the web page and extracted content in the job are not in a foreign language, even if they are not traditionally "English."
+
+Note: Prompts with backend instructions or code no longer need to be rejected if you can still determine the user intent from the prompt. If the user intent is indecipherable, you may still reject with reasoning as to why.
+
+NOTE: If no extracted text loads on the job, do not reject. Please answer "no" for relevant questions that this affects.
+
+NOTE: In jobs like this, we would not reject for backend instructions. If you scroll to the end of the "Prompt" section, you will see it says, "User Question: What's the latest fashion trend?" We can consider this to be the user prompt and continue to rate the job based on this prompt.
+
+===== Page 8 =====
+
+ NOTE3: If you come across a job with a Ticketmaster URL, try to open the URL first. If the Ticketmaster URL blocks you from viewing the webpage because it detects the VPN, then you may reject the job and indicate the reason ("Ticketmaster URL does not allow the use of VPNs and will not allow me to view the webpage").
+
+NOTE4: If the "LLM Response" has sufficient context, a prompt that would otherwise be vague should NOT be rejected, and the job should be rated based on that context.
+
+## Example:
+
+User Prompt: What's her net worth? LLM Response: Scarlett Johansson's net worth is not explicitly mentioned in the provided search results. However, it is mentioned that she was the world's highestpaid actress in 2018 and 2019, and has been featured multiple times on the Forbes Celebrity 100 list [1]. Explanation: Typically, we would reject this prompt because we do not know who "she" is. However, based on the LLM response, we can infer that the "she" is Scarlett Johansson. Therefore, this job would be annotatable.
+
+Rejection Examples (12/11)
+
+Rejection Reason                     | Example                                                                                                                                                                                                                                                              | Explanation
+-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+External Link Does Not Load          | URL: https://www.last.fm/music/Khan/                                                                                                                                                                                                                                 | Without being able to see the contents of the URL, we cannot verify any of the extracted text or answer the annotation questions. Therefore, we would reject a job with a URL that fails to load.
+Prompt Missing Context/Prompt         | User Prompt: so when will he rejoin?                                                                                                                                                                                                                                 | Important Note For ICs: If you come across a URL that does not load, please skip the job. For FTEs/PTEs: If you come across a URL that does not load, please verify with other raters that it is not an individual issue. If the URL loads for other raters but continues to fail to load for you, please skip the job. We would reject this prompt because we do not have the prior chat history to give context to the prompt. Therefore, we would not be able to evaluate this prompt because we do not know who "he" is and what information this user is seeking out.
+Intention is Ambiguous                |                                                                                                                                                                                                                                                                      |
+
+===== Page 9 =====
+
+Rejection Reason                     | Example                                                                                                                                                                                                                                                              | Explanation
+-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Prompt Missing Context/Prompt         | User Prompt: store hours and location                                                                                                                                                                                                                                | We would reject this job because we are not provided with any context as to which store the user is referencing and where it is located. Without prior context, either from the chat history or the user, we cannot verify the URL's relevance and would have to reject this job.
+Intention is Ambiguous (cont.)        |                                                                                                                                                                                                                                                                      |
+Explicit/Inappropriate Content       | User Prompt: lovely lillith (itslovelylilith) latest                                                                                                                                                                                                                 | This example is from a previous batch. The user is seeking explicit/inappropriate content. The provided URL led to a sexually explicit adult website that we are NOT looking to extract information from. We would reject this prompt because we are not looking to extract adult content.
+                                     | User Prompt: Traci Lords' most recent projects?                                                                                                                                                                                                                      | Another example from a previous batch, this prompt is similar to the previous one. The user is searching for adult content which the client does NOT want the model to extract. We would reject this prompt because it leads to adult content and sexually explicit/inappropriate results.
+Foreign Language                     | User Prompt: Me dio 11000                                                                                                                                                                                                                                            | We would reject this user prompt because it is not in English which disrupts our ability to annotate the job.
+                                     | URL: https://www.oxfordeconomics.com/ja/                                                                                                                                                                                                                             | We would reject this job because the URL contents are in another language (and presumably the extracted text would be as well). Therefore, we would not be able to accurately annotate the job or verify most of the information.
+
+## Task Questions
+
+The task questions are divided into two parts:
+
+===== Page 10 =====
+
+ - Content Extraction Completeness Questions
+ - Content Extraction Precision Questions
+
+There will be 10 questions that you will answer to determine whether the project's purpose has been met.
+
+## Important definitions:
+
+## Added 9/22
+
+- Header - Site branding, top navigation bars, search bars, login info
+- Footer - Copyright notices, disclaimers, secondary links, and bottom page elements
+- Navigation menus - Primary and secondary navigation elements
+- Sidebars - Complementary content, related links, and secondary information
+- Advertisements and promotional materials - Commercial content unrelated to main topic
+- Other unrelated content - Widgets, pop-ups, related stories, recommendation sections, and non- essential page elements
+
+NOTE: Specifically, page title or page containing just title should not be considered header garbage. For example, https://www.macdemarco.com/.
+
+===== Page 11 =====
+
+1/14/2026 Updates:
+
+Relevant here means that the entity mentioned in the prompt, or a component of the user intent, matches with the url. For example, for prompt: "Taniya chaterjee reel", URLs that include information about the entity Taniya Chatterjee, should be labeled "YES" in Q1. For this question, raters can ignore any videos and only answer based on images and text rendered on the URL. Important Note: When evaluating, please disregard the freshness or timeliness of the content. It doesn't matter if the information is outdated or no longer current, even when the prompt specifies "latest" or "most recent." Focus solely on whether the URL content is relevant and meets the user's needs based on their prompt. For example, the prompt "Jimmy neutron latest" could have a URL pointing to news from the 2000s and still receive a yes to Q1 so long as it discusses jimmy neutron. Important Note 2: As of now, a specific partial match can reasonably satisfy Q1 as "yes." We no longer need the prompt to be covered in full to satisfy Q1, so long as a "part" of the prompt is satisfied. For example: "little black dresses of the fox valley" for this prompt, a URL that addresses "little black dresses" or "fox valley" would be accepted as a "yes" for Q1. "little dresses," "black dresses," "dresses," "fox," or "valley" would not be enough to satisfy a Q1 "yes" on their own. We want the parts to be addressed in full. Important Note 3: A Q1 label of "Yes" is appropriate as long as the webpage content aligns with any of the entities or potential intents suggested by the prompt. It is okay to interpret the prompts in different ways to maximize the content match. The URL does not need to be extremely precise to be a match for the prompt. For example, a URL that gives 20% of \$762 is considered a match to the prompt "20% of \$762.08". Also, a URL about the 2026 Can- Am Defender is considered a good enough match to the prompt "2021 Can- Am Defender".
+
+Q1B: Justification for URL addresses user prompt question (Question 1 above) In 1- 2 sentences, explain why the URL does or does not address the user prompt.
+
+1/17/2026: If you select "yes" to Q1 for a partial match, please include the partial match in your justification.
+
+===== Page 12 =====
+
+0 For example, if the prompt is "best pet food stores on doordash" and the URL is a partial match to the prompt addressing "doordash", you justification would include "Partial match to "doordash", "The URL addresses "doordash" or similar. Please explain any justifications for why you picked the above answer if needed. Be as elaborate or specific as you please. Note that justifications often help the QPE understand your reasoning and accept your annotation!
+
+## Q2: Does the extracted body text preserve the essential and relevant information from the website?
+
+[Single- Select] Evaluate the parsed body text from the URL to determine if a parse failure occurs when key information is missing from the body text.
+
+Answer YES only if the following criteria are met... Key relevant contents are kept in the extracted body text 1/14/2026: Make sure specific contents are not missing if there are any in the website and they address the user prompt. This information does not need to be kept if it does not directly answer the user's prompt: Calendar Schedule Contact information (e.g. phone numbers, addresses, etc) Scores Answer N/A if Q1's answer is NO.
+
+1/14/2026 Important Note: If the essential content that addresses the prompt only exists in images (and is not extracted because of this), then Q2 should be No even if all non- image text is correctly extracted.
+
+1/21/2026 Important Note: Please align the relevant information to be consistent with the entity in your Q1 response! If you select "yes" to Q1 for a partial match, you will want to ensure any text in the URL relevant to the entity of your partial match is extracted. If you select "yes" to Q1 for a full match to the prompt, then any relevant text in the URL to the entire prompt should be extracted.
+
+Examples:
+
+1. Prompt: "best pet food stores on doordash" a. If Q1 "yes" for the entire prompt, text relevant to "best pet food stores" and "doordash" should all be extracted from the URL. b. If Q1 "yes" for a partial match to "doordash", only text relevant to "doordash" needs to be extracted from the URL. You would not answer Q2 "no" for not having any text about "best pet food stores." c. If Q1 "no" for no match at all, Q2 will grey-out and does not need to be answered.
+
+1/22/2026: If a job is really too long that you cannot feasibly verify everything within AHT but you think all of the essential extracted text is retained, you can leave a polite note of such. For example, "Extracted text is especially long/detailed- the response captured relevant information as far as I could tell within AHT."
+
+NOTE: There may be some jobs where the webpage has been updated/changed after the model extracted the content from the page.
+
+2/10/2026: If an image contains text, we will NOT consider this in answering Q2 because the model does not have the capability to extract text from images. This is different from prior guidance that stated otherwise.
+
+===== Page 13 =====
+
+ However, the model DOES have the ability to extract text from tables and external widgets (Ex. the Spotify track list in this URL). This kind of text is still considered for Q2.
+
+## Q3: Justification for Question 2 (completeness)
+
+[Freeform Text] Please explain any justifications for why you picked the answer for Q2 if needed. Be as elaborate or specific as you please.
+
+Note: Please make sure to write complete sentences when providing your justification.
+
+## Q4: How many tables are in the URL?
+
+[Freeform] Please fill in the number of table(s) visible on the webpage. If no tables are present, enter 0.
+
+11/26: In this question, we want to focus on identifying true tables. Tables must have clear headers, two or more rows, and grid structures. Not all table- like structures are true tables. 1/15: HTML table tags are not considered unwanted content. <table> and </table> does not need to be flagged if they appear in the extracted text. 1/21/2026: If something is between <table> </table> tags, go ahead and count it as a table even if it might not appear that way on the webpage! 1/22: If there are more than 10 tables in a job, please write "10+" under Q4. You do not need to count more than 10 tables. 2/10: If a job does not have extracted text, it is acceptable for raters to answer "0" for Q4 and "N/A" for Q5 even though these questions are about the URL and not the extracted text. If you decide to count the tables, we won't penalize, but it is not necessary in these instances.
+
+Is a Table
+Prices of Nixon Funeral Home
+Traditional Full Service Hotel           $1,000
+Basic Services                           $1,025
+Entainment                               $900
+Dressing & Cooking                       $150
+Viewing & Visitation                      $125
+Funeral Service                           $150
+Transfer to Funeral Home                  $150
+Additional Transfer Costs (not included in pricing) $0.85 per mile over 20 miles
+Hearse to Cemetery                        $200
+This is a table, having several rows with headers and data points (dollar amounts)
+
+===== Page 14 =====
+
+Is a Table
+
+[Image of a table with rows and columns, appears to be data about some topics with ratings or levels like Good, Great, Okay, Bad. Hard to read the exact text.]
+
+===== Page 15 =====
+
+1 Schedule
+2 Relationships
+3 Gifts
+   3.1 Love
+   3.2 Like
+   3.3 Neutral
+   3.4 Dislike
+   3.5 Hate
+4 Movies & Concessions
+5 Heart Events
+   5.1 Two Hearts
+   5.2 Four Hearts
+   5.3 Five Hearts
+   5.4 Six Hearts
+   5.5 Eight Hearts
+   5.6 Ten Hearts
+   5.7 Group Ten-Heart Event
+   5.8 Fourteen Hearts
+6 Manage
+7 Quotes
+8 Questions
+9 Quests
+10 Portals
+11 Timeline
+12 Trivia
+13 History
+
+A table of contents will generally not be considered a table, unless it is specifically formatted with headers and grid structures. In this case, the "table" of contents operates more like a list.
+
+## Q5: Do the table(s) in the webpage contain the key relevant information?
+
+[Single- Select] Please answer if the table(s) present on the webpage contain the key relevant information that directly addresses the user's prompt? Answer N/A if there is no table
+
+Examples:
+
+- User prompt is: Stacey Dash's projects:
+
+the table doesn't have the information needed to answer user's question
+
+===== Page 16 =====
+
+0 User prompt: Donna Kelce's cause of death:
+
+Donna Kelce
+Born         Donna Blalock<br>Cleveland, Ohio, U.S.
+Education    Ohio University<br>Baldwin Wallace University
+Children     Jason Kelce<br>Travis Kelce
+Relatives    Kylie Kelce (daughter-in-law)
+
+table doesn't have the answer to user's question
+
+## Content Extraction Precision Questions
+
+For this section, you need to ask yourself: "How much unnecessary or irrelevant information is retained in the extracted body text?"
+
+Below are definitions of the elements commonly found on a website:
+
+- Header: This is the top section of a webpage that usually appears on every page of a website. This can be the website logo or the title of the page.
+- Footer: The bottom section of a webpage. Common content here is copyright information, terms of service, and many more.
+- Navigation Menu: A set of links/texts that guide users to different sections or pages of the website. You can see it as horizontal menus, vertical side menus, or drop-down menus.
+- Side bar: A vertical column that shows additional or related information on the website. This is usually found on the left or right side of the main content.
+- Advertisement or Promotional Materials: These are content meant to promote products, services, or external brands.
+
+## Q6:Do the footers appear to be retained in the body text?
+
+[Single- Select] Compare the webpage content with the extracted body text to determine if irrelevant content from headers and footers is preserved in the extracted body text.
+
+## Q7:Do the navigation menus, headers or sidebars appear to be retained in the body text?
+
+[Single- Select] Compare the webpage content with the extracted body text to determine if irrelevant content from the navigation menu or sidebars is preserved in the extracted body text.
+
+1/22/206:
+
+Webpage Element | Description | Example
+
+===== Page 17 =====
+
+Navigation Menus | Primary and secondary navigation elements, such as navigation menus at the top or side of a website, drop-down navigation menus, etc.<br>Note: Navigation "buttons" and hyperlinked text are both not considered under Q7.<br>Navigation menus pertain to links that bring you to other webpages, not to links that navigate you within the same webpage. | Richest Persons in the World [Image of a webpage header with links like "HOME", "LISTS", "STATS", "CELEBRITY", "BUSINESS", "TECH", "VIDEOS"] The links across the top of the webpage and its included submenus are considered navigation menus.
+Headers        | Site branding, top navigation bars, search bars, login info that appears at the top of the website.<br>Note: Subheadings and individual article heading information is not counted under this question- we are only looking for website headings. | "Login" and "Get Started" would be considered part of the header of the webpage.
+Sidebars       | Complementary content, related links, and secondary information that appears to the left or right of the website's main content and information. Does not need to be a navigational sidebar, but can be any type of sidebar. | [Image of a webpage with a left sidebar containing links like "HOME", "FORUM", "WIKI", "TOOLS", "CONTACT US", "SUPPORT US"] The content/navigation links on the left of the webpage's main content are considered a sidebar (and a navigation menu.)
+
+## Q8: Do the advertisements or promotional materials appear to be retained in the body text? [Single- Select] Compare the webpage content with the extracted body text to determine if irrelevant content from advertisements or promotional materials is preserved in the extracted body text.
+
+1/15/2026: For Q8, text that seems promotional but is relevant to the prompt should not be counted as irrelevant content. We are only interested in flagging information that is unwarranted and does not serve the user prompt. As an example, "To continue reading, please visit our ESS News website." is a
+
+===== Page 18 =====
+
+1/15/2026: The word "Advertisement" or "AD", as a signal for where an ad will be on the page, is considered irrelevant content from advertisements under Q8.
+
+## Q9: Does other irrelevant content appear in the extracted body text?
+
+[Single- Select] Compare the webpage content with the extracted body text to determine if other irrelevant/garbage contents are preserved in the extracted body text.
+
+11/26: We can consider three or less instances of garbage text as a minor issue ("Yes, but minor), and four or more as a major issue ("Yes").
+
+However, the client would also like us to consider how proportionate the issues are to the main extracted text. If the issues are few and don't overwhelm the main text that is minor, but major issues may have a lot of garbage content in comparison to the size of the main extracted text.
+
+Note that per the grading rubric, the difference between "yes" and "yes but minor" is not penalized- only the difference between "yes/yes but minor" and "no."
+
+2/6/26: Consider these common examples of Q9 "garbage" content: "Skip to main content", "Back to top", Login prompts ("Sign in", "Login"), "More to explore", "See more", unrelated widgets, pop- ups, related stories, recommendation sections, and other non- essential page elements.
+
+2/10/26: If the model extracts the words "Header" and "Footer", but these do not actually appear on the webpage, we can consider this minor garbage under Q9 (along with examples like "Skip to main content", "Back to top").
+
+However, "Advertisement" showing up on the page alongside an ad would still be considered under Q8.
+
+## Q10: In 1-2 sentences, provide any comments about any unwanted/"garbage" content retained in the body text
+
+[Freeform Text] Please explain any justifications for the unwanted or "garbage" contents kept in the extracted body text
+
+## Additional Reminders
+
+## Tables
+
+When reviewing tables, you may encounter two types:
+
+- Properly formatted tables: These have clear rows and columns, similar to standard table layouts.
+- Unformatted or cell-by-cell/by-line tables: These tables appear as a series of individual lines or cells, without proper table structure.
+
+Important note: The formatting of the table does not affect the evaluation, as long as the information has been extracted correctly. Even if a table looks unstructured or messy, it should not be penalized if the content is still accurate and complete. Focus on whether the relevant information was captured correctly, not on how the table looks.
+
+===== Page 19 =====
+
+ Justification box
+ When writing your justification,
+
+Please ensure that you use coherent and complete sentences. Your explanation should align with the guidelines provided in the Source of Truth. The justification you provide will be factored into the grading system when assessing the quality of your submitted jobs.
+
+## Overlapping Elements
+
+Since there are a million formatting possibilities across websites, URL webpage elements might overlap across categories. In these instances, it's okay to flag the element in both questions.
+
+For example:
+
+Example                                                                                                                                                           | Reasoning
+------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------
+https://prezi.com/p/1rbz57pmdtpo/maria-oricka/                                                                                                                    | The footer of this page also includes navigation menus. If extracted, this would flag under both Q6 (footers) and Q7 (navigation menus.)
+[Image of a webpage footer with multiple columns of links, likely navigation or site map links]                                                                  |
+
+## 'Expandable' Webpage Elements
+
+When evaluating a webpage, particularly for Q2 and Q4, keep in mind that there may be some parts of the webpage that are not visible until you click a button to "expand" that part of the page.
+
+In these instances, if expanding the page does not take you to a new page, we would expect the model to still extract that information, especially if it is part of the key/essential information.
+
+If you are evaluating Q2 (Does the extracted body text preserve the essential and relevant information from the website?) and find that the model did not extract essential information from these types of webpages, then we would have to answer 'No' to Q2 and justify/explain why.
+
+Similarly, we want to ensure that we account for all tables that may appear on a webpage.
+
+## Example #1
+
+Look at the following URL: https://www.wikings.com/sports/womens-volleyball/roster
+
+We see the full volleyball team roster. However, pay attention to the + sign on the bottom right of each athlete's profile:
+
+===== Page 20 =====
+
+1
+
+[Image of a small circular icon with a plus sign inside it.]
+
+Pis Hitter / STT Delaney Speer
+
+Junior / Maple Valley, WA / Tahoma Full Bio
+
+Clicking on this + sign for each individual athlete reveals an expanded profile on the same webpage with additional information and tables.
+
+[Image of a slightly larger profile picture icon?]
+
+Pis Hitter / STT Delaney Speer
+
+Junior / Maple Valley, WA / Tahoma Full Bio
+
+Season | Headlines | DATE | OPPONENT | K | DIG | BLK | AST
+-------|-----------|------|----------|---|---|---|----
+Dec 23 | Vikings Tied for 8th in Directors' Cap Rankings Through Fall Season | | | | |
+11/08 | Alaska Anchorage | | 20 | 11 | 0 | 0
+11/15 | Sascon-Fraser | | 14 | 16 | 3 | 0
+11/20 | Central Washington | | 15 | 14 | 0 | 1
+11/22 | Northwest Nazarene | | 11 | 14 | 3 | 0
+12/04 | Hawaii-Pacific | | 10 | 15 | 0 | 0
+**Last 5 games played**
+
+## Example #2
+
+Evaluate the following URL: https://www.espn.com/nfl/player/1id/2577466/jordan- philips
+
+This one is slightly different from the previous example but follows similar logic. We see one table under Recent Games but notice the Fumbles and Interceptions headings beside Tackles.
+
+Recent Games | See All | | Tackles | | Fumbles | | Interceptions |
+-------------|---------|---------|---------|---------|---------|---------|---------|
+DATE | OPP | RESULT | TOT | SOLO | AST | SACK |
+Thu 11/20 | HOU | L 23-19 | 0 | 0 | 0 | 0
+Sun 11/30 | PIT | W 26-7 | 1 | 0 | 1 | 0
+Sun 12/7 | VS CIN | W 39-34 | 1 | 0 | 1 | 0
+Sun 12/14 | NEW | 35-31 | 0 | 0 | 0 | 0
+Sun 1/4 | VS NYJ | W 35-8 | 0 | 0 | 0 | 0
+
+Clicking on Fumbles and Interceptions keeps us on the same webpage but reveals two additional tables on the page:
+
+===== Page 21 =====
+
+1
+
+Record Game
+
+[Image of a table header "Record Game" but the rest of the table content is illegible.]
+
+===== Page 22 =====
+
+ Job Examples
+ Here are sample jobs to guide you on how to evaluate the jobs properly.
+
+Example 1
+
+Example 1
+Chat History | User: Golfer's cause of death<br>Bot: The Facebook post doesn't specify the legendary golfer's name or cause of death. However, I found some information on a PGA Tour golfer named Grayson Murray, who passed away, but the cause of death isn't specified in the search result [1]. If you're looking for information on a specific golfer, please let me know, and I'll try to help!
+Prompt | Golfer's cause of death
+URL | https://foxsportsradio.iheart.com/content/2024-05-29-pga-tour-golfer-grayson-murrays-official-cause-of-death-is-determined/
+Text Extracted | Find Station<br>On Air<br>Podcasts<br>Connect<br>Where To Listen<br>Advertise on Fox Sports Radio<br>Bios<br>Contact<br>Newsletter<br>Sports<br>PGA Tour Golfer Grayson Murray's Official Cause of Death is Determined<br>By<br>Jason Hall<br>May 30, 2024
+Answers | • Does the content answer the search query? Yes<br>• Is the right content from the webpage extracted in the 'text' column? No. Article body text was not extracted.<br>• How many tables are in the URL webpage? 0, N/A<br>• Does the 'text' column contain unrelated content? Yes, it has navigation menus or sidebars.
+
+Example 2
+
+Example 2
+
+===== Page 23 =====
+
+Chat History | User: amanda palombo, latest<br><br>Bot: Amanda Palombo is a physical therapist with impressive credentials. She holds a Doctorate in Physical Therapy from Rutgers, The State University of New Jersey, and has received board certifications as a Pediatric Clinical Specialist and a Certified Brain Injury Specialist [1]. \n\nAmanda's clinical expertise spans various settings, including acute inpatient rehabilitation, outpatient rehabilitation, and school settings, where she works with individuals from birth to 21 years of age. Her passion for teaching and research is evident in her role as an Adjunct Instructor for the Rutgers University Doctor of Physical Therapy Program [1]. \n\nSome of her notable activities include:\n\nPresenting Research: Amanda has presented her research at the national APTA Combined Sections Meeting.\n\nTeaching: She teaches courses in Exercise Science, Kinesiology and Biomechanics, and Cardiopulmonary.\n\nProfessional Development: Amanda is committed to ongoing learning and professional growth, as reflected in her participation in various seminars and workshops.\n\n
+Prompt | amanda palombo, latest
+URL | https://ptsseminars.com/faculty-details.php?faculty_table_tuid=9&full_name=Palo mbo,920Amanda
+Text Extracted | Faculty Detail<br>Amanda Palombo PT, DPT, PCS<br>Amanda Palombo, PT, DPT, PCS received her B.S. in Exercise Science and Sports Studies with a Minor in Biological Sciences and Psychology along with a Doctorate in Physical Therapy from Rutgers, The State University of New Jersey. Her clinical expertise afforded her board certifications as a Pediatric Clinical Specialist by the APTA Board of Clinical Specialties and a Certified Brain Injury Specialist by the Brain Injury Association of America. Dr. Palombo brings theory to practice as she shares her eclectic experiences in the acute inpatient rehabilitation, outpatient rehabilitation, and school settings working with individuals from birth to 21 years of age. Dr. Palombo values research and teaching. She has presented her research at the national APTA Combined Sections Meeting and serves as an Adjunct Instructor for the Rutgers University Doctor of Physical Therapy Program for the Exercise Science, Kinesiology and
+
+===== Page 24 =====
+
+Biomechanics, and Cardiopulmonary courses. Her passion for teaching, research, and working with children makes her an apt instructor for this course. Courses Taught Accreditations View Course Approvals RATE DISCOUNT Get a discounted Combo Rate when you enroll in two or more live classes Or get a discounted Group Rate when you enroll with a group of three or more, on live classes Register Now Contact Info Renietta Dias PTS Program Director PTS Seminars | Physical Therapy Seminars and Occupational Therapy Seminars Website designed by Webspicer
+
+Answers | • Does the content answer the search query? Yes<br>• Is the right content from the webpage extracted in the 'text' column? Yes<br>• How many tables are in the URL webpage? 0, N/A<br>• Does the 'text' column contain unrelated content? Yes, the extracted text contains advertisements or promotional materials.
+
+Example 3
+
+Example 3
+Chat History | User: all the colors of the dark latest<br>Bot: All the Colors of the Dark” is a novel by Chris Whitaker that has garnered significant attention for its unique blend of genres, including mystery, thriller, crime drama, and love story [1]. The book follows the lives of Patch and Saint, two best friends and misfits, as they navigate the complexities of life after a traumatic event in their small town of Monta Clare, Missouri [1]. VnVnThe story spans several decades, exploring themes of love, hope, and the
+
+===== Page 25 =====
+
+Chat History (cont.) | human condition. With its intricate plot, well- developed characters, and vivid prose, "All the Colors of the Dark" has received widespread acclaim from readers and critics alike [1]. VnV Some reviewers have noted that the book's short chapters can make it difficult to fully immerse oneself in the story, but overall, the novel has been praised for its engaging narrative, relatable characters, and unexpected twists [1].
+Prompt | all the colors of the dark latest
+URL | https://www.amazon.com/All-Colors-Dark-Chris-Whitaker/dp/0593798872
+Text Extracted | Skip to main content<br>All the Colors of the Dark<br>Penguin Random House LLC<br>Image Unavailable<br>Image not available for<br>Color:<br>To view this video download<br>Flash Player<br>This book was confounding, and compelling, and ultimately so satisfying. It's a little too long, and I definitely got bogged down in the middle. The writing style is challenging, in that you don't really get all the bits and pieces of the story, so I had to reread to try and fill in holes. But honestly that just meant I got to spend more time immersed in this story and these remarkable characters. I found myself rooting so hard for them, and I would love to read more of their story.<br>This novel is many things: it is about a serial killer, love gained and lost, art, kidnapping and hope. It is a literary novel written in short chapters that gives the reader such a real sense of the characters that you could swear you know them.<br>Patch, at the center of the novel, is a young boy when he saves a girl from being kidnapped. He got his name from the fact that he has only one eye and wears a patch like a pirate. He has a best friend, a girl named Saint, and together they are a powerful pair.<br>Despite Patch being hailed as a hero for saving the girl, he has been traumatized by the fact that when he saved her, the kidnapper took him instead and Patch found himself locked up in a dark, dark room with a girl named Grace. Once he is found and released, thanks to the unwavering efforts of Saint, there is no sign of Grace. People wonder if she is just a figment of Patch's imagination. He is sure that Grace is real and will stop at nothing to find her.
+
+===== Page 26 =====
+
+Text Extracted (cont.) | Patch comes from a small community in Missouri called Monta Clare. It is a peaceful and lovely place without any crime until the serial killer goes there to seek his victim. The people in the community all know one another and they are shocked by the intrusion of such horrible crime.<br><br>Patch and Saint remain friends but Patch is obsessed with finding Grace. He will stop at nothing, legal or illegal, in order to find her. Her words echo in his mind and she has become part of his heart. Nothing can compete with his search for her.<br><br>This novel is about love and hope, along with the challenges people face when trying to secure these things in their lives. As Chris Whitaker states in the novel, "To love and be loved was more than could ever be expected, more than enough for a thousand ordinary lifetimes." And he reminds us that "sometimes, against the longest of odds, hope wins out."<br><br>In 1975, in the small town of Monta Clare, Missouri, Patch and Saint are a pair of best friends and misfits whose lives are dramatically impacted when they find themselves involved in the attempted abduction of an affluent girl from their town. Spanning the course of several decades, All the Colors of the Dark follows the pair as they navigate life following the events of that fateful day. This book was an elaborate amalgamation of multiple genres of fiction, making it a great suggestion for almost any type of reader. It is a tale of childhood friendship and the complexities of how that relationship evolves when the trials of adulthood change who each of us is on a fundamental level. It is a story of finding love and having the strength to either hold onto it or let it go. It is a game of cat and mouse, with two adversaries using cunning and skill to gain advantage over one another. It is a murder mystery and psychological thriller that will leave your heart pounding in your chest while you turn the pages to find out what happens. It is about family, and the powerful bonds that tie us together whether it be by blood or by choice. While reading this, I laughed, cried, gasped out loud, cringed, awed- ed, sighed, closed my eyes, got mad, smiled, and loved every moment of it. My only critique for this work is that the chapters are entirely too short. Each spanning an average length of 2- 3 pages, I felt as though I was never fully able to settle into reading, and it ultimately had a negative effect on both the pacing and my overall enjoyment of the book. To be honest, longer chapters (even if they were broken down into
+
+===== Page 27 =====
+
+Text Extracted (cont.) | smaller sub-chapters) would have made this a 5 star read for me. ALL THE COLORS OF THE DARK Chris Whitaker When I talk about Chris Whitaker, I want to start at the beginning, but it feels more appropriate if WE BEGIN AT THE END. Someone is missing and she's not the first. She most likely won't be the last. There is a hunter in their small town, in their presence. And in the hunting, the hunters become the prey. But that's just the story's beginning and I promised to start at the end. Patch is a hard boy to forget and over the span of decades turns into a man most will wish they never met. But his story is long, and to understand his trajectory we must start at the beginning. At the end he will be forgiven, but his actions will not be forgotten. ALL THE COLORS OF THE DARK is a mystery, a thriller, a crime drama that spans states and decades. But in the end, ALL THE COLORS OF THE DARK is a love story. When the plane took off when the shades were drawn, when it got quiet, and when the lights were low, I went into the dark with Chris Whitaker. And when the plane landed, and I got to the end all I could see were ALL THE COLORS OF THE DARK. Reading over 500 pages in one sitting is not something I normally do but then again, I don't normally get the pleasure of reading a Chris Whitaker novel. I was on an exceptionally long flight, and I needed an exceptional book to pull me through. ALL THE COLORS OF THE DARK was just that. ALL THE COLORS OF THE DARK is not about who you should be, not who you pretend to be, not even who you aspire to be. It's about who you are. When it matters, when it counts. With crushing language, a superior grasp of what the English language can do, authentic characters, and a storyline that rivals only his last work, ALL THE COLORS OF THE DARK provided an exceptional reading experience and I highly recommend it. If I could give it ten stars I would! Thanks to Netgalley and Crown Publishing | Crown for the advanced copy! It was a pleasure! ALL THE COLORS OF THE DARK... ★★★★★ I was a little bit unsure early on in the book about how much I was going to enjoy it. I liked it from the start, but felt my feelings for it 'lag' a bit for part of
+
+===== Page 28 =====
+
+Text Extracted (cont.) | the first quarter of it. Then, I'm not even sure how it happened, but it grabbed me by the heart and kept me all the way through. I had a hard time putting it down (man, I just LOVE short chapters) and had quite a few surprises. Great book, excellent and creative plot that was well told.  Eine sehr unterhaltsame Lektüre!  Firstly, anyone suggesting the book is too long, incredulous, complex blah blah blah, is a philistine ...  This is one of the most incredible pieces of fiction I've ever read. Engaging, real characters, beautiful prose and an exciting plot. It's funny and tragic all in one breadth of a line.  I feel bereft I've finished it. I will miss and think about those people for a long time.  If this isn't made into a film then Mr Spielberg 'et al' are missing a trick!  Excellent story with interesting interlinking characters and kept you hooked on what was going to happen next. Most enjoyable book I have read for very long time.  When you peel back the many layers that make this story, you will find a love story so pure, a determination so absolute and a sense of loyalty so intense and unwavering you will forevermore expect no less. So beautifully written with expression so creative you will marvel at the cleverness of the author.  Well done Mr Whitaker you have a new fan.
+
+Answers | • Does the content answer the search query? Yes<br>• Is the right content from the webpage extracted in the 'text' column? No<br>• How many tables are in the URL webpage? 0, N/A<br>• Does the 'text' column contain unrelated content? 0 Yes; Irrelevant images or multimedia content 0 Yes; Unnecessary headers or footers
+
+===== Page 29 =====
+
+ Grading Rubric
+ Below is the grading rubric used to score jobs. A job receives a "pass" if it receives a score of 85% and above, and fails if it receives a score of 86% and below.
+
+Error Category | Error Name                       | Point Deduction | Description
+----------------|----------------------------------|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Critical<br/>Automatically fails a job when present. | Incorrect Rejection Action       | -16%            | Job was either incorrectly rejected or incorrectly submitted instead of rejected.
+                | Q1 Incorrect Response            | -16%            | Q1 is incorrectly answered.
+                | Q2A/B Incorrect Response         | -16%            | Q2 is incorrectly answered.
+Major<br/>Does not fail a job on its own, but will if paired with another error. | Q4: Incorrect # of Tables (MAJOR) | -10%            | The number of tables is off by more than 4. The tables in question are straightforward and unambiguous.
+                | Q5: Incorrect Response            | -10%            | Q5 is incorrectly answered.
+                | Q7: Incorrect Response            | -10%            | Q7 is incorrectly answered.
+                | Q8: Incorrect Response            | -10%            | Q8 is incorrectly answered.
+                | Q9: Incorrect Response            | -10%            | The rater selected 'Yes' or 'Yes but minor' instead of 'No' (or vice-versa).
+                | Q3: Incorrect/Incomplete Justification | -10%            | Justification is missing entirely or lacks crucial information.
+                | Q10: Incorrect/Incomplete Justification | -10%            | Justification is missing entirely or lacks crucial information.
+Minor<br/>Minor, does not fail a job on its own. | Q3: Justification could be improved | -5%             | The justification is explained, but the logic is flawed in some way.
+                | Q10: Justification could be improved | -5%             | The justification is explained, but the logic is flawed in some way.
+                | Q4: Incorrect # of Tables (MINOR)   | -5%             | The number of tables is off by 4 or less (1-4). The tables in question may be ambiguous in nature (e.g. Table vs. List). The rater's selection is understandable.
