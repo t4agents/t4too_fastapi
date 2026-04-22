@@ -61,3 +61,48 @@ class PayrollHistoryOut(BaseModel):
     type: Optional[str] = None
     description: Optional[str] = None
     extra: Optional[Dict[str, Any]] = None
+
+
+class PayrollHistorySummaryOut(BaseModel):
+    period_key: str
+    schedule_id: UUID
+    period_start: date
+    period_end: date
+    pay_day: Optional[date] = None
+    status: str
+    total_gross: Decimal
+    payroll_cost: Decimal
+    total_net: Decimal
+    taxes_and_deductions: Decimal
+    employee_count: int
+    excluded_count: int
+
+
+class PayrollHistoryDetailEntryOut(BaseModel):
+    id: UUID
+    schedule_id: UUID
+    payroll_period_id: Optional[UUID] = None
+    employee_id: UUID
+    period_key: str
+    full_name: Optional[str] = None
+    employment_type: Optional[str] = None
+    annual_salary_snapshot: Optional[Decimal] = None
+    hourly_rate_snapshot: Optional[Decimal] = None
+    regular_hours: Optional[Decimal] = None
+    overtime_hours: Optional[Decimal] = None
+    bonus: Optional[Decimal] = None
+    vacation: Optional[Decimal] = None
+    adjustment: Optional[Decimal] = None
+    cpp: Optional[Decimal] = None
+    ei: Optional[Decimal] = None
+    tax: Optional[Decimal] = None
+    gross: Optional[Decimal] = None
+    total_deduction: Optional[Decimal] = None
+    net: Optional[Decimal] = None
+    excluded: Optional[bool] = None
+    status: Optional[str] = None
+
+
+class PayrollHistoryDetailOut(BaseModel):
+    summary: PayrollHistorySummaryOut
+    entries: list[PayrollHistoryDetailEntryOut]
