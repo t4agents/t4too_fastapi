@@ -61,3 +61,40 @@ class PayrollEntryOut(BaseModel):
     type: Optional[str] = None
     description: Optional[str] = None
     extra: Optional[Dict[str, Any]] = None
+
+
+class PayrollEntryAddEmployeesRequest(BaseModel):
+    employee_ids: list[UUID]
+
+
+class PayrollEntryUpdate(BaseModel):
+    id: UUID
+    payroll_period_id: Optional[UUID] = None
+    schedule_id: Optional[UUID] = None
+    period_key: Optional[str] = None
+    employee_id: Optional[UUID] = None
+    full_name: Optional[str] = None
+    employment_type: Optional[str] = None
+    annual_salary_snapshot: Optional[Decimal] = None
+    hourly_rate_snapshot: Optional[Decimal] = None
+    federal_claim_snapshot: Optional[Decimal] = None
+    ontario_claim_snapshot: Optional[Decimal] = None
+    regular_hours: Optional[Decimal] = None
+    overtime_hours: Optional[Decimal] = None
+    bonus: Optional[Decimal] = None
+    vacation: Optional[Decimal] = None
+    cpp: Optional[Decimal] = None
+    ei: Optional[Decimal] = None
+    tax: Optional[Decimal] = None
+    gross: Optional[Decimal] = None
+    total_deduction: Optional[Decimal] = None
+    adjustment: Optional[Decimal] = None
+    net: Optional[Decimal] = None
+    cpp_exempt_snapshot: Optional[bool] = None
+    ei_exempt_snapshot: Optional[bool] = None
+    excluded: Optional[bool] = None
+    status: Optional[str] = None
+
+
+class PayrollFinalizeOut(BaseModel):
+    period_key: str

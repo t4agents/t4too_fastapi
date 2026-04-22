@@ -41,3 +41,16 @@ class PayrollScheduleOut(BaseModel):
     type: Optional[str] = None
     description: Optional[str] = None
     extra: Optional[Dict[str, Any]] = None
+
+
+class PayrollScheduleUpsert(BaseModel):
+    id: Optional[UUID] = None
+    frequency: Optional[str] = None
+    period: Optional[str] = None
+    note: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    status: Optional[str] = None
+    payon: Optional[str] = None
+    semi1: Optional[str] = None
+    semi2: Optional[str] = None

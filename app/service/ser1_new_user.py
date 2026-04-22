@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import logging
+from datetime import date, timedelta
 from typing import Any, Dict
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.supabase_admin import get_supabase_admin_client
+from app.db.models.t4.m_payroll_schedule import PayrollScheduleDB
 from app.db.models.too.z_be import ZBizEntityDB
 from app.db.models.too.z_client import ZClientDB
 from app.db.models.too.z_user import ZUserDB
@@ -64,6 +67,91 @@ def _extract_sbu_user_type(decoded: dict[str, Any]) -> str:
         return root_value.strip()
 
     return "SBU"
+
+
+def _default_payroll_schedule_templates() -> list[dict[str, Any]]:
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+    return [
+        {
+            "frequency": "weekly",
+            "effective_from": week_start,
+            "effective_to": date.max,
+            "status": "inactive",
+            "description": "Description",
+            "payon": "Friday",
+            "semi1": "EOM",
+            "semi2": "EOM",
+            "period": "Mon-Fri",
+            "note": "From Monday to Friday.",
+        },
+        {
+            "frequency": "biweekly",
+            "effective_from": week_start,
+            "effective_to": date.max,
+            "status": "inactive",
+            "description": "Description",
+            "payon": "Friday",
+            "semi1": "EOM",
+            "semi2": "EOM",
+            "period": "Mon-Fri (2 weeks)",
+            "note": "Pays every other week.",
+        },
+        {
+            "frequency": "semimonthly",
+            "effective_from": month_start,
+            "effective_to": date.max,
+            "status": "inactive",
+            "description": "Description",
+            "payon": "EOM",
+            "semi1": "15",
+            "semi2": "EOM",
+            "period": "1st-15th, 16th-EOM",
+            "note": "Pays twice a month.",
+        },
+        {
+            "frequency": "monthly",
+            "effective_from": month_start,
+            "effective_to": date.max,
+            "status": "active",
+            "description": "Description",
+            "payon": "EOM",
+            "semi1": "EOM",
+            "semi2": "EOM",
+            "period": "1st-EOM",
+            "note": "Pays once a month.",
+        },
+    ]
+
+
+async def _ensure_default_payroll_schedules(
+    db: AsyncSession,
+    *,
+    ten_id: UUID,
+    cli_id: UUID,
+    usr_id: UUID,
+    created_by: UUID,
+) -> None:
+    for template in _default_payroll_schedule_templates():
+        existing_id = await db.scalar(
+            select(PayrollScheduleDB.id).where(
+                PayrollScheduleDB.cli_id == cli_id,
+                PayrollScheduleDB.frequency == template["frequency"],
+            )
+        )
+        if existing_id:
+            continue
+        db.add(
+            PayrollScheduleDB(
+                ten_id=ten_id,
+                biz_id=cli_id,
+                cli_id=cli_id,
+                usr_id=usr_id,
+                created_by=created_by,
+                **template,
+            )
+        )
 
 
 async def _update_supabase_app_metadata_ten_id(uid: UUID) -> None:
@@ -178,6 +266,13 @@ async def provision_new_user(decoded: dict, db: AsyncSession) -> None:
             await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await _ensure_default_payroll_schedules(
+                db,
+                ten_id=user_id,
+                cli_id=user_id,
+                usr_id=user_id,
+                created_by=user_id,
+            )
     except Exception:        raise
     await _update_supabase_app_metadata_ten_id(user_id)
 
@@ -279,6 +374,13 @@ async def provision_new_user_with_seed(decoded: dict, db: AsyncSession) -> None:
             await db.execute(insert(ZBizEntityDB).values(**zbe_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZClientDB).values(**zclient_payload).on_conflict_do_nothing(index_elements=["id"]))
             await db.execute(insert(ZUserClientDB).values(**z_user_client_payload).on_conflict_do_nothing(index_elements=["id"]))
+            await _ensure_default_payroll_schedules(
+                db,
+                ten_id=user_id,
+                cli_id=user_id,
+                usr_id=user_id,
+                created_by=user_id,
+            )
             seed_summary = await apply_seed_defaults(user_id, db, reset=False)
     except Exception:        raise
     await _update_supabase_app_metadata_ten_id(user_id)
