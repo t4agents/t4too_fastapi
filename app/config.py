@@ -15,12 +15,11 @@ class _Settings(BaseSettings):
     JWKS_ALG: list[str] = ["ES256", "RS256"]
     SUPABASE_SERVICE_ROLE_KEY: str = ""
     TOO_SB_RLS: str = ""
-    # T4_ADMIN: str = "postgresql+asyncpg://username:pwd@local/icedb"
-    # OPENAI_API_KEY: str =""
-    # COHERE_API_KEY: str = ""
-    # MODEL_PRICING_JSON: str = "{\"gpt-5-mini\": {\"input\": 0.15, \"output\": 0.60}}"
-    # GUARDRAIL_ENABLE_LLM_JUDGE: bool = True
-    # PII_MINIMIZE_RAG_EVIDENCE: bool = True
+    OPENAI_API_KEY: str = ""
+    COHERE_API_KEY: str = ""
+    MODEL_PRICING_JSON: str = "{\"gpt-5-mini\": {\"input\": 0.15, \"output\": 0.60}}"
+    GUARDRAIL_ENABLE_LLM_JUDGE: bool = True
+    PII_MINIMIZE_RAG_EVIDENCE: bool = True
 
     # ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 

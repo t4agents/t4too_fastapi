@@ -4,6 +4,7 @@ import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
+from starlette.responses import StreamingResponse
 
 
 logger = logging.getLogger("app.http")
@@ -88,6 +89,21 @@ def add_http_logging_middleware(app: FastAPI) -> None:
             )
             logger.info("===== HTTP %s END =====", rid)
             raise
+
+        content_type = (response.headers.get("content-type") or "").lower()
+        is_streaming = isinstance(response, StreamingResponse) or "text/event-stream" in content_type
+        if is_streaming:
+            elapsed_ms = (time.perf_counter() - started_at) * 1000
+            level = logging.ERROR if response.status_code >= 500 else logging.INFO
+            logger.log(
+                level,
+                "[RESP] id=%s status=%s elapsed_ms=%.2f body=<streaming omitted>",
+                rid,
+                response.status_code,
+                elapsed_ms,
+            )
+            logger.info("===== HTTP %s END =====", rid)
+            return response
 
         response_body = b""
         async for chunk in response.body_iterator:

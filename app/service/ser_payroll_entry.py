@@ -4,11 +4,13 @@ from calendar import monthrange
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
+from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.ai.ai_embedding import Embedding384DB
 from app.db.models.t4.m_employee import EmployeeDB
 from app.db.models.t4.m_payroll_entry import PayrollEntryDB
 from app.db.models.t4.m_payroll_history import PayrollHistoryDB
@@ -23,6 +25,7 @@ from app.service.ser_payroll_common import (
 )
 from app.service.ser_payroll_period import get_or_create_period_for_window
 from app.service.ser_payroll_schedule import _create_entries_for_schedule, _current_period_window, _pay_date_from_period
+from app.llm.conn.openai_embedder import embed_fn
 
 
 async def fetch_payroll_entries(sbu_client_id: UUID, db: AsyncSession) -> list[PayrollEntryDB]:
@@ -280,6 +283,21 @@ async def finalize_payroll_entries(zjwt: dict, db: AsyncSession) -> dict[str, st
     period.status = "closed"
     await db.flush()
 
+    embedding_rows: list[Embedding384DB] = []
+    for history in history_rows:
+        chunk_text = _chunk(history)
+        emb = await embed_fn(chunk_text)
+        embedding_rows.append(
+            Embedding384DB(
+                source_id=history.id,
+                chunk=chunk_text,
+                emb384=emb,
+            )
+        )
+    if embedding_rows:
+        db.add_all(embedding_rows)
+        await db.flush()
+
     await db.execute(delete(PayrollEntryDB).where(PayrollEntryDB.cli_id == sbu_client_id))
     await db.flush()
 
@@ -376,3 +394,43 @@ def _to_uuid_or_none(value: UUID | str | None) -> UUID | None:
         return UUID(str(value))
     except ValueError:
         return None
+
+
+def _format_chunk_value(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, date):
+        return value.isoformat()
+    return str(value)
+
+
+def _chunk(history: PayrollHistoryDB) -> str:
+    parts = [
+        "payroll_history",
+        f"full_name={_format_chunk_value(history.full_name)}",
+        f"employment_type={_format_chunk_value(history.employment_type)}",
+        f"period_start={_format_chunk_value(history.period_start)}",
+        f"period_end={_format_chunk_value(history.period_end)}",
+        f"period_key={_format_chunk_value(history.period_key)}",
+        f"pay_date={_format_chunk_value(history.pay_date)}",
+        f"annual_salary_snapshot={_format_chunk_value(history.annual_salary_snapshot)}",
+        f"hourly_rate_snapshot={_format_chunk_value(history.hourly_rate_snapshot)}",
+        f"federal_claim_snapshot={_format_chunk_value(history.federal_claim_snapshot)}",
+        f"ontario_claim_snapshot={_format_chunk_value(history.ontario_claim_snapshot)}",
+        f"regular_hours={_format_chunk_value(history.regular_hours)}",
+        f"overtime_hours={_format_chunk_value(history.overtime_hours)}",
+        f"bonus={_format_chunk_value(history.bonus)}",
+        f"vacation={_format_chunk_value(history.vacation)}",
+        f"cpp={_format_chunk_value(history.cpp)}",
+        f"ei={_format_chunk_value(history.ei)}",
+        f"tax={_format_chunk_value(history.tax)}",
+        f"gross={_format_chunk_value(history.gross)}",
+        f"total_deduction={_format_chunk_value(history.total_deduction)}",
+        f"adjustment={_format_chunk_value(history.adjustment)}",
+        f"net={_format_chunk_value(history.net)}",
+        f"cpp_exempt_snapshot={_format_chunk_value(history.cpp_exempt_snapshot)}",
+        f"ei_exempt_snapshot={_format_chunk_value(history.ei_exempt_snapshot)}",
+        f"excluded={_format_chunk_value(history.excluded)}",
+        f"status={_format_chunk_value(history.status)}",
+    ]
+    return " | ".join(parts)
