@@ -7,12 +7,13 @@ from .ai_rag import aiRagRou
 from .ai_rag_eval import ragEvalRou
 
 from .rag1_unit import ragUnitRou
+from .rag2_llm import ragLLMRou
 
 rouAI = APIRouter()
 
-rouAI.include_router(ragUnitRou, prefix="/rag1unit", tags=["ai-rag-basic"])
+rouAI.include_router(ragUnitRou, prefix="/rag1unit", tags=["rag-basic"])
+rouAI.include_router(ragLLMRou, prefix="/rag2llm", tags=["rag-llm"])
 
-rouAI.include_router(aiRagRou, tags=["ai-rag"])
 rouAI.include_router(guardrailRou, prefix="/guardrail", tags=["ai-guardrail"])
 rouAI.include_router(ragEvalRou, prefix="/rag_eval", tags=["ai-rag-eval"])
 rouAI.include_router(routerRou, prefix="/brain", tags=["ai-brain"])

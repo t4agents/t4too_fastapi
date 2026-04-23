@@ -15,7 +15,7 @@ from app.db.conn.db_rls import get_db_rls
 from app.schemas.sch_ai_rag_basic import (
     RagAnswerResponse,
     QueryReq,
-    RagQueryResponse,
+    QueryRes,
     RagRerankAnswerResponse,
 )
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest, FeedbackCreateResponse
@@ -42,7 +42,7 @@ def _format_sse_comment(comment: str) -> str:
     return f": {comment}\n\n"
 
 
-@aiRagRou.post("/rag_query", response_model=RagQueryResponse)
+@aiRagRou.post("/rag_query", response_model=QueryRes)
 async def rag_query(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),

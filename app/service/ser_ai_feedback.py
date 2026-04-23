@@ -4,6 +4,7 @@ from app.db.models.ai.ai_feedback_event import FeedbackEventDB
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest
 from app.schemas.sch_ai import JWType
 
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _parse_uuid(value: str | None) -> UUID | None:
@@ -15,7 +16,7 @@ def _parse_uuid(value: str | None) -> UUID | None:
         return None
 
 
-async def log_feedback_event(payload: FeedbackCreateRequest, zjwt: JWType) -> None:
+async def log_feedback_event(payload: FeedbackCreateRequest, zjwt: JWType, db: AsyncSession) -> None:
     session_id = _parse_uuid(payload.session_id)
     message_id = _parse_uuid(payload.message_id)
 
@@ -25,11 +26,11 @@ async def log_feedback_event(payload: FeedbackCreateRequest, zjwt: JWType) -> No
     if payload.message_id and message_id is None:
         meta = {**meta, "client_message_id": payload.message_id}
 
-    add(
+    db.add(
         FeedbackEventDB(
-            ten_id=ctx.ten_id,
-            biz_id=ctx.biz_id,
-            user_id=ctx.user_id,
+            ten_id=zjwt.ztid,
+            biz_id=zjwt.zbid,
+            user_id=zjwt.zuid,
             session_id=session_id,
             message_id=message_id,
             route=payload.route,
@@ -42,4 +43,4 @@ async def log_feedback_event(payload: FeedbackCreateRequest, zjwt: JWType) -> No
             meta=meta,
         )
     )
-    await flush()
+    await db.flush()

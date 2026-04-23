@@ -108,11 +108,3 @@ async def route_answer_langgraph_stream(
     }
     return StreamingResponse(event_stream(), media_type="text/event-stream", headers=headers)
 
-
-@routerRou.post("/feedback", response_model=FeedbackCreateResponse)
-async def submit_feedback(
-    payload: FeedbackCreateRequest,
-    zme: ZMeDataClass = Depends(get_zme),
-):
-    await log_feedback_event(payload, zme)
-    return FeedbackCreateResponse()

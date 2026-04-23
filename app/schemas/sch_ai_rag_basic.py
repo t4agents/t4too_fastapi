@@ -16,7 +16,7 @@ class RagQueryResult(BaseModel):
     history: dict[str, Any]
 
 
-class RagQueryResponse(BaseModel):
+class QueryRes(BaseModel):
     query: str
     top_k: int
     results: List[RagQueryResult]

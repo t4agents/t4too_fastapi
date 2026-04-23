@@ -6,7 +6,7 @@ from app.core.dependency_injection import ZMeDataClass, get_zme
 from app.schemas.sch_ai_rag_basic import (
     RagAnswerResponse,
     QueryReq,
-    RagQueryResponse,
+    QueryRes,
     RagRerankAnswerResponse,
 )
 from app.service.ser_ai_embedding import rag_answer, rag_rerank, rag_query ,minimize_evidence_for_llm
@@ -21,7 +21,7 @@ async def build_chunks(zme: ZMeDataClass = Depends(get_zme)):
     chunks = "await WageEmbeddingRepository.build_chunks(zme)"
     return {"count": len(chunks), "sample": chunks[:3]}
 
-@embRou.post("/rag_query", response_model=RagQueryResponse)
+@embRou.post("/rag_query", response_model=QueryRes)
 async def rag_query(
     payload: QueryReq,
     zme: ZMeDataClass = Depends(get_zme),
