@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_ai_rag_basic import QueryReq, QueryRes
 from app.service.bi_rag_service import bi_rag_query_service
 

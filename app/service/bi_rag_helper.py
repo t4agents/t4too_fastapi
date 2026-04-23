@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from openai import AsyncOpenAI
 
 from app.config import get_settings_singleton
+from app.schemas.sch_ai import JWType
 
 _settings = get_settings_singleton()
 _client = AsyncOpenAI(api_key=_settings.OPENAI_API_KEY)

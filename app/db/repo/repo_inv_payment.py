@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
 from app.db.repo.repo_utils import coerce_model_values
+from app.schemas.sch_ai import JWType
 
 
 async def list_invoice_payments(db: AsyncSession, inv_id: UUID) -> List[InvoicePaymentDB]:

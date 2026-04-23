@@ -8,7 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class PayrollEntryOut(BaseModel):
+class PEOut(BaseModel):
     id: UUID
     ten_id: Optional[UUID] = None
     biz_id: Optional[UUID] = None
@@ -63,11 +63,11 @@ class PayrollEntryOut(BaseModel):
     extra: Optional[Dict[str, Any]] = None
 
 
-class PayrollEntryAddEmployeesRequest(BaseModel):
+class PEAddEmployee(BaseModel):
     employee_ids: list[UUID]
 
 
-class PayrollEntryUpdate(BaseModel):
+class PEUpdate(BaseModel):
     id: UUID
     payroll_period_id: Optional[UUID] = None
     schedule_id: Optional[UUID] = None

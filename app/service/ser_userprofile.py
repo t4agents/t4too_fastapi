@@ -9,12 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.supabase_admin import get_supabase_admin_client
 from app.db.models.too.z_user import ZUserDB
 from app.db.repo.repo_userprofile import get_user_by_id, update_user_fields
+from app.schemas.sch_ai import JWType
 
 _log = logging.getLogger(__name__)
 
 
 async def fetch_user_profile(zjwt: JWType, db: AsyncSession) -> ZUserDB:
-    user = await get_user_by_id(db, zjwt["zuid"])
+    user = await get_user_by_id(db, zjwt.zuid)
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -24,7 +26,7 @@ async def fetch_user_profile(zjwt: JWType, db: AsyncSession) -> ZUserDB:
 
 
 async def _update_supabase_user_meta(zjwt: JWType, updates: dict[str, Any]) -> None:
-    zuid = zjwt["zuid"]
+    zuid = zjwt.zuid
     meta_updates = {}
     if "display_name" in updates:
         meta_updates["display_name"] = updates["display_name"]

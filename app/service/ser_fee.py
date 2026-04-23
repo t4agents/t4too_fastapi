@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.inv.i_fee import FeeDB
 from app.db.repo.repo_fee import create_fee as repo_create_fee
 from app.db.repo.repo_fee import get_fee_by_id, list_fees, update_fee_fields
+from app.schemas.sch_ai import JWType
 
 
 async def fetch_fees(zjwt: JWType, db: AsyncSession) -> list[FeeDB]:
-    return await list_fees(db, zjwt["zuid"])
+    return await list_fees(db, zjwt.zuid)
 
 
 async def create_or_update_fee(zjwt: JWType, db: AsyncSession, payload: dict) -> FeeDB:
@@ -23,7 +24,7 @@ async def create_or_update_fee(zjwt: JWType, db: AsyncSession, payload: dict) ->
     }
     fee_id = payload.get("id")
     if fee_id:
-        existing = await get_fee_by_id(db, fee_id, zjwt["zuid"])
+        existing = await get_fee_by_id(db, fee_id, zjwt.zuid)
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             return await update_fee_fields(db, existing, updates)

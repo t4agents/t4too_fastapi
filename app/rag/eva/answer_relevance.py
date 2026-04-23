@@ -13,6 +13,7 @@ from sqlalchemy import select
 from app.config import get_settings_singleton
 from app.db.models.ai.ai_gold_dataset import RAGEvalDatasetDB, RAGEvalResultDB, RAGEvalRunDB
 from app.llm.conn.openai_embedder import EMBED_MODEL
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_answer_relevance import (
     RagEvalAnswerRelevanceRequest,

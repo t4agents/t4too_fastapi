@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_async import get_db_admin
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_seed import SeedRefreshOut
 from app.service.ser_seed import apply_seed_defaults
 

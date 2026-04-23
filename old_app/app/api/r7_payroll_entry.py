@@ -4,9 +4,9 @@ from typing import List, Optional
 
 from app.core.dependency_injection import ZMeDataClass, get_zme_be_list
 from app.schemas.sch_payroll_entry import (
-    PayrollEntryAddEmployeesRequest,
+    PEAddEmployee,
     PayrollEntryResponse,
-    PayrollEntryUpdate,
+    PEUpdate,
 )
 from app.service.ser7_payroll_entry import (
     list_current_entry_employees,
@@ -25,7 +25,7 @@ async def list_current_entrie_employees(skip: int = Query(0, ge=0),limit: int = 
 
 @entryRou.post("/edit", response_model=PayrollEntryResponse)
 async def edit_payroll_entry(
-    payload: PayrollEntryUpdate,
+    payload: PEUpdate,
     zme: ZMeDataClass = Depends(get_zme_be_list),
 ):
     return await edit_entry(payload, zme)
@@ -33,7 +33,7 @@ async def edit_payroll_entry(
 
 @entryRou.post("/add_employees", response_model=List[PayrollEntryResponse])
 async def add_employees_to_entry(
-    payload: PayrollEntryAddEmployeesRequest,
+    payload: PEAddEmployee,
     zme: ZMeDataClass = Depends(get_zme_be_list),
 ):
     return await add_entry_employees(payload, zme)

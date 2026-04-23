@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.t4.m_payroll_period import PayrollPeriodDB
 from app.db.models.t4.m_payroll_schedule import PayrollScheduleDB
 from app.db.repo.repo_payroll_period import list_payroll_periods
-from app.service.ser_payroll_common import period_key_from_dates
+from app.service.ser_payroll_common import period_key
 
 
 async def fetch_payroll_periods(sbu_client_id: UUID, db: AsyncSession) -> list[PayrollPeriodDB]:
@@ -29,7 +29,7 @@ async def get_or_create_period_for_window(
     if period_start is None or period_end is None:
         raise HTTPException(status_code=400, detail="Payroll period window is missing")
 
-    period_key = period_key_from_dates(schedule.frequency, period_start, period_end)
+    period_key = period_key(schedule.frequency, period_start, period_end)
     result = await db.execute(
         select(PayrollPeriodDB).where(
             PayrollPeriodDB.cli_id == sbu_client_id,

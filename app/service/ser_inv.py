@@ -15,6 +15,7 @@ from app.db.repo.repo_inv_item import list_invoice_items
 from app.db.repo.repo_inv import (create_invoice,get_invoice_by_id,list_invoices,update_invoice_fields,)
 from app.db.repo.repo_inv_payment import (create_invoice_payment,list_invoice_payments,)
 from app.db.repo.repo_inv_payment import (delete_invoice_payment,get_invoice_payment_by_id,)
+from app.schemas.sch_ai import JWType
 
 _INVOICE_COLUMNS = set(InvoiceDB.__table__.columns.keys())
 _INVOICE_PAYMENT_COLUMNS = set(InvoicePaymentDB.__table__.columns.keys())
@@ -55,10 +56,10 @@ def _to_bool(value: Any) -> bool:
 def _base_ids(zjwt: JWType) -> dict[str, UUID]:
     return {
         "ten_id": zjwt["app_metadata"]["sba_ten_id"],
-        "biz_id": zjwt["zuid"],
-        "usr_id": zjwt["zuid"],
-        "cli_id": zjwt["zuid"],
-        "created_by": zjwt["zuid"],
+        "biz_id": zjwt.zuid,
+        "usr_id": zjwt.zuid,
+        "cli_id": zjwt.zuid,
+        "created_by": zjwt.zuid,
     }
 
 
@@ -189,10 +190,10 @@ async def create_inv_payment(zjwt: JWType, db: AsyncSession, payload: dict) -> I
     create_payload = {
         **filtered,
         "ten_id": zjwt["app_metadata"]["sba_ten_id"],
-        "biz_id": zjwt["zuid"],
-        "usr_id": zjwt["zuid"],
-        "cli_id": zjwt["zuid"],
-        "created_by": zjwt["zuid"],
+        "biz_id": zjwt.zuid,
+        "usr_id": zjwt.zuid,
+        "cli_id": zjwt.zuid,
+        "created_by": zjwt.zuid,
     }
     return await create_invoice_payment(db, create_payload)
 

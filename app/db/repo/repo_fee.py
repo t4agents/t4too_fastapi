@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.inv.i_fee import FeeDB
 from app.db.repo.repo_utils import coerce_model_values
+from app.schemas.sch_ai import JWType
 
 
 async def list_fees(db: AsyncSession, zjwt: JWType) -> List[FeeDB]:
@@ -19,7 +20,7 @@ async def list_fees(db: AsyncSession, zjwt: JWType) -> List[FeeDB]:
 
 async def get_fee_by_id(db: AsyncSession, fee_id: UUID, zjwt: JWType) -> Optional[FeeDB]:
     result = await db.execute(
-        select(FeeDB).where(FeeDB.id == fee_id, FeeDB.created_by == zjwt["zuid"])
+        select(FeeDB).where(FeeDB.id == fee_id, FeeDB.created_by == zjwt.zuid)
     )
     return result.scalar_one_or_none()
 

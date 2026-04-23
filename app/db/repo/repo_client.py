@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.too.z_client import ZClientDB
 from app.db.repo.repo_utils import coerce_model_values
+from app.schemas.sch_ai import JWType
 
 
 async def list_clients(db: AsyncSession, zjwt: JWType) -> List[ZClientDB]:
@@ -20,7 +21,7 @@ async def list_clients(db: AsyncSession, zjwt: JWType) -> List[ZClientDB]:
 
 async def get_client_by_id(db: AsyncSession, client_id: UUID, zjwt: JWType) -> Optional[ZClientDB]:
     result = await db.execute(
-        select(ZClientDB).where(ZClientDB.id == client_id, ZClientDB.created_by == zjwt["zuid"])
+        select(ZClientDB).where(ZClientDB.id == client_id, ZClientDB.created_by == zjwt.zuid)
     )
     return result.scalar_one_or_none()
 

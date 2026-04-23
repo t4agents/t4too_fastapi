@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.repo.bi_rag_repo import bi_search_payroll_history_by_vector
+from app.schemas.sch_ai import JWType
 from app.service.bi_rag_helper import bi_embed_query_text, bi_extract_cli_id, bi_vector_literal
 
 

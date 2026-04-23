@@ -14,11 +14,12 @@ from app.db.models.t4.m_payroll_entry import PayrollEntryDB
 from app.db.models.t4.m_payroll_schedule import PayrollScheduleDB
 from app.db.repo.repo_payroll_schedule import list_payroll_schedules
 from app.db.repo.repo_utils import coerce_model_values
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_payroll_schedule import PayrollScheduleUpsert
 from app.service.ser_payroll_common import (
-    calculate_payroll_deductions_on_2026,
-    period_key_from_dates,
-    periods_per_year_from_frequency,
+    deductions_on_2026,
+    period_key,
+    period_frequency,
 )
 from app.service.ser_payroll_period import get_or_create_period_for_window
 
@@ -132,7 +133,7 @@ async def _recalculate_entries_for_schedule(
     if not entries:
         return
 
-    periods_per_year = periods_per_year_from_frequency(schedule.frequency)
+    periods_per_year = period_frequency(schedule.frequency)
     for entry in entries:
         employment_type = (entry.employment_type or "other").lower()
         hourly_rate = entry.hourly_rate_snapshot or Decimal("0.00")
@@ -148,7 +149,7 @@ async def _recalculate_entries_for_schedule(
             base_gross = (regular_hours * hourly_rate) + (overtime_hours * hourly_rate * Decimal("1.5"))
 
         gross = base_gross.quantize(Decimal("0.01"))
-        deductions = calculate_payroll_deductions_on_2026(
+        deductions = deductions_on_2026(
             period_gross=base_gross,
             periods_per_year=periods_per_year,
             cpp_exempt=bool(entry.cpp_exempt_snapshot),
@@ -214,11 +215,11 @@ async def _create_entries_for_schedule(
         pay_date = period.pay_date
 
     if period_key is None and period_start and period_end:
-        period_key = period_key_from_dates(schedule.frequency, period_start, period_end)
+        period_key = period_key(schedule.frequency, period_start, period_end)
     if pay_date is None:
         pay_date = _pay_date_from_period(schedule, period_end)
 
-    periods_per_year = periods_per_year_from_frequency(schedule.frequency)
+    periods_per_year = period_frequency(schedule.frequency)
     for employee in employees:
         employment_type = (employee.employment_type or "other").lower()
         full_name = " ".join(part for part in [employee.first_name, employee.last_name] if part)
@@ -228,7 +229,7 @@ async def _create_entries_for_schedule(
         elif employment_type == "hourly" and employee.regular_hours is not None and employee.hourly_rate is not None:
             gross = (employee.regular_hours * employee.hourly_rate).quantize(Decimal("0.01"))
 
-        deductions = calculate_payroll_deductions_on_2026(
+        deductions = deductions_on_2026(
             period_gross=gross,
             periods_per_year=periods_per_year,
             cpp_exempt=bool(employee.cpp_exempt),

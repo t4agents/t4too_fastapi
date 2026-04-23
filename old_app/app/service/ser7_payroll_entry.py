@@ -16,7 +16,7 @@ from app.db.models.m_payroll_period import PayrollPeriod
 from app.db.models.m_payroll_schedule import PayrollSchedule
 from app.db.models.ai_embedding import Embedding384
 from app.db.repo.repo_payroll_entry import PayrollEntryRepository
-from app.schemas.sch_payroll_entry import PayrollEntryAddEmployeesRequest, PayrollEntryCreate, PayrollEntryUpdate
+from app.schemas.sch_payroll_entry import PEAddEmployee, PayrollEntryCreate, PEUpdate
 from app.service.payroll_period import get_or_create_period_for_window
 from app.service.ser5_payroll_schedule import (
     _create_entries_for_schedule,
@@ -34,7 +34,7 @@ async def list_current_entry_employees(zme: ZMeDataClass,skip: int = 0,limit: in
     return list(result.scalars().all())
 
 
-async def edit_entry(payload: PayrollEntryUpdate, zme: ZMeDataClass) -> PayrollEntry:
+async def edit_entry(payload: PEUpdate, zme: ZMeDataClass) -> PayrollEntry:
     query = select(PayrollEntry).where(PayrollEntry.id == payload.id, PayrollEntry.biz_id == zme.zbid,)
     result = await zme.zdb.execute(query)
     entry = result.scalars().first()
@@ -262,7 +262,7 @@ async def finalize_entry(zme: ZMeDataClass,):
 
 
 async def add_entry_employees(
-    payload: PayrollEntryAddEmployeesRequest,
+    payload: PEAddEmployee,
     zme: ZMeDataClass,
 ) -> List[PayrollEntry]:
     if not payload.employee_ids:

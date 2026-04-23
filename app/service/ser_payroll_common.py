@@ -56,7 +56,7 @@ ONTARIO_SURTAX_RATE_2 = Decimal("0.36")
 ONTARIO_TAX_REDUCTION_BASIC = Decimal("300.00")
 
 
-def period_key_from_dates(frequency: str | None, period_start: date, period_end: date) -> str:
+def period_key(frequency: str | None, period_start: date, period_end: date) -> str:
     freq = (frequency or "").lower()
     code = FREQUENCY_CODE_MAP.get(freq)
     if not code:
@@ -75,7 +75,7 @@ def period_key_from_dates(frequency: str | None, period_start: date, period_end:
     return f"{period_no}-{code}-{year}"
 
 
-def periods_per_year_from_frequency(frequency: str | None) -> int:
+def period_frequency(frequency: str | None) -> int:
     mapping = {
         "weekly": 52,
         "biweekly": 26,
@@ -87,7 +87,7 @@ def periods_per_year_from_frequency(frequency: str | None) -> int:
     return int(mapping.get((frequency or "").lower(), 1))
 
 
-def calculate_payroll_deductions_on_2026(
+def deductions_on_2026(
     period_gross: Decimal,
     periods_per_year: int,
     cpp_exempt: bool = False,

@@ -17,12 +17,10 @@ from app.db.models.t4.m_payroll_history import PayrollHistoryDB
 from app.db.models.t4.m_payroll_period import PayrollPeriodDB
 from app.db.models.t4.m_payroll_schedule import PayrollScheduleDB
 from app.db.repo.repo_payroll_entry import list_payroll_entries
-from app.schemas.sch_payroll_entry import PayrollEntryAddEmployeesRequest, PayrollEntryUpdate
-from app.service.ser_payroll_common import (
-    calculate_payroll_deductions_on_2026,
-    period_key_from_dates,
-    periods_per_year_from_frequency,
-)
+
+from app.schemas.sch_ai import JWType
+from app.schemas.sch_payroll_entry import PEAddEmployee, PEUpdate
+from app.service.ser_payroll_common import (deductions_on_2026, period_key, period_frequency,)
 from app.service.ser_payroll_period import get_or_create_period_for_window
 from app.service.ser_payroll_schedule import _create_entries_for_schedule, _current_period_window, _pay_date_from_period
 from app.llm.conn.openai_embedder import embed_fn
@@ -32,8 +30,8 @@ async def fetch_payroll_entries(sbu_client_id: UUID, db: AsyncSession) -> list[P
     return await list_payroll_entries(db, sbu_client_id)
 
 
-async def edit_payroll_entry(payload: PayrollEntryUpdate, zjwt: JWType, db: AsyncSession) -> PayrollEntryDB:
-    sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
+async def edit_payroll_entry(payload: PEUpdate, zjwt: JWType, db: AsyncSession) -> PayrollEntryDB:
+    sbu_client_id = zjwt.zcid
     result = await db.execute(
         select(PayrollEntryDB).where(
             PayrollEntryDB.id == payload.id,
@@ -44,11 +42,10 @@ async def edit_payroll_entry(payload: PayrollEntryUpdate, zjwt: JWType, db: Asyn
     if not entry:
         raise HTTPException(status_code=404, detail="Payroll entry not found")
 
-    immutable_fields = {"id", "biz_id", "ten_id", "usr_id", "employee_id", "schedule_id", "period_key", "cli_id"}
+    immutable_fields = {"id", "biz_id", "ten_id", "usr_id","employee_id", "schedule_id", "period_key", "cli_id"}
     updates = payload.model_dump(exclude_unset=True)
     for key, value in updates.items():
-        if key in immutable_fields:
-            continue
+        if key in immutable_fields:continue
         setattr(entry, key, value)
 
     await _recalculate_entry_deductions(entry, db, sbu_client_id)
@@ -58,7 +55,7 @@ async def edit_payroll_entry(payload: PayrollEntryUpdate, zjwt: JWType, db: Asyn
 
 
 async def add_entry_employees(
-    payload: PayrollEntryAddEmployeesRequest,
+    payload: PEAddEmployee,
     zjwt: JWType,
     db: AsyncSession,
 ) -> list[PayrollEntryDB]:
@@ -66,7 +63,8 @@ async def add_entry_employees(
         raise HTTPException(status_code=400, detail="employee_ids is required")
 
     sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
-    ten_id = _to_uuid_or_none((zjwt.get("app_metadata") or {}).get("sba_ten_id"))
+    ten_id = _to_uuid_or_none(
+        (zjwt.get("app_metadata") or {}).get("sba_ten_id"))
     zuid = _to_uuid_or_none(zjwt.get("zuid"))
 
     base_entry_result = await db.execute(
@@ -100,17 +98,20 @@ async def add_entry_employees(
         )
         schedule = schedule_result.scalar_one_or_none()
         if not schedule:
-            raise HTTPException(status_code=404, detail="Active payroll schedule not found")
+            raise HTTPException(
+                status_code=404, detail="Active payroll schedule not found")
 
         period_start, period_end = _current_period_window(schedule)
         if period_start is None or period_end is None:
-            raise HTTPException(status_code=400, detail="Payroll schedule period is not initialized")
-        period_key = period_key_from_dates(schedule.frequency, period_start, period_end)
+            raise HTTPException(
+                status_code=400, detail="Payroll schedule period is not initialized")
+        period_key = period_key(schedule.frequency, period_start, period_end)
         pay_date = _pay_date_from_period(schedule, period_end)
         schedule_id = schedule.id
 
     if not schedule:
-        raise HTTPException(status_code=404, detail="Payroll schedule not found")
+        raise HTTPException(
+            status_code=404, detail="Payroll schedule not found")
 
     period: PayrollPeriodDB | None = None
     if period_start and period_end:
@@ -124,33 +125,40 @@ async def add_entry_employees(
         period_key = period.period_key
         pay_date = period.pay_date
         if period.status == "closed":
-            raise HTTPException(status_code=409, detail="Payroll period already finalized")
+            raise HTTPException(
+                status_code=409, detail="Payroll period already finalized")
 
     employee_result = await db.execute(
         select(EmployeeDB).where(
             EmployeeDB.cli_id == sbu_client_id,
             EmployeeDB.id.in_(payload.employee_ids),
-            or_(EmployeeDB.is_deleted.is_(None), EmployeeDB.is_deleted.is_(False)),
+            or_(EmployeeDB.is_deleted.is_(None),
+                EmployeeDB.is_deleted.is_(False)),
         )
     )
     employees = list(employee_result.scalars().all())
     found_ids = {employee.id for employee in employees}
-    missing_ids = [str(employee_id) for employee_id in payload.employee_ids if employee_id not in found_ids]
+    missing_ids = [str(employee_id)
+                   for employee_id in payload.employee_ids if employee_id not in found_ids]
     if missing_ids:
-        raise HTTPException(status_code=404, detail=f"Employees not found: {', '.join(missing_ids)}")
+        raise HTTPException(
+            status_code=404, detail=f"Employees not found: {', '.join(missing_ids)}")
 
-    periods_per_year = periods_per_year_from_frequency(schedule.frequency)
+    periods_per_year = period_frequency(schedule.frequency)
     entries: list[PayrollEntryDB] = []
     for employee in employees:
         employment_type = (employee.employment_type or "other").lower()
-        full_name = " ".join(part for part in [employee.first_name, employee.last_name] if part)
+        full_name = " ".join(
+            part for part in [employee.first_name, employee.last_name] if part)
         gross = Decimal("0.00")
         if employment_type == "salary" and employee.annual_salary is not None:
-            gross = (employee.annual_salary / periods_per_year).quantize(Decimal("0.01"))
+            gross = (employee.annual_salary /
+                     periods_per_year).quantize(Decimal("0.01"))
         elif employment_type == "hourly" and employee.regular_hours is not None and employee.hourly_rate is not None:
-            gross = (employee.regular_hours * employee.hourly_rate).quantize(Decimal("0.01"))
+            gross = (employee.regular_hours *
+                     employee.hourly_rate).quantize(Decimal("0.01"))
 
-        deductions = calculate_payroll_deductions_on_2026(
+        deductions = deductions_on_2026(
             period_gross=gross,
             periods_per_year=periods_per_year,
             cpp_exempt=bool(employee.cpp_exempt),
@@ -170,8 +178,10 @@ async def add_entry_employees(
             full_name=full_name,
             annual_salary_snapshot=employee.annual_salary,
             hourly_rate_snapshot=employee.hourly_rate,
-            federal_claim_snapshot=employee.federal_claim_amount or Decimal("0.00"),
-            ontario_claim_snapshot=employee.ontario_claim_amount or Decimal("0.00"),
+            federal_claim_snapshot=employee.federal_claim_amount or Decimal(
+                "0.00"),
+            ontario_claim_snapshot=employee.ontario_claim_amount or Decimal(
+                "0.00"),
             regular_hours=employee.regular_hours,
             overtime_hours=Decimal("0.00"),
             bonus=Decimal("0.00"),
@@ -199,25 +209,28 @@ async def add_entry_employees(
 
 
 async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, str]:
-    sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
-    entries_result = await db.execute(select(PayrollEntryDB).where(PayrollEntryDB.cli_id == sbu_client_id))
+    zcid = zjwt.zcid
+    entries_result = await db.execute(select(PayrollEntryDB).where(PayrollEntryDB.cli_id == zcid))
     entries = list(entries_result.scalars().all())
     if not entries:
-        raise HTTPException(status_code=404, detail="No payroll entries to finalize")
+        raise HTTPException(
+            status_code=404, detail="No payroll entries to finalize")
 
     first_entry = entries[0]
     if first_entry.period_start is None or first_entry.period_end is None:
-        raise HTTPException(status_code=400, detail="Payroll entries are missing period_start/period_end")
+        raise HTTPException(
+            status_code=400, detail="Payroll entries are missing period_start/period_end")
 
     schedule_result = await db.execute(
         select(PayrollScheduleDB).where(
             PayrollScheduleDB.id == first_entry.schedule_id,
-            PayrollScheduleDB.cli_id == sbu_client_id,
+            PayrollScheduleDB.cli_id == zcid,
         )
     )
     schedule = schedule_result.scalar_one_or_none()
     if not schedule:
-        raise HTTPException(status_code=404, detail="Payroll schedule not found")
+        raise HTTPException(
+            status_code=404, detail="Payroll schedule not found")
     if (schedule.status or "").lower() != "active":
         raise HTTPException(
             status_code=409,
@@ -229,7 +242,7 @@ async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, 
         period_result = await db.execute(
             select(PayrollPeriodDB).where(
                 PayrollPeriodDB.id == first_entry.payroll_period_id,
-                PayrollPeriodDB.cli_id == sbu_client_id,
+                PayrollPeriodDB.cli_id == zcid,
             )
         )
         period = period_result.scalar_one_or_none()
@@ -239,10 +252,11 @@ async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, 
             schedule=schedule,
             period_start=first_entry.period_start,
             period_end=first_entry.period_end,
-            sbu_client_id=sbu_client_id,
+            sbu_client_id=zcid,
         )
     if period.status == "closed":
-        raise HTTPException(status_code=409, detail="Payroll period already finalized")
+        raise HTTPException(
+            status_code=409, detail="Payroll period already finalized")
 
     zero = Decimal("0.00")
     history_rows = [
@@ -258,8 +272,10 @@ async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, 
             pay_date=entry.pay_date,
             annual_salary_snapshot=zero if entry.excluded else entry.annual_salary_snapshot,
             hourly_rate_snapshot=zero if entry.excluded else entry.hourly_rate_snapshot,
-            federal_claim_snapshot=zero if entry.excluded else (entry.federal_claim_snapshot or zero),
-            ontario_claim_snapshot=zero if entry.excluded else (entry.ontario_claim_snapshot or zero),
+            federal_claim_snapshot=zero if entry.excluded else (
+                entry.federal_claim_snapshot or zero),
+            ontario_claim_snapshot=zero if entry.excluded else (
+                entry.ontario_claim_snapshot or zero),
             regular_hours=zero if entry.excluded else entry.regular_hours,
             overtime_hours=zero if entry.excluded else entry.overtime_hours,
             bonus=zero if entry.excluded else (entry.bonus or zero),
@@ -275,8 +291,8 @@ async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, 
             ei_exempt_snapshot=bool(entry.ei_exempt_snapshot),
             excluded=bool(entry.excluded),
             status="finalized",
-            cli_id=sbu_client_id,
-            biz_id=sbu_client_id,
+            cli_id=zcid,
+            biz_id=zcid,
             ten_id=entry.ten_id,
             usr_id=entry.usr_id,
             created_by=entry.created_by,
@@ -303,14 +319,14 @@ async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, 
         db.add_all(embedding_rows)
         await db.flush()
 
-    await db.execute(delete(PayrollEntryDB).where(PayrollEntryDB.cli_id == sbu_client_id))
+    await db.execute(delete(PayrollEntryDB).where(PayrollEntryDB.cli_id == zcid))
     await db.flush()
 
     next_start, next_end = _next_period_window(schedule.frequency, first_entry.period_start, first_entry.period_end)
     await _create_entries_for_schedule(
         schedule=schedule,
         db=db,
-        sbu_client_id=sbu_client_id,
+        sbu_client_id=zcid,
         period_start=next_start,
         period_end=next_end,
     )
@@ -319,8 +335,7 @@ async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, 
 
 
 async def _recalculate_entry_deductions(entry: PayrollEntryDB, db: AsyncSession, sbu_client_id: UUID) -> None:
-    if not entry.schedule_id:
-        return
+    if not entry.schedule_id:return
     schedule_result = await db.execute(
         select(PayrollScheduleDB).where(
             PayrollScheduleDB.id == entry.schedule_id,
@@ -331,7 +346,7 @@ async def _recalculate_entry_deductions(entry: PayrollEntryDB, db: AsyncSession,
     if not schedule:
         return
 
-    periods_per_year = periods_per_year_from_frequency(schedule.frequency)
+    periods_per_year = period_frequency(schedule.frequency)
     employment_type = (entry.employment_type or "other").lower()
     hourly_rate = entry.hourly_rate_snapshot or Decimal("0.00")
     regular_hours = entry.regular_hours or Decimal("0.00")
@@ -343,10 +358,11 @@ async def _recalculate_entry_deductions(entry: PayrollEntryDB, db: AsyncSession,
         if overtime_hours > 0 and hourly_rate > 0:
             base_gross += overtime_hours * hourly_rate * Decimal("1.5")
     else:
-        base_gross = (regular_hours * hourly_rate) + (overtime_hours * hourly_rate * Decimal("1.5"))
+        base_gross = (regular_hours * hourly_rate) + \
+            (overtime_hours * hourly_rate * Decimal("1.5"))
 
     gross = base_gross.quantize(Decimal("0.01"))
-    deductions = calculate_payroll_deductions_on_2026(
+    deductions = deductions_on_2026(
         period_gross=base_gross,
         periods_per_year=periods_per_year,
         cpp_exempt=bool(entry.cpp_exempt_snapshot),
@@ -359,7 +375,8 @@ async def _recalculate_entry_deductions(entry: PayrollEntryDB, db: AsyncSession,
     entry.ei = deductions["ei"]
     entry.tax = deductions["tax"]
     entry.total_deduction = deductions["total_deduction"]
-    entry.net = (gross - deductions["total_deduction"] + adjustment).quantize(Decimal("0.01"))
+    entry.net = (
+        gross - deductions["total_deduction"] + adjustment).quantize(Decimal("0.01"))
 
 
 def _next_period_window(frequency: str | None, period_start: date, period_end: date) -> tuple[date, date]:
@@ -373,7 +390,8 @@ def _next_period_window(frequency: str | None, period_start: date, period_end: d
         if period_start.day <= 15:
             last_day = monthrange(period_start.year, period_start.month)[1]
             return date(period_start.year, period_start.month, 16), date(period_start.year, period_start.month, last_day)
-        next_year, next_month = _next_month(period_start.year, period_start.month)
+        next_year, next_month = _next_month(
+            period_start.year, period_start.month)
         return date(next_year, next_month, 1), date(next_year, next_month, 15)
     if freq == "weekly":
         start = period_start + timedelta(days=7)
@@ -381,7 +399,8 @@ def _next_period_window(frequency: str | None, period_start: date, period_end: d
     if freq == "biweekly":
         start = period_start + timedelta(days=14)
         return start, start + timedelta(days=11)
-    raise HTTPException(status_code=400, detail=f"Unsupported payroll frequency '{freq}'")
+    raise HTTPException(
+        status_code=400, detail=f"Unsupported payroll frequency '{freq}'")
 
 
 def _next_month(year: int, month: int) -> tuple[int, int]:

@@ -107,7 +107,7 @@ async def get_zjwt(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> JWTyp
         user_metadata=user_metadata,
     )
 
-    # print("1------------", zjwt["zuid"])
+    # print("1------------", zjwt.zuid)
     # print("2------------", zjwt["app_metadata"]["sba_ten_id"])
     # print("3------------", zjwt["user_metadata"]["avatar"])
     # print("4------------", zjwt["user_metadata"]["sbu_name"])

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.t4.m_employee import EmployeeDB
 from app.db.repo.repo_utils import coerce_model_values
+from app.schemas.sch_ai import JWType
 
 
 async def list_employees(db: AsyncSession, sbu_client_id: UUID) -> List[EmployeeDB]:
@@ -25,7 +26,7 @@ async def list_employees(db: AsyncSession, sbu_client_id: UUID) -> List[Employee
 async def get_employee_by_id(db: AsyncSession, employee_id: UUID, zjwt: JWType) -> Optional[EmployeeDB]:
     result = await db.execute(
         select(EmployeeDB)
-        .where(EmployeeDB.id == employee_id, EmployeeDB.created_by == zjwt["zuid"])
+        .where(EmployeeDB.id == employee_id, EmployeeDB.created_by == zjwt.zuid)
     )
     return result.scalar_one_or_none()
 

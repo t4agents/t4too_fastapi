@@ -11,6 +11,7 @@ from app.db.repo.repo_employee import (
     list_employees,
     update_employee_fields,
 )
+from app.schemas.sch_ai import JWType
 
 
 async def fetch_employees(sbu_client_id: UUID, db: AsyncSession) -> list[EmployeeDB]:
@@ -30,7 +31,7 @@ async def create_or_update_employee(zjwt: JWType, db: AsyncSession, payload: dic
     employee_id = payload.get("id")
     updates = {k: v for k, v in payload.items() if k not in {"id", "full_name"}}
     if employee_id:
-        existing = await get_employee_by_id(db, employee_id, zjwt["zuid"])
+        existing = await get_employee_by_id(db, employee_id, zjwt.zuid)
         if existing:
             return await update_employee_fields(db, existing, updates)
     data = {**base_ids, **updates}

@@ -14,6 +14,7 @@ from app.db.repo.repo_payment_method import (
     list_payment_methods,
     update_payment_method_fields,
 )
+from app.schemas.sch_ai import JWType
 
 _log = logging.getLogger("app.http")
 
@@ -24,7 +25,7 @@ async def fetch_payment_methods(zjwt: JWType, db: AsyncSession) -> list[PaymentM
         zjwt.get("zuid"),
         (zjwt.get("app_metadata") or {}).get("sba_ten_id"),
     )
-    return await list_payment_methods(db, zjwt["zuid"])
+    return await list_payment_methods(db, zjwt.zuid)
 
 
 async def create_or_update_payment_method(
@@ -39,10 +40,10 @@ async def create_or_update_payment_method(
     )
     base_ids = {
         "ten_id": jwt_ten_id,
-        "biz_id": zjwt["zuid"],
-        "usr_id": zjwt["zuid"],
-        "cli_id": zjwt["zuid"],
-        "created_by": zjwt["zuid"],
+        "biz_id": zjwt.zuid,
+        "usr_id": zjwt.zuid,
+        "cli_id": zjwt.zuid,
+        "created_by": zjwt.zuid,
     }
     method_id = payload.get("id")
     if method_id:
@@ -52,7 +53,7 @@ async def create_or_update_payment_method(
             zjwt.get("zuid"),
             jwt_ten_id,
         )
-        existing = await get_payment_method_by_id(db, method_id, zjwt["zuid"])
+        existing = await get_payment_method_by_id(db, method_id, zjwt.zuid)
         updates = {k: v for k, v in payload.items() if k != "id"}
         if existing:
             _log.info(
@@ -66,7 +67,7 @@ async def create_or_update_payment_method(
                 db,
                 existing,
                 updates,
-                actor_id=zjwt["zuid"],
+                actor_id=zjwt.zuid,
                 expected_ten_id=jwt_ten_id,
             )
         _log.warning(

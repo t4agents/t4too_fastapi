@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from app.db.models.ai.ai_gold_dataset import RAGEvalDatasetDB, RAGEvalResultDB, RAGEvalRunDB
 from app.llm.conn.openai_embedder import EMBED_MODEL, embed_fn
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_answer_similarity import (
     RagEvalAnswerSimilarityRequest,
