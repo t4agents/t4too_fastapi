@@ -15,7 +15,7 @@ _log = logging.getLogger(__name__)
 
 
 async def fetch_homeinfo(
-    zjwt: dict,
+    zjwt: JWType,
     db: AsyncSession,
 ) -> tuple[ZUserDB, ZBizEntityDB | None]:
     _log.info("dashboard fetch start sub=%s", zjwt["zuid"])

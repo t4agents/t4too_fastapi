@@ -32,7 +32,7 @@ async def fetch_payroll_entries(sbu_client_id: UUID, db: AsyncSession) -> list[P
     return await list_payroll_entries(db, sbu_client_id)
 
 
-async def edit_payroll_entry(payload: PayrollEntryUpdate, zjwt: dict, db: AsyncSession) -> PayrollEntryDB:
+async def edit_payroll_entry(payload: PayrollEntryUpdate, zjwt: JWType, db: AsyncSession) -> PayrollEntryDB:
     sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
     result = await db.execute(
         select(PayrollEntryDB).where(
@@ -59,7 +59,7 @@ async def edit_payroll_entry(payload: PayrollEntryUpdate, zjwt: dict, db: AsyncS
 
 async def add_entry_employees(
     payload: PayrollEntryAddEmployeesRequest,
-    zjwt: dict,
+    zjwt: JWType,
     db: AsyncSession,
 ) -> list[PayrollEntryDB]:
     if not payload.employee_ids:
@@ -198,7 +198,7 @@ async def add_entry_employees(
     return entries
 
 
-async def finalize_payroll_entries(zjwt: dict, db: AsyncSession) -> dict[str, str]:
+async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, str]:
     sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
     entries_result = await db.execute(select(PayrollEntryDB).where(PayrollEntryDB.cli_id == sbu_client_id))
     entries = list(entries_result.scalars().all())

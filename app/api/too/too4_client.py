@@ -1,5 +1,5 @@
 from uuid import UUID
-
+from app.schemas.sch_ai import JWType
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,7 +39,7 @@ def _to_out(client: ZClientDB) -> ClientOut:
 
 @clientRou.get("/get_client_list", response_model=list[ClientOut])
 async def get_clients(
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     clients = await fetch_clients(zjwt, db)
@@ -49,7 +49,7 @@ async def get_clients(
 @clientRou.post("/post_client", response_model=ClientOut)
 async def post_client(
     payload: ClientCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     client = await create_or_update_client(zjwt, db, payload.model_dump(exclude_unset=True))

@@ -13,7 +13,7 @@ seedRou = APIRouter()
 
 @seedRou.post("/seed/refresh", response_model=SeedRefreshOut)
 async def post_seed_refresh(
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
     summary = await apply_seed_defaults(zjwt, db, reset=False)

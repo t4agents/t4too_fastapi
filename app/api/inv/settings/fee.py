@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.inv.i_fee import FeeDB
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_fee import FeeCreate, FeeOut
 from app.service.ser_fee import create_or_update_fee, fetch_fees
 
@@ -24,7 +25,7 @@ def _to_out(fee: FeeDB) -> FeeOut:
 
 @feeRou.get("/get_fee_list", response_model=list[FeeOut])
 async def get_fees(
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     # zuid = UUID(zjwt)
@@ -35,7 +36,7 @@ async def get_fees(
 @feeRou.post("/create_fee", response_model=FeeOut)
 async def post_fee(
     payload: FeeCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     fee = await create_or_update_fee(zjwt, db, payload.model_dump(exclude_unset=True))

@@ -52,7 +52,7 @@ def _to_bool(value: Any) -> bool:
     return bool(value)
 
 
-def _base_ids(zjwt: dict) -> dict[str, UUID]:
+def _base_ids(zjwt: JWType) -> dict[str, UUID]:
     return {
         "ten_id": zjwt["app_metadata"]["sba_ten_id"],
         "biz_id": zjwt["zuid"],
@@ -62,7 +62,7 @@ def _base_ids(zjwt: dict) -> dict[str, UUID]:
     }
 
 
-async def fetch_invoice_by_id(zjwt: dict, db: AsyncSession, inv_id: UUID) -> InvoiceAggregate | None:
+async def fetch_invoice_by_id(zjwt: JWType, db: AsyncSession, inv_id: UUID) -> InvoiceAggregate | None:
     inv = await get_invoice_by_id(db, inv_id)
     if not inv:return None
     items, payments = await asyncio.gather(
@@ -72,7 +72,7 @@ async def fetch_invoice_by_id(zjwt: dict, db: AsyncSession, inv_id: UUID) -> Inv
     return InvoiceAggregate(invoice=inv, items=items, payments=payments)
 
 
-async def create_or_update_invoice(zjwt: dict, db: AsyncSession, payload: dict) -> InvoiceDB:
+async def create_or_update_invoice(zjwt: JWType, db: AsyncSession, payload: dict) -> InvoiceDB:
     data = dict(payload)
     inv_id = _to_uuid(data.pop("inv_id", None) or data.get("id"))
     if inv_id:
@@ -163,7 +163,7 @@ async def recalculate_invoice_payment_summary(db: AsyncSession, inv_id: UUID) ->
     await update_invoice_fields(db, inv, updates)
 
 
-async def create_inv_payment(zjwt: dict, db: AsyncSession, payload: dict) -> InvoicePaymentDB:
+async def create_inv_payment(zjwt: JWType, db: AsyncSession, payload: dict) -> InvoicePaymentDB:
     data = dict(payload)
 
     inv_id = _to_uuid(data.get("inv_id"))
@@ -197,7 +197,7 @@ async def create_inv_payment(zjwt: dict, db: AsyncSession, payload: dict) -> Inv
     return await create_invoice_payment(db, create_payload)
 
 
-async def delete_inv_payment(zjwt: dict, db: AsyncSession, payment_id: UUID) -> UUID:
+async def delete_inv_payment(zjwt: JWType, db: AsyncSession, payment_id: UUID) -> UUID:
     payment = await get_invoice_payment_by_id(db, payment_id, zjwt)
     if not payment:
         raise ValueError("Invoice payment not found")

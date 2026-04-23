@@ -1,4 +1,5 @@
 from uuid import UUID
+from app.schemas.sch_ai import JWType
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,7 @@ def _to_out(item: ItemDB) -> ItemOut:
 
 @itemRou.get("/get_item_list", response_model=list[ItemOut])
 async def get_items(
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
     items = await fetch_items(zjwt, db)
@@ -40,7 +41,7 @@ async def get_items(
 @itemRou.post("/post_item", response_model=ItemOut)
 async def post_item(
     payload: ItemCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
     item = await create_or_update_item(zjwt, db, payload.model_dump(exclude_unset=True))

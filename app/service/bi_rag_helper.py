@@ -12,7 +12,7 @@ _client = AsyncOpenAI(api_key=_settings.OPENAI_API_KEY)
 _EMBED_MODEL = "text-embedding-3-small"
 
 
-def bi_extract_cli_id(zjwt: dict) -> UUID:
+def bi_extract_cli_id(zjwt: JWType) -> UUID:
     user_metadata = zjwt.get("user_metadata")
     if not isinstance(user_metadata, dict):
         raise HTTPException(status_code=400, detail="Missing user_metadata in JWT.")

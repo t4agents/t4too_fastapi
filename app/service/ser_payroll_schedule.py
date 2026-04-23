@@ -28,7 +28,7 @@ async def fetch_payroll_schedules(sbu_client_id: UUID, db: AsyncSession) -> list
 
 
 async def create_or_update_payroll_schedule(
-    zjwt: dict,
+    zjwt: JWType,
     db: AsyncSession,
     payload: PayrollScheduleUpsert,
 ) -> PayrollScheduleDB:

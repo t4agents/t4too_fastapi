@@ -3,9 +3,9 @@ import time
 from fastapi import APIRouter, Depends
 
 from app.core.dependency_injection import ZMeDataClass, get_zme
-from app.schemas.sch_ai_embedding import (
+from app.schemas.sch_ai_rag_basic import (
     RagAnswerResponse,
-    RagQueryRequest,
+    QueryReq,
     RagQueryResponse,
     RagRerankAnswerResponse,
 )
@@ -26,7 +26,7 @@ async def build_chunks(zme: ZMeDataClass = Depends(get_zme)):
 
 @embRou.post("/rag_query", response_model=RagQueryResponse)
 async def rag_query(
-    payload: RagQueryRequest,
+    payload: QueryReq,
     zme: ZMeDataClass = Depends(get_zme),
 ):
     return await rag_query_service(payload, zme)
@@ -34,7 +34,7 @@ async def rag_query(
 
 @embRou.post("/rag_answer", response_model=RagAnswerResponse)
 async def rag_answer(
-    payload: RagQueryRequest,
+    payload: QueryReq,
     zme: ZMeDataClass = Depends(get_zme),
 ):
     start = time.perf_counter()
@@ -65,7 +65,7 @@ async def rag_answer(
 
 @embRou.post("/rag_answer_rerank", response_model=RagRerankAnswerResponse)
 async def rag_answer_rerank(
-    payload: RagQueryRequest,
+    payload: QueryReq,
     zme: ZMeDataClass = Depends(get_zme),
 ):
     start = time.perf_counter()

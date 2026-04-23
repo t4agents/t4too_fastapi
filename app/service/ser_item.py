@@ -9,11 +9,11 @@ from app.db.repo.repo_item import create_item as repo_create_item
 from app.db.repo.repo_item import get_item_by_id, list_items, update_item_fields
 
 
-async def fetch_items(zjwt: dict, db: AsyncSession) -> list[ItemDB]:
+async def fetch_items(zjwt: JWType, db: AsyncSession) -> list[ItemDB]:
     return await list_items(db, zjwt)
 
 
-async def create_or_update_item(zjwt: dict, db: AsyncSession, payload: dict) -> ItemDB:
+async def create_or_update_item(zjwt: JWType, db: AsyncSession, payload: dict) -> ItemDB:
     base_ids = {
         "ten_id": zjwt["app_metadata"]["sba_ten_id"],
         "biz_id": zjwt["zuid"],

@@ -9,7 +9,7 @@ from app.service.bi_rag_helper import bi_embed_query_text, bi_extract_cli_id, bi
 async def bi_rag_query_service(
     query: str,
     top_k: int,
-    zjwt: dict,
+    zjwt: JWType,
     db: AsyncSession,
 ) -> dict:
     cli_id = bi_extract_cli_id(zjwt)

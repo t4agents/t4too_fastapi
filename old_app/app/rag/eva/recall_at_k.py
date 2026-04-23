@@ -10,7 +10,7 @@ from app.db.db_async import T4DbSession
 from app.db.models.ai_gold_dataset import RAGEvalDatasetDB, RAGEvalResultDB, RAGEvalRunDB
 from app.db.models.m_payroll_history import PayrollHistory
 from app.llm.conn.openai_embedder import EMBED_MODEL
-from app.schemas.sch_ai_embedding import RagQueryRequest
+from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_recall import RagEvalRecallRequest, RagEvalRecallResponse, RagEvalRecallRow
 from app.service.ser_ai_embedding import rag_answer_rerank
 
@@ -63,7 +63,7 @@ async def run_recall_at_k(payload: RagEvalRecallRequest) -> RagEvalRecallRespons
 
             zme = ZMeDataClass(ztid=ten_id, zbid=biz_id, zuid=user_id, zdb=session)
 
-            rag_payload = RagQueryRequest(query=row.question, top_k=payload.top_k)
+            rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
             logger.info("===recall:embedding_start")
             rag_response = await rag_answer_rerank(rag_payload, zme)
             evidence = (rag_response or {}).get("evidence") or []

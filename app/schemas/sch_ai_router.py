@@ -2,7 +2,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from app.schemas.sch_ai_embedding import RagRerankAnswerResponse
+from app.schemas.sch_ai_rag_basic import RagRerankAnswerResponse
 
 
 class RouterQueryRequest(BaseModel):

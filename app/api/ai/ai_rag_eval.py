@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.schemas.sch_ai import JWType
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
@@ -32,7 +33,7 @@ from app.schemas.sch_ai_rag_overall import RagEvalOverallRequest, RagEvalOverall
 from app.schemas.sch_ai_rag_precision import RagEvalPrecisionRequest, RagEvalPrecisionResponse
 from app.schemas.sch_ai_rag_recall import RagEvalRecallRequest, RagEvalRecallResponse
 from app.schemas.sch_ai_rag_run_rfr import RagEvalRunRFRRequest, RagEvalRunRFRResponse
-from app.service.ser_ai_context import ai_context_from_zjwt
+# from app.service.ser_ai_context import ai_context_from_zjwt
 from app.service.ser_ai_gold_dataset import create_gold_dataset, list_gold_dataset, update_gold_dataset
 from app.service.ser_ai_rag_eval import run_rag_eval
 
@@ -54,7 +55,7 @@ def _to_gold_out(row) -> GoldDatasetOut:
 @ragEvalRou.get("/dataset/list", response_model=list[GoldDatasetOut])
 async def dataset_list(
     limit: int = Query(200, ge=1, le=1000),
-    _zjwt: dict = Depends(get_zjwt),
+    _zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     rows = await list_gold_dataset(limit, db)
@@ -64,7 +65,7 @@ async def dataset_list(
 @ragEvalRou.post("/dataset/create", response_model=GoldDatasetOut)
 async def dataset_create(
     payload: GoldDatasetCreateRequest,
-    _zjwt: dict = Depends(get_zjwt),
+    _zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     row = await create_gold_dataset(payload, db)
@@ -74,7 +75,7 @@ async def dataset_create(
 @ragEvalRou.post("/dataset/update", response_model=GoldDatasetOut)
 async def dataset_update(
     payload: GoldDatasetUpdateRequest,
-    _zjwt: dict = Depends(get_zjwt),
+    _zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     row = await update_gold_dataset(payload, db)
@@ -84,7 +85,7 @@ async def dataset_update(
 @ragEvalRou.post("/run", response_model=RagEvalResponse)
 async def run_rag_eval_endpoint(
     payload: RagEvalRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -94,7 +95,7 @@ async def run_rag_eval_endpoint(
 @ragEvalRou.post("/run-judge", response_model=RagEvalResponse)
 async def run_rag_eval_judge_endpoint(
     payload: RagEvalRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -105,7 +106,7 @@ async def run_rag_eval_judge_endpoint(
 @ragEvalRou.post("/run-heuristic", response_model=RagEvalResponse)
 async def run_rag_eval_heuristic_endpoint(
     payload: RagEvalRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -116,7 +117,7 @@ async def run_rag_eval_heuristic_endpoint(
 @ragEvalRou.post("/run-summary", response_model=RagEvalResponse)
 async def run_rag_eval_summary_endpoint(
     payload: RagEvalRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -127,7 +128,7 @@ async def run_rag_eval_summary_endpoint(
 @ragEvalRou.post("/recall_at_k", response_model=RagEvalRecallResponse)
 async def run_rag_eval_recall_at_k_endpoint(
     payload: RagEvalRecallRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -137,7 +138,7 @@ async def run_rag_eval_recall_at_k_endpoint(
 @ragEvalRou.post("/precision_at_k", response_model=RagEvalPrecisionResponse)
 async def run_rag_eval_precision_at_k_endpoint(
     payload: RagEvalPrecisionRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -147,7 +148,7 @@ async def run_rag_eval_precision_at_k_endpoint(
 @ragEvalRou.post("/faithfulness", response_model=RagEvalFaithfulnessResponse)
 async def run_rag_eval_faithfulness_endpoint(
     payload: RagEvalFaithfulnessRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -157,7 +158,7 @@ async def run_rag_eval_faithfulness_endpoint(
 @ragEvalRou.post("/answer_similarity", response_model=RagEvalAnswerSimilarityResponse)
 async def run_rag_eval_answer_similarity_endpoint(
     payload: RagEvalAnswerSimilarityRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -167,7 +168,7 @@ async def run_rag_eval_answer_similarity_endpoint(
 @ragEvalRou.post("/answer_relevance", response_model=RagEvalAnswerRelevanceResponse)
 async def run_rag_eval_answer_relevance_endpoint(
     payload: RagEvalAnswerRelevanceRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -177,7 +178,7 @@ async def run_rag_eval_answer_relevance_endpoint(
 @ragEvalRou.post("/run_recall_faithfulness_relevance", response_model=RagEvalRunRFRResponse)
 async def run_rag_eval_recall_faithfulness_relevance_endpoint(
     payload: RagEvalRunRFRRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -218,7 +219,7 @@ async def run_rag_eval_recall_faithfulness_relevance_endpoint(
 @ragEvalRou.post("/run_overall_score", response_model=RagEvalOverallResponse)
 async def run_rag_eval_overall_score_endpoint(
     payload: RagEvalOverallRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)

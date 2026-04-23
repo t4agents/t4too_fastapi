@@ -3,7 +3,7 @@ from typing import Any, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
-class RagQueryRequest(BaseModel):
+class QueryReq(BaseModel):
     query: str = Field(..., min_length=1)
     top_k: int = Field(default=5, ge=1)
 

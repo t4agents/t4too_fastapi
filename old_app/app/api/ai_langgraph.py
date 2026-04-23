@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.core.dependency_injection import ZMeDataClass, get_zme
-from app.schemas.sch_ai_embedding import RagRerankAnswerResponse
+from app.schemas.sch_ai_rag_basic import RagRerankAnswerResponse
 from app.schemas.sch_ai_router import RouterQueryRequest
 from app.service.ser_ai_router import route_and_answer as route_and_answer_service
 

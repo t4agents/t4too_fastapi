@@ -8,6 +8,7 @@ from app.db.conn.db_rls import get_db_rls
 from app.db.models.inv.i_nvoice import InvoiceDB
 from app.db.models.inv.i_nvoice_item import InvoiceItemDB
 from app.db.models.inv.i_nvoice_payment import InvoicePaymentDB
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_inv import InvCreate, InvOut, InvPaymentCreate, InvPaymentOut
 from app.service.ser_inv import (create_or_update_invoice, create_inv_payment,
                                  delete_inv_payment,
@@ -116,7 +117,7 @@ def _to_item_out(item: InvoiceItemDB) -> dict:
 
 @inv2Rou.get("/get_inv_list", response_model=list[InvOut])
 async def get_invoices(
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     invs = await fetch_invoices(db)
@@ -126,7 +127,7 @@ async def get_invoices(
 @inv2Rou.get("/get_inv_one", response_model=InvOut)
 async def get_invoice_one(
     inv_id: str,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     inv_uuid = _parse_uuid_or_400(inv_id, "inv_id")
@@ -143,7 +144,7 @@ async def get_invoice_one(
 @inv2Rou.post("/post_inv_one", response_model=InvOut)
 async def post_invoice_one(
     payload: InvCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     inv = await create_or_update_invoice(zjwt, db, payload.model_dump(exclude_unset=True))
@@ -153,7 +154,7 @@ async def post_invoice_one(
 @inv2Rou.get("/get_inv_payment_list", response_model=list[InvPaymentOut])
 async def get_invoice_payment_list(
     inv_id: str,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     inv_uuid = _parse_uuid_or_400(inv_id, "inv_id")
@@ -164,7 +165,7 @@ async def get_invoice_payment_list(
 @inv2Rou.post("/create_inv_payment", response_model=InvPaymentOut)
 async def post_invoice_payment(
     payload: InvPaymentCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     try:
@@ -178,7 +179,7 @@ async def post_invoice_payment(
 @inv2Rou.delete("/delete_inv_payment")
 async def delete_invoice_payment(
     payment_id: str,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     payment_uuid = _parse_uuid_or_400(payment_id, "payment_id")

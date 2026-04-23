@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.t4.m_payroll_schedule import PayrollScheduleDB
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_payroll_schedule import PayrollScheduleOut, PayrollScheduleUpsert
 from app.service.ser_payroll_schedule import create_or_update_payroll_schedule, fetch_payroll_schedules
 
@@ -21,10 +22,11 @@ def _to_db_dict(payroll_schedule: PayrollScheduleDB) -> dict[str, Any]:
 
 @scheduleRou.get("/get_payroll_schedule_list", response_model=list[PayrollScheduleOut])
 async def get_payroll_schedule_list(
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    sbu_client_id = zjwt["user_metadata"]["sbu_client_id"]
+    sbu_client_id = zjwt.zcid
+    if not sbu_client_id:return []
     schedules = await fetch_payroll_schedules(sbu_client_id, db)
     return [PayrollScheduleOut(**_to_db_dict(schedule)) for schedule in schedules]
 
@@ -32,7 +34,7 @@ async def get_payroll_schedule_list(
 @scheduleRou.post("/post_payroll_schedule", response_model=PayrollScheduleOut)
 async def post_payroll_schedule(
     payload: PayrollScheduleUpsert,
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     schedule = await create_or_update_payroll_schedule(zjwt, db, payload)

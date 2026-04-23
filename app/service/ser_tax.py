@@ -9,11 +9,11 @@ from app.db.repo.repo_tax import create_tax as repo_create_tax
 from app.db.repo.repo_tax import get_tax_by_id, list_taxes, update_tax_fields
 
 
-async def fetch_taxes(zjwt: dict, db: AsyncSession) -> list[TaxDB]:
+async def fetch_taxes(zjwt: JWType, db: AsyncSession) -> list[TaxDB]:
     return await list_taxes(db, zjwt)
 
 
-async def create_or_update_tax(zjwt: dict, db: AsyncSession, payload: dict) -> TaxDB:
+async def create_or_update_tax(zjwt: JWType, db: AsyncSession, payload: dict) -> TaxDB:
     base_ids = {
         "ten_id": zjwt["zuid"],
         "biz_id": zjwt["zuid"],

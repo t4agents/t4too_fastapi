@@ -13,7 +13,7 @@ from app.db.repo.repo_userprofile import get_user_by_id, update_user_fields
 _log = logging.getLogger(__name__)
 
 
-async def fetch_user_profile(zjwt: dict, db: AsyncSession) -> ZUserDB:
+async def fetch_user_profile(zjwt: JWType, db: AsyncSession) -> ZUserDB:
     user = await get_user_by_id(db, zjwt["zuid"])
     if not user:
         raise HTTPException(
@@ -23,7 +23,7 @@ async def fetch_user_profile(zjwt: dict, db: AsyncSession) -> ZUserDB:
     return user
 
 
-async def _update_supabase_user_meta(zjwt: dict, updates: dict[str, Any]) -> None:
+async def _update_supabase_user_meta(zjwt: JWType, updates: dict[str, Any]) -> None:
     zuid = zjwt["zuid"]
     meta_updates = {}
     if "display_name" in updates:
@@ -49,7 +49,7 @@ async def _update_supabase_user_meta(zjwt: dict, updates: dict[str, Any]) -> Non
         ) from exc
 
 
-async def update_user_profile(zjwt: dict, db: AsyncSession, updates: dict) -> ZUserDB:
+async def update_user_profile(zjwt: JWType, db: AsyncSession, updates: dict) -> ZUserDB:
     user = await fetch_user_profile(zjwt, db)
     user = await update_user_fields(db, user, updates)
     await _update_supabase_user_meta(zjwt, updates)

@@ -10,7 +10,7 @@ from app.db.models.too.z_client import ZClientDB
 from app.db.repo.repo_utils import coerce_model_values
 
 
-async def list_clients(db: AsyncSession, zjwt: dict) -> List[ZClientDB]:
+async def list_clients(db: AsyncSession, zjwt: JWType) -> List[ZClientDB]:
     result = await db.execute(
         select(ZClientDB)
         .order_by(ZClientDB.created_at.desc())
@@ -18,7 +18,7 @@ async def list_clients(db: AsyncSession, zjwt: dict) -> List[ZClientDB]:
     return list(result.scalars().all())
 
 
-async def get_client_by_id(db: AsyncSession, client_id: UUID, zjwt: dict) -> Optional[ZClientDB]:
+async def get_client_by_id(db: AsyncSession, client_id: UUID, zjwt: JWType) -> Optional[ZClientDB]:
     result = await db.execute(
         select(ZClientDB).where(ZClientDB.id == client_id, ZClientDB.created_by == zjwt["zuid"])
     )

@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from app.core.dependency_injection import ZMeDataClass, get_zme
-from app.schemas.sch_ai_embedding import RagRerankAnswerResponse
+from app.schemas.sch_ai import JWType
+from app.schemas.sch_ai_rag_basic import RagRerankAnswerResponse
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest, FeedbackCreateResponse
 from app.schemas.sch_ai_router import RouterQueryRequest
 from app.service.ser_ai_feedback import log_feedback_event

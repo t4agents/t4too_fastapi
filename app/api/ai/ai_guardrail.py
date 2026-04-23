@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.schemas.sch_ai import JWType
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,10 +12,11 @@ from app.schemas.sch_ai_guardrail import (
     GuardrailQueryRequest,
     GuardrailRateResponse,
 )
-from app.service.ser_ai_context import ai_context_from_zjwt
+# from app.service.ser_ai_context import ai_context_from_zjwt
 from app.service.ser_ai_guardrail import compute_rate, fetch_values
 
 guardrailRou = APIRouter()
+
 
 
 def _percentile(values: list[float], percentile: float) -> float | None:
@@ -70,7 +72,7 @@ def _cost_stats(values: list[float]) -> GuardrailCostResponse:
 @guardrailRou.post("/hallucination_rate", response_model=GuardrailRateResponse)
 async def hallucination_rate(
     payload: GuardrailQueryRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -81,7 +83,7 @@ async def hallucination_rate(
 @guardrailRou.post("/refusal_rate", response_model=GuardrailRateResponse)
 async def refusal_rate(
     payload: GuardrailQueryRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -92,7 +94,7 @@ async def refusal_rate(
 @guardrailRou.post("/fallback_rate", response_model=GuardrailRateResponse)
 async def fallback_rate(
     payload: GuardrailQueryRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -103,7 +105,7 @@ async def fallback_rate(
 @guardrailRou.post("/latency", response_model=GuardrailLatencyResponse)
 async def latency(
     payload: GuardrailQueryRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)
@@ -114,7 +116,7 @@ async def latency(
 @guardrailRou.post("/cost", response_model=GuardrailCostResponse)
 async def cost(
     payload: GuardrailQueryRequest,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     ctx = ai_context_from_zjwt(zjwt, db)

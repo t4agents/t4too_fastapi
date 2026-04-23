@@ -1,5 +1,7 @@
 import json
 import logging
+from app.schemas.sch_ai import JWType
+
 import re
 from datetime import datetime
 from typing import Any
@@ -10,7 +12,7 @@ from openai import AsyncOpenAI
 
 from app.config import get_settings_singleton
 from app.db.models.ai.ai_guardrail import GuardrailEventDB
-from app.service.ser_ai_context import AIContext
+
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
 )
@@ -273,7 +275,7 @@ async def log_rag_guardrail(
     )
 
 
-def _apply_filters(stmt, req, ctx: AIContext):
+def _apply_filters(stmt, req, zjwt: JWType):
     stmt = stmt.where(GuardrailEventDB.biz_id == ctx.biz_id)
     stmt = stmt.where(GuardrailEventDB.ten_id == ctx.ten_id)
     if req.start_ts:
@@ -293,7 +295,7 @@ def _apply_filters(stmt, req, ctx: AIContext):
     return stmt
 
 
-async def compute_rate(db: AsyncSession, field_name: str, req, ctx: AIContext) -> tuple[int, int, float | None]:
+async def compute_rate(db: AsyncSession, field_name: str, req, zjwt: JWType) -> tuple[int, int, float | None]:
     field = getattr(GuardrailEventDB, field_name)
     total_expr = func.count(case((field.is_not(None), 1)))
     flagged_expr = func.count(case((field.is_(True), 1)))
@@ -306,7 +308,7 @@ async def compute_rate(db: AsyncSession, field_name: str, req, ctx: AIContext) -
     return total, flagged, rate
 
 
-async def fetch_values(db: AsyncSession, field_name: str, req, ctx: AIContext) -> list[float]:
+async def fetch_values(db: AsyncSession, field_name: str, req, zjwt: JWType) -> list[float]:
     field = getattr(GuardrailEventDB, field_name)
     stmt = select(field).where(field.is_not(None))
     stmt = _apply_filters(stmt, req, ctx).order_by(GuardrailEventDB.created_at.desc())

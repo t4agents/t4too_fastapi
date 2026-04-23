@@ -1,5 +1,6 @@
 from uuid import UUID
 import logging
+from app.schemas.sch_ai import JWType
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +28,7 @@ def _to_out(tax: TaxDB) -> TaxOut:
 @taxRou.get("/get_tax_list", response_model=list[TaxOut])
 async def get_taxes(
     decoded: dict = Depends(get_jwks_decoded),
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     taxes = await fetch_taxes(zjwt, db)
@@ -37,7 +38,7 @@ async def get_taxes(
 @taxRou.post("/post_tax", response_model=TaxOut)
 async def post_tax(
     payload: TaxCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     tax = await create_or_update_tax(zjwt, db, payload.model_dump(exclude_unset=True))

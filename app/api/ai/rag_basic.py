@@ -12,38 +12,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
-from app.schemas.sch_ai_rag_basic import (
-    RagAnswerResponse,
-    QueryReq,
-    RagQueryResponse,
-    RagRerankAnswerResponse,
-)
+from app.schemas.sch_ai import JWType
+from app.schemas.sch_ai_rag_basic import (RagAnswerResponse,QueryReq,RagQueryResponse,RagRerankAnswerResponse,)
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest, FeedbackCreateResponse
-from app.service.ser_ai_embedding import (
-    minimize_evidence_for_llm,
+from app.service.ser_ai_embedding import (minimize_evidence_for_llm,
     # rag_answer as rag_answer_service,
     # rag_answer_rerank as rag_answer_rerank_service,
     rag_query as rag_query_service,
 )
 from app.service.ser_ai_feedback import log_feedback_event
 from app.service.ser_ai_guardrail import log_rag_guardrail
-from app.schemas.sch_ai import JWType
 
-
-aiRagRou = APIRouter()
+ragBasicRou = APIRouter()
 logger = logging.getLogger("app.http")
 
 
-def _format_sse(event: str, data: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-
-
-def _format_sse_comment(comment: str) -> str:
-    return f": {comment}\n\n"
-
-
-@aiRagRou.post("/rag_query", response_model=RagQueryResponse)
-async def rag_query(
+@ragBasicRou.post("/rag_cosine", response_model=RagQueryResponse)
+async def rag_query_cosine(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
@@ -87,15 +72,14 @@ async def rag_query(
 #     return response
 
 
-# @aiRagRou.post("/rag_answer_rerank", response_model=RagRerankAnswerResponse)
+# @ragBasicRou.post("/rag_answer_rerank", response_model=RagRerankAnswerResponse)
 # async def rag_answer_rerank(
-#     payload: RagQueryRequest,
+#     payload: QueryReq,
 #     zjwt: JWType = Depends(get_zjwt),
 #     db: AsyncSession = Depends(get_db_rls),
 # ):
-#     ctx = ai_context_from_zjwt(zjwt, db)
 #     start = time.perf_counter()
-#     response = await rag_answer_rerank_service(payload, ctx)
+#     response = await rag_answer_rerank_service(payload, zjwt, db=db)
 #     latency_ms = (time.perf_counter() - start) * 1000
 
 #     guardrail_meta = response.pop("_guardrail", None)
@@ -103,9 +87,9 @@ async def rag_query(
 #         guardrail_evidence = minimize_evidence_for_llm(response.get("evidence") or [], payload.query)
 #         await log_rag_guardrail(
 #             db,
-#             ten_id=ctx.ten_id,
-#             biz_id=ctx.biz_id,
-#             user_id=ctx.user_id,
+#             ten_id=zjwt.ztid,
+#             biz_id=zjwt.zbid,
+#             user_id=zjwt.zuid,
 #             route="rag_answer_rerank",
 #             question=payload.query,
 #             answer=response.get("answer") or "",

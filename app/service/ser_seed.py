@@ -28,6 +28,7 @@ from app.db.seed_catalog import (
     SEED_VERSION,
     TAX_TEMPLATES,
 )
+from app.schemas.sch_ai import JWType
 
 SEED_NAMESPACE = UUID("a9c57b13-0f0b-4ef2-b154-27b5957b08db")
 _log = logging.getLogger(__name__)
@@ -132,11 +133,13 @@ async def _delete_rows_by_ids(
 
 
 async def apply_seed_defaults(
-    zuid: UUID,
+    zjwt: JWType,
     db: AsyncSession,
     *,
     reset: bool = False,
 ) -> dict[str, Any]:
+    zuid = zjwt.zuid
+    if not zuid: raise ValueError("Invalid JWT: missing zuid")
     _log.info("seed apply start sub=%s reset=%s", zuid, reset)
     user = await get_user_by_id(db, zuid)
     email = user.email if user and user.email else "invoaice@gmail.com"

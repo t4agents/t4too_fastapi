@@ -1,4 +1,5 @@
 from uuid import UUID
+from app.schemas.sch_ai import JWType
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +26,7 @@ def _to_out(method: PaymentMethodDB) -> PaymentMethodOut:
 
 @pmRou.get("/get_pm_list", response_model=list[PaymentMethodOut])
 async def get_payment_methods(
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     methods = await fetch_payment_methods(zjwt, db)
@@ -35,7 +36,7 @@ async def get_payment_methods(
 @pmRou.post("/post_pm", response_model=PaymentMethodOut)
 async def post_payment_method(
     payload: PaymentMethodCreate,
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     method = await create_or_update_payment_method(zjwt, db, payload.model_dump(exclude_unset=True))

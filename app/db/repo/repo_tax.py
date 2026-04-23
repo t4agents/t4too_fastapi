@@ -13,7 +13,7 @@ from app.db.repo.repo_utils import coerce_model_values
 _log = logging.getLogger("app.http")
 
 
-async def list_taxes(db: AsyncSession, zjwt: dict) -> List[TaxDB]:
+async def list_taxes(db: AsyncSession, zjwt: JWType) -> List[TaxDB]:
     result = await db.execute(
         select(TaxDB).order_by(TaxDB.created_at.desc())
     )
@@ -21,7 +21,7 @@ async def list_taxes(db: AsyncSession, zjwt: dict) -> List[TaxDB]:
     _log.info("list_taxes result_count=%s zuid=%s", len(rows), zjwt["zuid"])
     return rows
 
-async def get_tax_by_id(db: AsyncSession, tax_id: UUID, zjwt: dict) -> Optional[TaxDB]:
+async def get_tax_by_id(db: AsyncSession, tax_id: UUID, zjwt: JWType) -> Optional[TaxDB]:
     result = await db.execute(
         select(TaxDB).where(TaxDB.id == tax_id, TaxDB.created_by == zjwt["zuid"])
     )

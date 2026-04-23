@@ -17,7 +17,7 @@ async def fetch_employees(sbu_client_id: UUID, db: AsyncSession) -> list[Employe
     return await list_employees(db, sbu_client_id)
 
 
-async def create_or_update_employee(zjwt: dict, db: AsyncSession, payload: dict) -> EmployeeDB:
+async def create_or_update_employee(zjwt: JWType, db: AsyncSession, payload: dict) -> EmployeeDB:
 
     
     base_ids = {

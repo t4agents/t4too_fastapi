@@ -20,7 +20,7 @@ async def list_invoice_payments(db: AsyncSession, inv_id: UUID) -> List[InvoiceP
 
 
 async def get_invoice_payment_by_id(
-    db: AsyncSession, payment_id: UUID, zjwt: dict
+    db: AsyncSession, payment_id: UUID, zjwt: JWType
 ) -> Optional[InvoicePaymentDB]:
     result = await db.execute(
         select(InvoicePaymentDB).where(InvoicePaymentDB.id == payment_id)

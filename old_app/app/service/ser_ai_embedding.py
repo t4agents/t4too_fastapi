@@ -25,7 +25,7 @@ from app.core.dependency_injection import ZMeDataClass
 from app.db.models.ai_embedding import Embedding384
 from app.db.models.m_payroll_history import PayrollHistory
 from app.llm.conn.openai_embedder import embed_fn
-from app.schemas.sch_ai_embedding import RagQueryRequest
+from app.schemas.sch_ai_rag_basic import QueryReq
 from app.agent.tools.persist_cache import persistent_cache_get, persistent_cache_set
 
 
@@ -302,7 +302,7 @@ async def _cohere_rerank(query: str, documents: list[str], top_n: int) -> list[d
             return data.get("results", [])
 
 
-async def _retrieve_hybrid_candidates(payload: RagQueryRequest, zme: ZMeDataClass) -> list[dict]:
+async def _retrieve_hybrid_candidates(payload: QueryReq, zme: ZMeDataClass) -> list[dict]:
     retrieval_cache_key = f"rag_candidates|{zme.ztid}|{payload.query}|{payload.top_k}"
     cached_candidates = await persistent_cache_get(zme, retrieval_cache_key)
     if cached_candidates is not None:
@@ -358,7 +358,7 @@ async def _retrieve_hybrid_candidates(payload: RagQueryRequest, zme: ZMeDataClas
     return candidates
 
 
-async def rag_query(payload: RagQueryRequest, zme: ZMeDataClass) -> dict:
+async def rag_query(payload: QueryReq, zme: ZMeDataClass) -> dict:
     embed_cache_key = f"embed_query|{zme.ztid}|{payload.query}"
     cached_embedding = await persistent_cache_get(zme, embed_cache_key)
     if cached_embedding is not None:
@@ -398,7 +398,7 @@ async def rag_query(payload: RagQueryRequest, zme: ZMeDataClass) -> dict:
     }
 
 
-async def rag_answer(payload: RagQueryRequest, zme: ZMeDataClass) -> dict:
+async def rag_answer(payload: QueryReq, zme: ZMeDataClass) -> dict:
     evidence = await _retrieve_hybrid_candidates(payload, zme)
 
     if not evidence:
@@ -436,7 +436,7 @@ async def rag_answer(payload: RagQueryRequest, zme: ZMeDataClass) -> dict:
 
 
 async def rag_answer_rerank(
-    payload: RagQueryRequest,
+    payload: QueryReq,
     zme: ZMeDataClass,
     status_cb: StatusCallback | None = None,
 ) -> dict:

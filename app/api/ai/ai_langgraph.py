@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
+from app.schemas.sch_ai import JWType
 
 langRou = APIRouter()
 

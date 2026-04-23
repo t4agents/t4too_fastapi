@@ -9,7 +9,8 @@ import aiohttp
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.schemas.sch_ai import JWType
 from openai import AsyncOpenAI
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
@@ -24,9 +25,9 @@ from app.config import get_settings_singleton
 from app.db.models.ai.ai_embedding import Embedding384DB
 from app.db.models.t4.m_payroll_history import PayrollHistoryDB
 from app.llm.conn.openai_embedder import embed_fn
-from app.schemas.sch_ai_embedding import RagQueryRequest
-from app.service.ser_ai_cache import persistent_cache_get, persistent_cache_set
-from app.service.ser_ai_context import AIContext
+from app.schemas.sch_ai import JWType
+from app.schemas.sch_ai_rag_basic import QueryReq
+from app.service.ser_ai_cache import persistent_cache_get # persistent_cache_set
 
 
 settings = get_settings_singleton()
@@ -302,9 +303,9 @@ async def _cohere_rerank(query: str, documents: list[str], top_n: int) -> list[d
             return data.get("results", [])
 
 
-async def _retrieve_hybrid_candidates(payload: RagQueryRequest, ctx: AIContext) -> list[dict]:
-    retrieval_cache_key = f"rag_candidates|{ctx.ten_id}|{payload.query}|{payload.top_k}"
-    cached_candidates = await persistent_cache_get(ctx, retrieval_cache_key)
+async def _retrieve_hybrid_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> list[dict]:
+    retrieval_cache_key = f"rag_candidates|{zjwt.ztid}|{payload.query}|{payload.top_k}"
+    cached_candidates = await persistent_cache_get(zjwt, retrieval_cache_key, db=db)
     if cached_candidates is not None:
         logger.info("---------------- Retrieval cache hit -> candidates=%s", len(cached_candidates))
         return cached_candidates
@@ -315,14 +316,14 @@ async def _retrieve_hybrid_candidates(payload: RagQueryRequest, ctx: AIContext) 
     kw_score = func.ts_rank_cd(tsv, tsq).label("kw_score")
     kw_score = func.least(kw_score * 10, 1.0).label("kw_score")
 
-    embed_cache_key = f"embed_query|{ctx.ten_id}|{payload.query}"
-    cached_embedding = await persistent_cache_get(ctx, embed_cache_key)
+    embed_cache_key = f"embed_query|{zjwt.ztid}|{payload.query}"
+    cached_embedding = await persistent_cache_get(zjwt, embed_cache_key, db=db)
     if cached_embedding is not None:
         query_vec = cached_embedding
         logger.info("---------------- Embedding cache hit")
     else:
         query_vec = await embed_fn(payload.query)
-        await persistent_cache_set(ctx, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL)
+        await persistent_cache_set(zjwt, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL, db=db)
     distance = Embedding384DB.emb384.cosine_distance(query_vec).label("distance")
     vec_score = func.coalesce(1 - distance, 0).label("vec_score")
 
@@ -335,11 +336,11 @@ async def _retrieve_hybrid_candidates(payload: RagQueryRequest, ctx: AIContext) 
             (vec_score * 0.7 + kw_score * 0.3).label("final_score"),
         )
         .join(PayrollHistoryDB, PayrollHistoryDB.id == Embedding384DB.source_id)
-        .where(PayrollHistoryDB.cli_id == ctx.cli_id)
+        .where(PayrollHistoryDB.cli_id == zjwt.zcid)
         .order_by(func.coalesce((vec_score * 0.7 + kw_score * 0.3), vec_score).desc())
         .limit(payload.top_k)
     )
-    res = await ctx.db.execute(stmt)
+    res = await db.execute(stmt)
     rows = res.all()
 
     candidates = []
@@ -354,19 +355,19 @@ async def _retrieve_hybrid_candidates(payload: RagQueryRequest, ctx: AIContext) 
                 "history": _orm_to_dict(hist_row),
             }
         )
-    await persistent_cache_set(ctx, retrieval_cache_key, candidates, ttl_seconds=RETRIEVAL_CACHE_TTL)
+    # await persistent_cache_set(zjwt, retrieval_cache_key, candidates, ttl_seconds=RETRIEVAL_CACHE_TTL)
     return candidates
 
 
-async def rag_query(payload: RagQueryRequest, ctx: AIContext) -> dict:
-    embed_cache_key = f"embed_query|{ctx.ten_id}|{payload.query}"
-    cached_embedding = await persistent_cache_get(ctx, embed_cache_key)
+async def rag_query(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
+    embed_cache_key = f"embed_query|{zjwt.ztid}|{payload.query}"
+    cached_embedding = await persistent_cache_get(zjwt, embed_cache_key, db)
     if cached_embedding is not None:
         query_vec = cached_embedding
         logger.info("---------------- Embedding cache hit")
     else:
         query_vec = await embed_fn(payload.query)
-        await persistent_cache_set(ctx, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL)
+        # await persistent_cache_set(zjwt, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL, db=db)
     query_vector_literal = "[" + ",".join(f"{float(v):.12g}" for v in query_vec) + "]"
     stmt = text(
         """
@@ -385,11 +386,11 @@ async def rag_query(payload: RagQueryRequest, ctx: AIContext) -> dict:
         LIMIT :top_k
         """
     )
-    res = await ctx.db.execute(
+    res = await db.execute(
         stmt,
         {
             "query_vector": query_vector_literal,
-            "cli_id": ctx.cli_id,
+            "cli_id": zjwt.zcid,
             "top_k": payload.top_k,
         },
     )
@@ -415,173 +416,174 @@ async def rag_query(payload: RagQueryRequest, ctx: AIContext) -> dict:
     }
 
 
-async def rag_answer(payload: RagQueryRequest, ctx: AIContext) -> dict:
-    evidence = await _retrieve_hybrid_candidates(payload, ctx)
+# async def rag_answer(payload: QueryReq, zjwt: JWType) -> dict:
+#     evidence = await _retrieve_hybrid_candidates(payload, zjwt)
 
-    if not evidence:
-        return {
-            "query": payload.query,
-            "top_k": payload.top_k,
-            "model": ANSWER_MODEL,
-            "answer": "No matching payroll history found for this query.",
-            "confidence": 0,
-            "reasoning_summary": ["No evidence was retrieved for the query."],
-            "citations": [],
-            "limitations": "No relevant payroll history records were retrieved.",
-            "model_reasoning_summary": [],
-            "evidence": [],
-        }
+#     if not evidence:
+#         return {
+#             "query": payload.query,
+#             "top_k": payload.top_k,
+#             "model": ANSWER_MODEL,
+#             "answer": "No matching payroll history found for this query.",
+#             "confidence": 0,
+#             "reasoning_summary": ["No evidence was retrieved for the query."],
+#             "citations": [],
+#             "limitations": "No relevant payroll history records were retrieved.",
+#             "model_reasoning_summary": [],
+#             "evidence": [],
+#         }
 
-    llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
-    answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_evidence)
+#     llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
+#     answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_evidence)
 
-    return {
-        "query": payload.query,
-        "top_k": payload.top_k,
-        "model": ANSWER_MODEL,
-        "answer": answer_payload.get("answer"),
-        "confidence": answer_payload.get("confidence"),
-        "reasoning_summary": answer_payload.get("reasoning_summary"),
-        "citations": answer_payload.get("citations"),
-        "limitations": answer_payload.get("limitations"),
-        "model_reasoning_summary": reasoning_summary,
-        "evidence": evidence,
-        "_guardrail": {
-            "usage": usage,
-        },
-    }
+#     return {
+#         "query": payload.query,
+#         "top_k": payload.top_k,
+#         "model": ANSWER_MODEL,
+#         "answer": answer_payload.get("answer"),
+#         "confidence": answer_payload.get("confidence"),
+#         "reasoning_summary": answer_payload.get("reasoning_summary"),
+#         "citations": answer_payload.get("citations"),
+#         "limitations": answer_payload.get("limitations"),
+#         "model_reasoning_summary": reasoning_summary,
+#         "evidence": evidence,
+#         "_guardrail": {
+#             "usage": usage,
+#         },
+#     }
 
 
-async def rag_answer_rerank(
-    payload: RagQueryRequest,
-    ctx: AIContext,
-    status_cb: StatusCallback | None = None,
-) -> dict:
-    await _emit_status(
-        status_cb,
-        "rag_retrieve_start",
-        {"query": payload.query, "top_k": payload.top_k},
-    )
-    evidence = await _retrieve_hybrid_candidates(payload, ctx)
-    await _emit_status(
-        status_cb,
-        "rag_retrieve_done",
-        {"count": len(evidence), "top_k": payload.top_k},
-    )
-    if not evidence:
-        await _emit_status(status_cb, "rag_no_evidence", {"query": payload.query})
-        return {
-            "query": payload.query,
-            "top_k": payload.top_k,
-            "model": ANSWER_MODEL,
-            "rerank_model": COHERE_RERANK_MODEL,
-            "answer": "No matching payroll history found for this query.",
-            "confidence": 0,
-            "reasoning_summary": ["No evidence was retrieved for the query."],
-            "citations": [],
-            "limitations": "No relevant payroll history records were retrieved.",
-            "model_reasoning_summary": [],
-            "evidence": [],
-        }
+# async def rag_answer_rerank(
+#     payload: QueryReq,
+#     zjwt: JWType,
+#     status_cb: StatusCallback | None = None,
+#     db: AsyncSession,
+# ) -> dict:
+#     await _emit_status(
+#         status_cb,
+#         "rag_retrieve_start",
+#         {"query": payload.query, "top_k": payload.top_k},
+#     )
+#     evidence = await _retrieve_hybrid_candidates(payload, zjwt, db)
+#     await _emit_status(
+#         status_cb,
+#         "rag_retrieve_done",
+#         {"count": len(evidence), "top_k": payload.top_k},
+#     )
+#     if not evidence:
+#         await _emit_status(status_cb, "rag_no_evidence", {"query": payload.query})
+#         return {
+#             "query": payload.query,
+#             "top_k": payload.top_k,
+#             "model": ANSWER_MODEL,
+#             "rerank_model": COHERE_RERANK_MODEL,
+#             "answer": "No matching payroll history found for this query.",
+#             "confidence": 0,
+#             "reasoning_summary": ["No evidence was retrieved for the query."],
+#             "citations": [],
+#             "limitations": "No relevant payroll history records were retrieved.",
+#             "model_reasoning_summary": [],
+#             "evidence": [],
+#         }
 
-    llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
-    documents = [item["chunk"] for item in llm_evidence]
-    fallback_reason: str | None = None
-    try:
-        await _emit_status(
-            status_cb,
-            "rag_rerank_start",
-            {"model": COHERE_RERANK_MODEL, "top_k": payload.top_k},
-        )
-        joined = "\n".join(documents)
-        docs_hash = hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
-        cache_key = f"cohere_rerank|{ctx.ten_id}|{payload.query}|{payload.top_k}|{docs_hash}"
-        cached_rerank = await persistent_cache_get(ctx, cache_key)
-        if cached_rerank is not None:
-            rerank_results = cached_rerank
-            logger.info(
-                "---------------- Cohere rerank cache hit -> results=%s",
-                len(rerank_results),
-            )
-        else:
-            rerank_results = await _cohere_rerank(payload.query, documents, payload.top_k)
-            await persistent_cache_set(ctx, cache_key, rerank_results, ttl_seconds=COHERE_RERANK_CACHE_TTL)
-        await _emit_status(
-            status_cb,
-            "rag_rerank_done",
-            {"count": len(rerank_results), "model": COHERE_RERANK_MODEL},
-        )
-    except HTTPException as exc:
-        if exc.status_code == 429 or (exc.status_code is not None and exc.status_code >= 500):
-            fallback_reason = f"Cohere rerank unavailable (status {exc.status_code})."
-        else:
-            raise
-    except Exception as exc:
-        fallback_reason = f"Cohere rerank failed: {str(exc)}"
+#     llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
+#     documents = [item["chunk"] for item in llm_evidence]
+#     fallback_reason: str | None = None
+#     try:
+#         await _emit_status(
+#             status_cb,
+#             "rag_rerank_start",
+#             {"model": COHERE_RERANK_MODEL, "top_k": payload.top_k},
+#         )
+#         joined = "\n".join(documents)
+#         docs_hash = hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
+#         cache_key = f"cohere_rerank|{zjwt.ztid}|{payload.query}|{payload.top_k}|{docs_hash}"
+#         cached_rerank = await persistent_cache_get(zjwt, cache_key, db=db)
+#         if cached_rerank is not None:
+#             rerank_results = cached_rerank
+#             logger.info(
+#                 "---------------- Cohere rerank cache hit -> results=%s",
+#                 len(rerank_results),
+#             )
+#         else:
+#             rerank_results = await _cohere_rerank(payload.query, documents, payload.top_k)
+#             await persistent_cache_set(zjwt, cache_key, rerank_results, ttl_seconds=COHERE_RERANK_CACHE_TTL, db=db)
+#         await _emit_status(
+#             status_cb,
+#             "rag_rerank_done",
+#             {"count": len(rerank_results), "model": COHERE_RERANK_MODEL},
+#         )
+#     except HTTPException as exc:
+#         if exc.status_code == 429 or (exc.status_code is not None and exc.status_code >= 500):
+#             fallback_reason = f"Cohere rerank unavailable (status {exc.status_code})."
+#         else:
+#             raise
+#     except Exception as exc:
+#         fallback_reason = f"Cohere rerank failed: {str(exc)}"
 
-    if fallback_reason:
-        await _emit_status(
-            status_cb,
-            "rag_rerank_fallback",
-            {"reason": fallback_reason, "model": COHERE_RERANK_MODEL},
-        )
-        logger.info("---------------- Cohere rerank fallback -> using base evidence. reason=%s", fallback_reason)
-        reranked = [
-            {
-                "evidence_id": idx,
-                "score": item.get("score"),
-                "source_id": item.get("source_id"),
-                "chunk": item["chunk"],
-                "history": item["history"],
-            }
-            for idx, item in enumerate(evidence, start=1)
-        ]
-    else:
-        reranked = []
-        for new_idx, item in enumerate(rerank_results, start=1):
-            idx = item.get("index")
-            if idx is None or idx >= len(evidence):
-                continue
-            base = evidence[idx]
-            reranked.append(
-                {
-                    "evidence_id": new_idx,
-                    "score": item.get("relevance_score"),
-                    "source_id": base.get("source_id"),
-                    "chunk": base["chunk"],
-                    "history": base["history"],
-                }
-            )
+#     if fallback_reason:
+#         await _emit_status(
+#             status_cb,
+#             "rag_rerank_fallback",
+#             {"reason": fallback_reason, "model": COHERE_RERANK_MODEL},
+#         )
+#         logger.info("---------------- Cohere rerank fallback -> using base evidence. reason=%s", fallback_reason)
+#         reranked = [
+#             {
+#                 "evidence_id": idx,
+#                 "score": item.get("score"),
+#                 "source_id": item.get("source_id"),
+#                 "chunk": item["chunk"],
+#                 "history": item["history"],
+#             }
+#             for idx, item in enumerate(evidence, start=1)
+#         ]
+#     else:
+#         reranked = []
+#         for new_idx, item in enumerate(rerank_results, start=1):
+#             idx = item.get("index")
+#             if idx is None or idx >= len(evidence):
+#                 continue
+#             base = evidence[idx]
+#             reranked.append(
+#                 {
+#                     "evidence_id": new_idx,
+#                     "score": item.get("relevance_score"),
+#                     "source_id": base.get("source_id"),
+#                     "chunk": base["chunk"],
+#                     "history": base["history"],
+#                 }
+#             )
 
-    await _emit_status(status_cb, "rag_generate_start", {"model": ANSWER_MODEL})
-    llm_reranked = minimize_evidence_for_llm(reranked, payload.query)
-    answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_reranked)
-    await _emit_status(status_cb, "rag_generate_done", {"model": ANSWER_MODEL})
-    if fallback_reason:
-        reasoning_summary = [fallback_reason] + list(reasoning_summary)
-        limitations = answer_payload.get("limitations") or ""
-        if limitations:
-            limitations = f"{limitations} Rerank fallback: {fallback_reason}"
-        else:
-            limitations = f"Rerank fallback: {fallback_reason}"
-        answer_payload["limitations"] = limitations
+#     await _emit_status(status_cb, "rag_generate_start", {"model": ANSWER_MODEL})
+#     llm_reranked = minimize_evidence_for_llm(reranked, payload.query)
+#     answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_reranked)
+#     await _emit_status(status_cb, "rag_generate_done", {"model": ANSWER_MODEL})
+#     if fallback_reason:
+#         reasoning_summary = [fallback_reason] + list(reasoning_summary)
+#         limitations = answer_payload.get("limitations") or ""
+#         if limitations:
+#             limitations = f"{limitations} Rerank fallback: {fallback_reason}"
+#         else:
+#             limitations = f"Rerank fallback: {fallback_reason}"
+#         answer_payload["limitations"] = limitations
 
-    response = {
-        "query": payload.query,
-        "top_k": payload.top_k,
-        "model": ANSWER_MODEL,
-        "rerank_model": COHERE_RERANK_MODEL,
-        "answer": answer_payload.get("answer"),
-        "confidence": answer_payload.get("confidence"),
-        "reasoning_summary": answer_payload.get("reasoning_summary"),
-        "citations": answer_payload.get("citations"),
-        "limitations": answer_payload.get("limitations"),
-        "model_reasoning_summary": reasoning_summary,
-        "evidence": reranked,
-    }
-    response["_guardrail"] = {
-        "usage": usage,
-    }
-    if fallback_reason:
-        response["_guardrail"]["fallback_reason"] = fallback_reason
-    return response
+#     response = {
+#         "query": payload.query,
+#         "top_k": payload.top_k,
+#         "model": ANSWER_MODEL,
+#         "rerank_model": COHERE_RERANK_MODEL,
+#         "answer": answer_payload.get("answer"),
+#         "confidence": answer_payload.get("confidence"),
+#         "reasoning_summary": answer_payload.get("reasoning_summary"),
+#         "citations": answer_payload.get("citations"),
+#         "limitations": answer_payload.get("limitations"),
+#         "model_reasoning_summary": reasoning_summary,
+#         "evidence": reranked,
+#     }
+#     response["_guardrail"] = {
+#         "usage": usage,
+#     }
+#     if fallback_reason:
+#         response["_guardrail"]["fallback_reason"] = fallback_reason
+#     return response

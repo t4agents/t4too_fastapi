@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.schemas.sch_ai import JWType
 
 import json
 
@@ -7,14 +8,14 @@ from sqlalchemy import select
 
 from app.db.models.ai.ai_gold_dataset import RAGEvalDatasetDB, RAGEvalResultDB, RAGEvalRunDB
 from app.llm.conn.openai_embedder import EMBED_MODEL
-from app.schemas.sch_ai_embedding import RagQueryRequest
+from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_precision import (
     RagEvalPrecisionRequest,
     RagEvalPrecisionResponse,
     RagEvalPrecisionRow,
 )
-from app.service.ser_ai_context import AIContext
-from app.service.ser_ai_embedding import rag_answer_rerank
+
+# from app.service.ser_ai_embedding import rag_answer_rerank
 
 
 def _avg(values: list[float | None]) -> float | None:
@@ -24,21 +25,21 @@ def _avg(values: list[float | None]) -> float | None:
     return sum(nums) / len(nums)
 
 
-async def run_precision_at_k(payload: RagEvalPrecisionRequest, ctx: AIContext) -> RagEvalPrecisionResponse:
+async def run_precision_at_k(payload: RagEvalPrecisionRequest, zjwt: JWType) -> RagEvalPrecisionResponse:
     run = RAGEvalRunDB(
         embedding_version=f"{EMBED_MODEL}/384",
         model_version="rag-eval-precision",
         description=payload.description,
     )
-    ctx.db.add(run)
-    await ctx.db.flush()
+    add(run)
+    await flush()
 
     stmt = select(RAGEvalDatasetDB).where(RAGEvalDatasetDB.is_active.is_(True))
     if payload.category and payload.category.lower() != "rag":
         stmt = stmt.where(RAGEvalDatasetDB.category == payload.category)
     if payload.limit:
         stmt = stmt.limit(payload.limit)
-    dataset_rows = (await ctx.db.execute(stmt)).scalars().all()
+    dataset_rows = (await db.execute(stmt)).scalars().all()
     if not dataset_rows:
         raise HTTPException(status_code=404, detail="No active dataset rows found.")
 
@@ -51,7 +52,7 @@ async def run_precision_at_k(payload: RagEvalPrecisionRequest, ctx: AIContext) -
         if not relevant_ids:
             continue
 
-        rag_payload = RagQueryRequest(query=row.question, top_k=payload.top_k)
+        rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
         rag_response = await rag_answer_rerank(rag_payload, ctx)
         evidence = (rag_response or {}).get("evidence") or []
         retrieved_ids = [str(e.get("source_id")) for e in evidence if e.get("source_id")]
@@ -87,8 +88,8 @@ async def run_precision_at_k(payload: RagEvalPrecisionRequest, ctx: AIContext) -
         precision_values.append(precision_at_k)
 
     if results:
-        ctx.db.add_all(results)
-    await ctx.db.flush()
+        add_all(results)
+    await flush()
 
     total = len(rows) if payload.include_rows else len(results)
     return RagEvalPrecisionResponse(

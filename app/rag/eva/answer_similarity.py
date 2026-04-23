@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from app.db.models.ai.ai_gold_dataset import RAGEvalDatasetDB, RAGEvalResultDB, RAGEvalRunDB
 from app.llm.conn.openai_embedder import EMBED_MODEL, embed_fn
-from app.schemas.sch_ai_embedding import RagQueryRequest
+from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_answer_similarity import (
     RagEvalAnswerSimilarityRequest,
     RagEvalAnswerSimilarityResponse,
     RagEvalAnswerSimilarityRow,
 )
-from app.service.ser_ai_context import AIContext
-from app.service.ser_ai_embedding import rag_answer_rerank
+
+# from app.service.ser_ai_embedding import rag_answer_rerank
 
 
 def _avg(values: list[float | None]) -> float | None:
@@ -52,21 +52,21 @@ async def _answer_similarity(answer: str, expected: str) -> tuple[float | None, 
         return None, f"embed_error:{str(exc)}"
 
 
-async def run_answer_similarity(payload: RagEvalAnswerSimilarityRequest, ctx: AIContext) -> RagEvalAnswerSimilarityResponse:
+async def run_answer_similarity(payload: RagEvalAnswerSimilarityRequest, zjwt: JWType) -> RagEvalAnswerSimilarityResponse:
     run = RAGEvalRunDB(
         embedding_version=f"{EMBED_MODEL}/384",
         model_version="rag-eval-answer-similarity",
         description=payload.description,
     )
-    ctx.db.add(run)
-    await ctx.db.flush()
+    add(run)
+    await flush()
 
     stmt = select(RAGEvalDatasetDB).where(RAGEvalDatasetDB.is_active.is_(True))
     if payload.category and payload.category.lower() != "rag":
         stmt = stmt.where(RAGEvalDatasetDB.category == payload.category)
     if payload.limit:
         stmt = stmt.limit(payload.limit)
-    dataset_rows = (await ctx.db.execute(stmt)).scalars().all()
+    dataset_rows = (await db.execute(stmt)).scalars().all()
     if not dataset_rows:
         raise HTTPException(status_code=404, detail="No active dataset rows found.")
 
@@ -75,7 +75,7 @@ async def run_answer_similarity(payload: RagEvalAnswerSimilarityRequest, ctx: AI
     similarity_values: list[float | None] = []
 
     for row in dataset_rows:
-        rag_payload = RagQueryRequest(query=row.question, top_k=payload.top_k)
+        rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
         rag_response = await rag_answer_rerank(rag_payload, ctx)
         answer_text = (rag_response or {}).get("answer") or ""
         answer_similarity, similarity_note = await _answer_similarity(answer_text, row.expected_answer or "")
@@ -112,8 +112,8 @@ async def run_answer_similarity(payload: RagEvalAnswerSimilarityRequest, ctx: AI
         similarity_values.append(answer_similarity)
 
     if results:
-        ctx.db.add_all(results)
-    await ctx.db.flush()
+        add_all(results)
+    await flush()
 
     total = len(rows) if payload.include_rows else len(results)
     return RagEvalAnswerSimilarityResponse(

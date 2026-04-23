@@ -1,6 +1,6 @@
 from typing import Any
 from uuid import UUID
-
+from app.schemas.sch_ai import JWType
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,10 +19,11 @@ def _to_db_dict(employee: EmployeeDB) -> dict[str, Any]:
 
 @employeeRou.get("/get_employee_list", response_model=list[EmployeeOut])
 async def get_employee_list(
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
-    sbu_client_id = zjwt["user_metadata"]["sbu_client_id"]
+    sbu_client_id = zjwt.zcid
+    if not sbu_client_id:raise ValueError("sbu_client_id is missing in the JWT")
     employees = await fetch_employees(sbu_client_id, db)
     print(f"Fetched employees: {employees}")
     return [EmployeeOut(**_to_db_dict(employee)) for employee in employees]
@@ -31,7 +32,7 @@ async def get_employee_list(
 @employeeRou.post("/post_employee", response_model=EmployeeOut)
 async def post_employee(
     payload: EmployeeCreate,
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
     # zuid = UUID(zjwt)

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zjwt
 from app.db.conn.db_async import get_db_admin
 from app.db.models.too.z_be import ZBizEntityDB
+from app.schemas.sch_ai import JWType
 from app.service.ser_be import fetch_be_profile, update_be_profile
 from app.service.ser_seed import apply_seed_defaults
 
@@ -19,7 +20,7 @@ def _to_db_dict(be: ZBizEntityDB) -> dict[str, Any]:
 
 @beRou.get("/getbe", response_model=dict)
 async def get_be_profile(
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
     try:
@@ -35,7 +36,7 @@ async def get_be_profile(
 @beRou.post("/savebe", response_model=dict)
 async def post_be_profile(
     payload: dict[str, Any],
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_admin),
 ):
     updates = payload

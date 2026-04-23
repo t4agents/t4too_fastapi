@@ -2,7 +2,8 @@ from uuid import UUID
 
 from app.db.models.ai.ai_feedback_event import FeedbackEventDB
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest
-from app.service.ser_ai_context import AIContext
+from app.schemas.sch_ai import JWType
+
 
 
 def _parse_uuid(value: str | None) -> UUID | None:
@@ -14,7 +15,7 @@ def _parse_uuid(value: str | None) -> UUID | None:
         return None
 
 
-async def log_feedback_event(payload: FeedbackCreateRequest, ctx: AIContext) -> None:
+async def log_feedback_event(payload: FeedbackCreateRequest, zjwt: JWType) -> None:
     session_id = _parse_uuid(payload.session_id)
     message_id = _parse_uuid(payload.message_id)
 
@@ -24,7 +25,7 @@ async def log_feedback_event(payload: FeedbackCreateRequest, ctx: AIContext) -> 
     if payload.message_id and message_id is None:
         meta = {**meta, "client_message_id": payload.message_id}
 
-    ctx.db.add(
+    add(
         FeedbackEventDB(
             ten_id=ctx.ten_id,
             biz_id=ctx.biz_id,
@@ -41,4 +42,4 @@ async def log_feedback_event(payload: FeedbackCreateRequest, ctx: AIContext) -> 
             meta=meta,
         )
     )
-    await ctx.db.flush()
+    await flush()

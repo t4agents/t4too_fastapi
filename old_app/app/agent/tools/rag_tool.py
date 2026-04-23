@@ -3,7 +3,7 @@ import time
 from collections.abc import Awaitable, Callable
 
 from app.core.dependency_injection import ZMeDataClass
-from app.schemas.sch_ai_embedding import RagQueryRequest
+from app.schemas.sch_ai_rag_basic import QueryReq
 from app.agent.tools.persist_cache import persistent_cache_get, persistent_cache_set
 from app.service.ser_ai_guardrail import log_rag_guardrail
 
@@ -56,7 +56,7 @@ async def run_rag_rerank(
 
     from app.service.ser_ai_embedding import rag_answer_rerank as rag_answer_rerank_service
 
-    rag_payload = RagQueryRequest(query=query, top_k=top_k)
+    rag_payload = QueryReq(query=query, top_k=top_k)
     response = await rag_answer_rerank_service(rag_payload, zme, status_cb=status_cb)
     try:
         await log_rag_guardrail(

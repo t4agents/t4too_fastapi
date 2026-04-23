@@ -18,7 +18,7 @@ from app.db.repo.repo_payment_method import (
 _log = logging.getLogger("app.http")
 
 
-async def fetch_payment_methods(zjwt: dict, db: AsyncSession) -> list[PaymentMethodDB]:
+async def fetch_payment_methods(zjwt: JWType, db: AsyncSession) -> list[PaymentMethodDB]:
     _log.info(
         "pm.service.list zuid=%s jwt_ten_id=%s",
         zjwt.get("zuid"),
@@ -28,7 +28,7 @@ async def fetch_payment_methods(zjwt: dict, db: AsyncSession) -> list[PaymentMet
 
 
 async def create_or_update_payment_method(
-    zjwt: dict, db: AsyncSession, payload: dict
+    zjwt: JWType, db: AsyncSession, payload: dict
 ) -> PaymentMethodDB:
     jwt_ten_id = (zjwt.get("app_metadata") or {}).get("sba_ten_id")
     _log.info(

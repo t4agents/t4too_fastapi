@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
-from app.service.ser_ai_context import ai_context_from_zjwt
+# from app.service.ser_ai_context import ai_context_from_zjwt
 
 
 @dataclass(slots=True)
@@ -37,7 +37,7 @@ class ZMeDataClass:
 
 
 async def get_zme(
-    zjwt: dict = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ) -> ZMeDataClass:
     ctx = ai_context_from_zjwt(zjwt, db)

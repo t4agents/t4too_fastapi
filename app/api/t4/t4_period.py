@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.t4.m_payroll_period import PayrollPeriodDB
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_payroll_period import PayrollPeriodOut
 from app.service.ser_payroll_period import fetch_payroll_periods
 
@@ -21,9 +22,10 @@ def _to_db_dict(payroll_period: PayrollPeriodDB) -> dict[str, Any]:
 
 @periodRou.get("/get_payroll_period_list", response_model=list[PayrollPeriodOut])
 async def get_payroll_period_list(
-    zjwt: dict[str, Any] = Depends(get_zjwt),
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    sbu_client_id = zjwt["user_metadata"]["sbu_client_id"]
+    sbu_client_id = zjwt.zcid
+    if not sbu_client_id:return []
     periods = await fetch_payroll_periods(sbu_client_id, db)
     return [PayrollPeriodOut(**_to_db_dict(period)) for period in periods]

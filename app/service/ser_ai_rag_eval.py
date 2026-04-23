@@ -2,6 +2,7 @@ import json
 import math
 from datetime import date
 from decimal import Decimal
+from app.schemas.sch_ai import JWType
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -10,11 +11,11 @@ from openai import AsyncOpenAI
 from app.config import get_settings_singleton
 from app.db.models.ai.ai_gold_dataset import RAGEvalDatasetDB, RAGEvalResultDB, RAGEvalRunDB
 from app.llm.conn.openai_embedder import EMBED_MODEL, embed_fn
-from app.schemas.sch_ai_embedding import RagQueryRequest
+from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_eval import RagEvalRequest, RagEvalResponse, RagEvalRow
-from app.service.ser_ai_embedding import rag_answer_rerank
+# from app.service.ser_ai_embedding import rag_answer_rerank
 from app.service.ser_ai_embedding import minimize_evidence_for_llm
-from app.service.ser_ai_context import AIContext
+
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
 )
@@ -171,14 +172,14 @@ async def _answer_relevancy(answer: str, expected: str) -> tuple[float | None, s
         return None, f"embed_error:{str(exc)}"
 
 
-async def run_rag_eval(payload: RagEvalRequest, ctx: AIContext) -> RagEvalResponse:
+async def run_rag_eval(payload: RagEvalRequest, zjwt: JWType) -> RagEvalResponse:
     run = RAGEvalRunDB(
         embedding_version=f"{EMBED_MODEL}/384",
         model_version="rag-eval",
         description=payload.description,
     )
-    ctx.db.add(run)
-    await ctx.db.flush()
+    add(run)
+    await flush()
 
     stmt = select(RAGEvalDatasetDB).where(RAGEvalDatasetDB.is_active.is_(True))
     if payload.category:
@@ -186,7 +187,7 @@ async def run_rag_eval(payload: RagEvalRequest, ctx: AIContext) -> RagEvalRespon
     if payload.limit:
         stmt = stmt.limit(payload.limit)
 
-    dataset_rows = (await ctx.db.execute(stmt)).scalars().all()
+    dataset_rows = (await db.execute(stmt)).scalars().all()
     if not dataset_rows:
         raise HTTPException(status_code=404, detail="No active dataset rows found.")
 
@@ -204,7 +205,7 @@ async def run_rag_eval(payload: RagEvalRequest, ctx: AIContext) -> RagEvalRespon
         if not relevant_ids:
             continue
 
-        rag_payload = RagQueryRequest(query=row.question, top_k=payload.top_k)
+        rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
         rag_response = await rag_answer_rerank(rag_payload, ctx)
         evidence = (rag_response or {}).get("evidence") or []
         retrieved_ids = [str(e.get("source_id")) for e in evidence if e.get("source_id")]
@@ -299,8 +300,8 @@ async def run_rag_eval(payload: RagEvalRequest, ctx: AIContext) -> RagEvalRespon
         relevancy_values.append(answer_relevancy)
 
     if results:
-        ctx.db.add_all(results)
-    await ctx.db.flush()
+        add_all(results)
+    await flush()
 
     avg_recall = _avg(recall_values)
     avg_precision = _avg(precision_values)
