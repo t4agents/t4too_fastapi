@@ -29,11 +29,11 @@ async def get_or_create_period_for_window(
     if period_start is None or period_end is None:
         raise HTTPException(status_code=400, detail="Payroll period window is missing")
 
-    period_key = period_key(schedule.frequency, period_start, period_end)
+    period_key_value = period_key(schedule.frequency, period_start, period_end)
     result = await db.execute(
         select(PayrollPeriodDB).where(
             PayrollPeriodDB.cli_id == sbu_client_id,
-            PayrollPeriodDB.period_key == period_key,
+            PayrollPeriodDB.period_key == period_key_value,
         )
     )
     period = result.scalar_one_or_none()
@@ -53,7 +53,7 @@ async def get_or_create_period_for_window(
         start_date=period_start,
         end_date=period_end,
         pay_date=_pay_date_from_period(schedule, period_end),
-        period_key=period_key,
+        period_key=period_key_value,
         period_number=max_period_number + 1,
         status="open",
         cli_id=sbu_client_id,

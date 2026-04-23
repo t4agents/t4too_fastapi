@@ -33,9 +33,15 @@ async def create_or_update_payroll_schedule(
     db: AsyncSession,
     payload: PayrollScheduleUpsert,
 ) -> PayrollScheduleDB:
-    sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
-    zuid = _to_uuid_or_none(zjwt.get("zuid"))
-    ten_id = _to_uuid_or_none((zjwt.get("app_metadata") or {}).get("sba_ten_id"))
+    sbu_client_id = zjwt.zcid
+    if sbu_client_id is None:
+        raise HTTPException(status_code=400, detail="Missing sbu_client_id in JWT.")
+
+    actor_id = zjwt.zuid
+    if actor_id is None:
+        raise HTTPException(status_code=400, detail="Missing user id in JWT.")
+
+    ten_id = zjwt.ztid
     values = payload.model_dump(exclude_unset=True)
     schedule_id = values.get("id")
 
@@ -57,8 +63,8 @@ async def create_or_update_payroll_schedule(
             existing.cli_id = sbu_client_id
             existing.biz_id = sbu_client_id
             existing.ten_id = ten_id or existing.ten_id
-            existing.usr_id = zuid
-            existing.created_by = zuid
+            existing.usr_id = actor_id
+            existing.created_by = actor_id
             schedule = existing
         else:
             schedule = PayrollScheduleDB(
@@ -70,8 +76,8 @@ async def create_or_update_payroll_schedule(
                         "cli_id": sbu_client_id,
                         "biz_id": sbu_client_id,
                         "ten_id": ten_id,
-                        "usr_id": zuid,
-                        "created_by": zuid,
+                        "usr_id": actor_id,
+                        "created_by": actor_id,
                     },
                 )
             )
@@ -85,8 +91,8 @@ async def create_or_update_payroll_schedule(
                     "cli_id": sbu_client_id,
                     "biz_id": sbu_client_id,
                     "ten_id": ten_id,
-                    "usr_id": zuid,
-                    "created_by": zuid,
+                    "usr_id": actor_id,
+                    "created_by": actor_id,
                 },
             )
         )
@@ -202,7 +208,7 @@ async def _create_entries_for_schedule(
         return
 
     period = None
-    period_key = None
+    period_key_value = None
     if period_start and period_end:
         period = await get_or_create_period_for_window(
             db=db,
@@ -211,11 +217,11 @@ async def _create_entries_for_schedule(
             period_end=period_end,
             sbu_client_id=sbu_client_id,
         )
-        period_key = period.period_key
+        period_key_value = period.period_key
         pay_date = period.pay_date
 
-    if period_key is None and period_start and period_end:
-        period_key = period_key(schedule.frequency, period_start, period_end)
+    if period_key_value is None and period_start and period_end:
+        period_key_value = period_key(schedule.frequency, period_start, period_end)
     if pay_date is None:
         pay_date = _pay_date_from_period(schedule, period_end)
 
@@ -246,7 +252,7 @@ async def _create_entries_for_schedule(
                 period_start=period_start,
                 period_end=period_end,
                 pay_date=pay_date,
-                period_key=period_key,
+                period_key=period_key_value,
                 employment_type=employment_type,
                 full_name=full_name,
                 annual_salary_snapshot=employee.annual_salary,

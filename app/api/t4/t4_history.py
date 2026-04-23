@@ -45,7 +45,8 @@ async def get_payroll_history_summary_list(
     zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
+    sbu_client_id = zjwt.zcid
+    if not sbu_client_id:return []
     return await fetch_payroll_history_summary_list(sbu_client_id, db)
 
 
@@ -63,7 +64,8 @@ async def get_payroll_history_detail(
         except ValueError:
             period_key = id
 
-    sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
+    sbu_client_id = zjwt.zcid
+    if not sbu_client_id:return None
     return await fetch_payroll_history_detail(
         sbu_client_id,
         db,

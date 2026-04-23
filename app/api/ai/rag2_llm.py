@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agent.brain import TOP_K_MODEL, decide_top_k
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
 from app.schemas.sch_ai import JWType, RagRetrieveRes
@@ -110,7 +111,32 @@ async def rag_answer_rerank_stream(
 
     async def runner() -> None:
         try:
-            result = await rag_rerank(payload, zjwt, db, status_cb=status_cb)
+            decided_top_k = payload.top_k
+            top_k_reasoning: list[str] = []
+            top_k_rationale = ""
+            try:
+                decided_top_k, top_k_rationale, top_k_reasoning = await decide_top_k(
+                    payload.query,
+                    default_top_k=payload.top_k,
+                )
+                await status_cb(
+                    "rag_top_k",
+                    {"top_k": decided_top_k, "rationale": top_k_rationale, "model": TOP_K_MODEL},
+                )
+            except Exception:
+                await status_cb(
+                    "rag_top_k_fallback",
+                    {"top_k": decided_top_k, "reason": "top_k_decision_failed"},
+                )
+
+            decided_payload = QueryReq(query=payload.query, top_k=decided_top_k)
+            result = await rag_rerank(decided_payload, zjwt, db, status_cb=status_cb)
+            if isinstance(result, dict):
+                result["top_k"] = decided_top_k
+                if top_k_reasoning:
+                    result["model_reasoning_summary"] = list(top_k_reasoning) + list(
+                        result.get("model_reasoning_summary") or []
+                    )
             latency_ms = (time.perf_counter() - start) * 1000
             guardrail_meta = result.pop("_guardrail", None)
             try:

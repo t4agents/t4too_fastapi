@@ -32,6 +32,8 @@ async def fetch_payroll_entries(sbu_client_id: UUID, db: AsyncSession) -> list[P
 
 async def edit_payroll_entry(payload: PEUpdate, zjwt: JWType, db: AsyncSession) -> PayrollEntryDB:
     sbu_client_id = zjwt.zcid
+    if not sbu_client_id:
+        raise HTTPException(status_code=400, detail="Invalid client ID")
     result = await db.execute(
         select(PayrollEntryDB).where(
             PayrollEntryDB.id == payload.id,
@@ -62,10 +64,11 @@ async def add_entry_employees(
     if not payload.employee_ids:
         raise HTTPException(status_code=400, detail="employee_ids is required")
 
-    sbu_client_id = UUID(str(zjwt["user_metadata"]["sbu_client_id"]))
-    ten_id = _to_uuid_or_none(
-        (zjwt.get("app_metadata") or {}).get("sba_ten_id"))
-    zuid = _to_uuid_or_none(zjwt.get("zuid"))
+    sbu_client_id = zjwt.zcid
+    ten_id = zjwt.ztid
+    zuid = zjwt.zuid
+    if not sbu_client_id or not zuid or not ten_id:
+        raise HTTPException(status_code=400, detail="Invalid client ID")
 
     base_entry_result = await db.execute(
         select(PayrollEntryDB)
@@ -80,7 +83,7 @@ async def add_entry_employees(
         schedule_id = base_entry.schedule_id
         period_start = base_entry.period_start
         period_end = base_entry.period_end
-        period_key = base_entry.period_key
+        period_key_value = base_entry.period_key
         pay_date = base_entry.pay_date
         schedule_result = await db.execute(
             select(PayrollScheduleDB).where(
@@ -105,7 +108,7 @@ async def add_entry_employees(
         if period_start is None or period_end is None:
             raise HTTPException(
                 status_code=400, detail="Payroll schedule period is not initialized")
-        period_key = period_key(schedule.frequency, period_start, period_end)
+        period_key_value = period_key(schedule.frequency, period_start, period_end)
         pay_date = _pay_date_from_period(schedule, period_end)
         schedule_id = schedule.id
 
@@ -122,7 +125,7 @@ async def add_entry_employees(
             period_end=period_end,
             sbu_client_id=sbu_client_id,
         )
-        period_key = period.period_key
+        period_key_value = period.period_key
         pay_date = period.pay_date
         if period.status == "closed":
             raise HTTPException(
@@ -173,7 +176,7 @@ async def add_entry_employees(
             period_start=period_start,
             period_end=period_end,
             pay_date=pay_date,
-            period_key=period_key,
+            period_key=period_key_value,
             employment_type=employment_type,
             full_name=full_name,
             annual_salary_snapshot=employee.annual_salary,
@@ -210,6 +213,10 @@ async def add_entry_employees(
 
 async def finalize_payroll_entries(zjwt: JWType, db: AsyncSession) -> dict[str, str]:
     zcid = zjwt.zcid
+    zuid = zjwt.zuid
+    ten_id = zjwt.ztid
+    if not zcid or not zuid or not ten_id:
+        raise HTTPException(status_code=400, detail="Invalid client ID")
     entries_result = await db.execute(select(PayrollEntryDB).where(PayrollEntryDB.cli_id == zcid))
     entries = list(entries_result.scalars().all())
     if not entries:
