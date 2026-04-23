@@ -323,7 +323,7 @@ async def _retrieve_hybrid_candidates(payload: QueryReq, zjwt: JWType, db: Async
         logger.info("---------------- Embedding cache hit")
     else:
         query_vec = await embed_fn(payload.query)
-        await persistent_cache_set(zjwt, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL, db=db)
+        # await persistent_cache_set(zjwt, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL, db=db)
     distance = Embedding384DB.emb384.cosine_distance(query_vec).label("distance")
     vec_score = func.coalesce(1 - distance, 0).label("vec_score")
 
@@ -416,41 +416,41 @@ async def rag_query(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
     }
 
 
-# async def rag_answer(payload: QueryReq, zjwt: JWType) -> dict:
-#     evidence = await _retrieve_hybrid_candidates(payload, zjwt)
+async def rag_answer(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
+    evidence = await _retrieve_hybrid_candidates(payload, zjwt, db=db)
 
-#     if not evidence:
-#         return {
-#             "query": payload.query,
-#             "top_k": payload.top_k,
-#             "model": ANSWER_MODEL,
-#             "answer": "No matching payroll history found for this query.",
-#             "confidence": 0,
-#             "reasoning_summary": ["No evidence was retrieved for the query."],
-#             "citations": [],
-#             "limitations": "No relevant payroll history records were retrieved.",
-#             "model_reasoning_summary": [],
-#             "evidence": [],
-#         }
+    if not evidence:
+        return {
+            "query": payload.query,
+            "top_k": payload.top_k,
+            "model": ANSWER_MODEL,
+            "answer": "No matching payroll history found for this query.",
+            "confidence": 0,
+            "reasoning_summary": ["No evidence was retrieved for the query."],
+            "citations": [],
+            "limitations": "No relevant payroll history records were retrieved.",
+            "model_reasoning_summary": [],
+            "evidence": [],
+        }
 
-#     llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
-#     answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_evidence)
+    llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
+    answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_evidence)
 
-#     return {
-#         "query": payload.query,
-#         "top_k": payload.top_k,
-#         "model": ANSWER_MODEL,
-#         "answer": answer_payload.get("answer"),
-#         "confidence": answer_payload.get("confidence"),
-#         "reasoning_summary": answer_payload.get("reasoning_summary"),
-#         "citations": answer_payload.get("citations"),
-#         "limitations": answer_payload.get("limitations"),
-#         "model_reasoning_summary": reasoning_summary,
-#         "evidence": evidence,
-#         "_guardrail": {
-#             "usage": usage,
-#         },
-#     }
+    return {
+        "query": payload.query,
+        "top_k": payload.top_k,
+        "model": ANSWER_MODEL,
+        "answer": answer_payload.get("answer"),
+        "confidence": answer_payload.get("confidence"),
+        "reasoning_summary": answer_payload.get("reasoning_summary"),
+        "citations": answer_payload.get("citations"),
+        "limitations": answer_payload.get("limitations"),
+        "model_reasoning_summary": reasoning_summary,
+        "evidence": evidence,
+        "_guardrail": {
+            "usage": usage,
+        },
+    }
 
 
 # async def rag_answer_rerank(
