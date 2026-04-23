@@ -8,7 +8,7 @@ from .ai_rag_eval import ragEvalRou
 
 rouAI = APIRouter()
 
-rouAI.include_router(aiRagRou, prefix="/rag", tags=["ai-rag"])
+rouAI.include_router(aiRagRou, tags=["ai-rag"])
 rouAI.include_router(guardrailRou, prefix="/guardrail", tags=["ai-guardrail"])
 rouAI.include_router(ragEvalRou, prefix="/rag_eval", tags=["ai-rag-eval"])
 rouAI.include_router(routerRou, prefix="/brain", tags=["ai-brain"])

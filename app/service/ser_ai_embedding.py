@@ -16,7 +16,7 @@ from openai.types.responses.response_format_text_json_schema_config_param import
 )
 from openai.types.responses.response_text_config_param import ResponseTextConfigParam
 from fastapi import HTTPException
-from sqlalchemy import func, select, cast, literal
+from sqlalchemy import func, select, cast, literal, text
 from sqlalchemy.dialects.postgresql import REGCONFIG
 from sqlalchemy.inspection import inspect as sa_inspect
 
@@ -367,27 +367,44 @@ async def rag_query(payload: RagQueryRequest, ctx: AIContext) -> dict:
     else:
         query_vec = await embed_fn(payload.query)
         await persistent_cache_set(ctx, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL)
-    distance = Embedding384DB.emb384.cosine_distance(query_vec).label("distance")
-
-    stmt = (
-        select(Embedding384DB, PayrollHistoryDB, distance)
-        .join(PayrollHistoryDB, PayrollHistoryDB.id == Embedding384DB.source_id)
-        .where(PayrollHistoryDB.cli_id == ctx.cli_id)
-        .order_by(distance.asc())
-        .limit(payload.top_k)
+    query_vector_literal = "[" + ",".join(f"{float(v):.12g}" for v in query_vec) + "]"
+    stmt = text(
+        """
+        SELECT
+            to_jsonb(e) AS embedding,
+            to_jsonb(h) AS history,
+            (
+                e.emb384 OPERATOR(extensions.<=>)
+                CAST(:query_vector AS extensions.vector(384))
+            )::float8 AS distance
+        FROM too_ai.payroll_history_384 e
+        JOIN too_t4.payroll_history h
+          ON h.id = e.source_id
+        WHERE h.cli_id = :cli_id
+        ORDER BY distance ASC
+        LIMIT :top_k
+        """
     )
-    res = await ctx.db.execute(stmt)
-    rows = res.all()
+    res = await ctx.db.execute(
+        stmt,
+        {
+            "query_vector": query_vector_literal,
+            "cli_id": ctx.cli_id,
+            "top_k": payload.top_k,
+        },
+    )
+    rows = res.mappings().all()
 
     results = []
-    for emb_row, hist_row, dist in rows:
+    for row in rows:
+        dist = row.get("distance")
         score = None if dist is None else 1 - float(dist)
         results.append(
             {
                 "score": score,
                 "distance": None if dist is None else float(dist),
-                "embedding": _orm_to_dict(emb_row),
-                "history": _orm_to_dict(hist_row),
+                "embedding": row.get("embedding") or {},
+                "history": row.get("history") or {},
             }
         )
 
