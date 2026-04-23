@@ -36,7 +36,7 @@ ragUnitRou = APIRouter()
 logger = logging.getLogger("app.http")
 
 
-@ragUnitRou.post("/rag11_cosine", response_model=RagQueryResponse)
+@ragUnitRou.post("/cosine", response_model=RagQueryResponse)
 async def rag_query_cosine(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),
@@ -45,7 +45,7 @@ async def rag_query_cosine(
     return await rag_query(payload, zjwt, db)
 
 
-@ragUnitRou.post("/rag12_vector", response_model=RagRetrieveRes)
+@ragUnitRou.post("/vector", response_model=RagRetrieveRes)
 async def rag_query_vector(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),
@@ -60,7 +60,7 @@ async def rag_query_vector(
     }
 
 
-@ragUnitRou.post("/rag13_keyword", response_model=RagRetrieveRes)
+@ragUnitRou.post("/keyword", response_model=RagRetrieveRes)
 async def rag_query_keyword(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),
@@ -75,7 +75,7 @@ async def rag_query_keyword(
     }
 
 
-@ragUnitRou.post("/rag14_hybrid", response_model=RagRetrieveRes)
+@ragUnitRou.post("/hybrid", response_model=RagRetrieveRes)
 async def rag_query_hybrid(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),
