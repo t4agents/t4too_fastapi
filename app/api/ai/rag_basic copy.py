@@ -5,6 +5,7 @@ import json
 import logging
 import time
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -12,13 +13,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
-from app.schemas.sch_ai import JWType
-from app.schemas.sch_ai_rag_basic import (RagAnswerResponse,QueryReq,RagQueryResponse,RagRerankAnswerResponse,)
+from app.schemas.sch_ai import JWType, RagRetrieveRes
+from app.schemas.sch_ai_rag_basic import (
+    RagAnswerResponse,
+    QueryReq,
+    RagQueryResponse,
+    RagRerankAnswerResponse,
+)
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest, FeedbackCreateResponse
 from app.service.ser_ai_embedding import (minimize_evidence_for_llm,
-    rag_answer as rag_answer_service,
+    rag_answer,
     rag_rerank,
-    rag_query as rag_query_service,
+    rag_query,
+    retrieve_hybrid_candidates,
+    retrieve_keyword_candidates,
+    retrieve_vector_candidates,
 )
 from app.service.ser_ai_feedback import log_feedback_event
 from app.service.ser_ai_guardrail import log_rag_guardrail
@@ -27,13 +36,58 @@ ragBasicRou = APIRouter()
 logger = logging.getLogger("app.http")
 
 
-@ragBasicRou.post("/rag1_cosine", response_model=RagQueryResponse)
+@ragBasicRou.post("/rag11_cosine", response_model=RagQueryResponse)
 async def rag_query_cosine(
     payload: QueryReq,
     zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
-    return await rag_query_service(payload, zjwt, db)
+    return await rag_query(payload, zjwt, db)
+
+
+@ragBasicRou.post("/rag12_vector", response_model=RagRetrieveRes)
+async def rag_query_vector(
+    payload: QueryReq,
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+):
+    results = await retrieve_vector_candidates(payload, zjwt, db)
+    return {
+        "query": payload.query,
+        "top_k": payload.top_k,
+        "mode": "vector",
+        "results": results,
+    }
+
+
+@ragBasicRou.post("/rag13_keyword", response_model=RagRetrieveRes)
+async def rag_query_keyword(
+    payload: QueryReq,
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+):
+    results = await retrieve_keyword_candidates(payload, zjwt, db)
+    return {
+        "query": payload.query,
+        "top_k": payload.top_k,
+        "mode": "keyword",
+        "results": results,
+    }
+
+
+@ragBasicRou.post("/rag14_hybrid", response_model=RagRetrieveRes)
+async def rag_query_hybrid(
+    payload: QueryReq,
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+):
+    results = await retrieve_hybrid_candidates(payload, zjwt, db)
+    return {
+        "query": payload.query,
+        "top_k": payload.top_k,
+        "mode": "hybrid",
+        "results": results,
+    }
 
 
 
@@ -46,7 +100,7 @@ async def rag_answer(
     db: AsyncSession = Depends(get_db_rls),
 ):
     start = time.perf_counter()
-    response = await rag_answer_service(payload, zjwt, db)
+    response = await rag_answer(payload, zjwt, db)
     latency_ms = (time.perf_counter() - start) * 1000
 
     guardrail_meta = response.pop("_guardrail", None)
@@ -75,11 +129,12 @@ async def rag_answer(
 @ragBasicRou.post("/rag3_rerank", response_model=RagRerankAnswerResponse)
 async def rag3_answer_rerank(
     payload: QueryReq,
+    retrieval_mode: Literal["vector", "keyword", "hybrid"] = "hybrid",
     zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     start = time.perf_counter()
-    response = await rag_rerank(payload, zjwt, db=db)
+    response = await rag_rerank(payload, zjwt, db=db, retrieval_mode=retrieval_mode)
     latency_ms = (time.perf_counter() - start) * 1000
 
     guardrail_meta = response.pop("_guardrail", None)

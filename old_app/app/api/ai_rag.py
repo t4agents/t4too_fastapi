@@ -9,10 +9,7 @@ from app.schemas.sch_ai_rag_basic import (
     RagQueryResponse,
     RagRerankAnswerResponse,
 )
-from app.service.ser_ai_embedding import rag_answer as rag_answer_service
-from app.service.ser_ai_embedding import rag_rerank as rag_answer_rerank_service
-from app.service.ser_ai_embedding import rag_query as rag_query_service
-from app.service.ser_ai_embedding import minimize_evidence_for_llm
+from app.service.ser_ai_embedding import rag_answer, rag_rerank, rag_query ,minimize_evidence_for_llm
 from app.service.ser_ai_guardrail import log_rag_guardrail
 
 
@@ -29,7 +26,7 @@ async def rag_query(
     payload: QueryReq,
     zme: ZMeDataClass = Depends(get_zme),
 ):
-    return await rag_query_service(payload, zme)
+    return await rag_query(payload, zme)
 
 
 @embRou.post("/rag_answer", response_model=RagAnswerResponse)
@@ -38,7 +35,7 @@ async def rag_answer(
     zme: ZMeDataClass = Depends(get_zme),
 ):
     start = time.perf_counter()
-    response = await rag_answer_service(payload, zme)
+    response = await rag_answer(payload, zme)
     latency_ms = (time.perf_counter() - start) * 1000
 
     guardrail_meta = response.pop("_guardrail", None)
@@ -69,7 +66,7 @@ async def rag_answer_rerank(
     zme: ZMeDataClass = Depends(get_zme),
 ):
     start = time.perf_counter()
-    response = await rag_answer_rerank_service(payload, zme)
+    response = await rag_rerank(payload, zme)
     latency_ms = (time.perf_counter() - start) * 1000
 
     guardrail_meta = response.pop("_guardrail", None)

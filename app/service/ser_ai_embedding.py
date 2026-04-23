@@ -4,13 +4,12 @@ import logging
 import hashlib
 import re
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, Literal
 import aiohttp
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.sch_ai import JWType
 from openai import AsyncOpenAI
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
@@ -39,6 +38,7 @@ COHERE_RERANK_URL = "https://api.cohere.com/v1/rerank"
 COHERE_RERANK_CACHE_TTL = 900
 EMBED_CACHE_TTL = 3600
 RETRIEVAL_CACHE_TTL = 300
+RetrievalMode = Literal["vector", "keyword", "hybrid"]
 
 RAG_ANSWER_FORMAT: ResponseFormatTextJSONSchemaConfigParam = {
     "type": "json_schema",
@@ -303,8 +303,17 @@ async def _cohere_rerank(query: str, documents: list[str], top_n: int) -> list[d
             return data.get("results", [])
 
 
-async def _retrieve_hybrid_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> list[dict]:
-    retrieval_cache_key = f"rag_candidates|{zjwt.ztid}|{payload.query}|{payload.top_k}"
+async def _get_query_embedding(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> list[float]:
+    embed_cache_key = f"embed_query|{zjwt.ztid}|{payload.query}"
+    cached_embedding = await persistent_cache_get(zjwt, embed_cache_key, db=db)
+    if cached_embedding is not None:
+        logger.info("---------------- Embedding cache hit")
+        return cached_embedding
+    return await embed_fn(payload.query)
+
+
+async def _retrieve_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession, mode: RetrievalMode) -> list[dict]:
+    retrieval_cache_key = f"rag_candidates|{mode}|{zjwt.ztid}|{payload.query}|{payload.top_k}"
     cached_candidates = await persistent_cache_get(zjwt, retrieval_cache_key, db=db)
     if cached_candidates is not None:
         logger.info("---------------- Retrieval cache hit -> candidates=%s", len(cached_candidates))
@@ -313,43 +322,53 @@ async def _retrieve_hybrid_candidates(payload: QueryReq, zjwt: JWType, db: Async
     regconfig = cast(literal("english"), REGCONFIG)
     tsv = func.to_tsvector(regconfig, Embedding384DB.chunk)
     tsq = func.plainto_tsquery(regconfig, payload.query)
-    kw_score = func.ts_rank_cd(tsv, tsq).label("kw_score")
-    kw_score = func.least(kw_score * 10, 1.0).label("kw_score")
+    keyword_score = func.least(func.ts_rank_cd(tsv, tsq) * 10, 1.0).label("keyword_score")
 
-    embed_cache_key = f"embed_query|{zjwt.ztid}|{payload.query}"
-    cached_embedding = await persistent_cache_get(zjwt, embed_cache_key, db=db)
-    if cached_embedding is not None:
-        query_vec = cached_embedding
-        logger.info("---------------- Embedding cache hit")
-    else:
-        query_vec = await embed_fn(payload.query)
-        # await persistent_cache_set(zjwt, embed_cache_key, query_vec, ttl_seconds=EMBED_CACHE_TTL, db=db)
+    query_vec = await _get_query_embedding(payload, zjwt, db=db)
     distance = Embedding384DB.emb384.cosine_distance(query_vec).label("distance")
-    vec_score = func.coalesce(1 - distance, 0).label("vec_score")
+    vector_score = func.coalesce(1 - distance, 0).label("vector_score")
+    hybrid_score = (vector_score * 0.7 + keyword_score * 0.3).label("hybrid_score")
+
+    order_by_expr = {
+        "vector": vector_score,
+        "keyword": keyword_score,
+        "hybrid": hybrid_score,
+    }[mode]
 
     stmt = (
         select(
             Embedding384DB,
             PayrollHistoryDB,
-            vec_score,
-            kw_score,
-            (vec_score * 0.7 + kw_score * 0.3).label("final_score"),
+            vector_score,
+            keyword_score,
+            hybrid_score,
         )
         .join(PayrollHistoryDB, PayrollHistoryDB.id == Embedding384DB.source_id)
         .where(PayrollHistoryDB.cli_id == zjwt.zcid)
-        .order_by(func.coalesce((vec_score * 0.7 + kw_score * 0.3), vec_score).desc())
+        .order_by(func.coalesce(order_by_expr, vector_score).desc())
         .limit(payload.top_k)
     )
     res = await db.execute(stmt)
     rows = res.all()
 
     candidates = []
-    for idx, (emb_row, hist_row, vec_score, kw_score, final_score) in enumerate(rows, start=1):
-        score = float(final_score) if final_score is not None else float(vec_score)
+    for idx, (emb_row, hist_row, vec_value, kw_value, hybrid_value) in enumerate(rows, start=1):
+        vector_value = None if vec_value is None else float(vec_value)
+        keyword_value = None if kw_value is None else float(kw_value)
+        hybrid_value_float = None if hybrid_value is None else float(hybrid_value)
+        if mode == "vector":
+            score = vector_value
+        elif mode == "keyword":
+            score = keyword_value
+        else:
+            score = hybrid_value_float if hybrid_value_float is not None else vector_value
         candidates.append(
             {
                 "evidence_id": idx,
                 "score": score,
+                "vector_score": vector_value,
+                "keyword_score": keyword_value,
+                "hybrid_score": hybrid_value_float,
                 "source_id": str(emb_row.source_id),
                 "chunk": emb_row.chunk,
                 "history": _orm_to_dict(hist_row),
@@ -357,6 +376,18 @@ async def _retrieve_hybrid_candidates(payload: QueryReq, zjwt: JWType, db: Async
         )
     # await persistent_cache_set(zjwt, retrieval_cache_key, candidates, ttl_seconds=RETRIEVAL_CACHE_TTL)
     return candidates
+
+
+async def retrieve_vector_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> list[dict]:
+    return await _retrieve_candidates(payload, zjwt, db, mode="vector")
+
+
+async def retrieve_keyword_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> list[dict]:
+    return await _retrieve_candidates(payload, zjwt, db, mode="keyword")
+
+
+async def retrieve_hybrid_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> list[dict]:
+    return await _retrieve_candidates(payload, zjwt, db, mode="hybrid")
 
 
 async def rag_query(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
@@ -417,7 +448,7 @@ async def rag_query(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
 
 
 async def rag_answer(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
-    evidence = await _retrieve_hybrid_candidates(payload, zjwt, db=db)
+    evidence = await retrieve_hybrid_candidates(payload, zjwt, db=db)
 
     if not evidence:
         return {
@@ -458,13 +489,19 @@ async def rag_rerank(
     zjwt: JWType,
     db: AsyncSession,
     status_cb: StatusCallback | None = None,
+    retrieval_mode: RetrievalMode = "hybrid",
 ) -> dict:
     await _emit_status(
         status_cb,
         "rag_retrieve_start",
         {"query": payload.query, "top_k": payload.top_k},
     )
-    evidence = await _retrieve_hybrid_candidates(payload, zjwt, db)
+    retrieval_fn = {
+        "vector": retrieve_vector_candidates,
+        "keyword": retrieve_keyword_candidates,
+        "hybrid": retrieve_hybrid_candidates,
+    }[retrieval_mode]
+    evidence = await retrieval_fn(payload, zjwt, db)
     await _emit_status(
         status_cb,
         "rag_retrieve_done",

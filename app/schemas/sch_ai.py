@@ -12,3 +12,21 @@ class JWType(BaseModel):
 
     app_metadata: dict[str, Any] = Field(default_factory=dict)
     user_metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class RagHit(BaseModel):
+    evidence_id: int
+    score: Optional[float] = None
+    vector_score: Optional[float] = None
+    keyword_score: Optional[float] = None
+    hybrid_score: Optional[float] = None
+    source_id: str
+    chunk: str
+    history: dict[str, Any]
+
+
+class RagRetrieveRes(BaseModel):
+    query: str
+    top_k: int
+    mode: Literal["vector", "keyword", "hybrid"]
+    results: List[RagHit]

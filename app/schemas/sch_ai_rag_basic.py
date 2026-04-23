@@ -1,6 +1,7 @@
 from typing import Any, List, Optional, Literal
 
 from pydantic import BaseModel, Field
+from app.schemas.sch_ai import RagHit, RagRetrieveRes
 
 
 class QueryReq(BaseModel):
@@ -64,3 +65,8 @@ class RagRerankAnswerResponse(BaseModel):
     limitations: str
     model_reasoning_summary: List[str]
     evidence: List[RagRerankEvidence]
+
+
+# Backward-compatible aliases (prefer short names in sch_ai.py)
+RagRetrieveCandidate = RagHit
+RagRetrieveResponse = RagRetrieveRes

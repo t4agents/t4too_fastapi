@@ -6,11 +6,11 @@ from .ai_langgraph import langRou
 from .ai_rag import aiRagRou
 from .ai_rag_eval import ragEvalRou
 
-from .rag_basic import ragBasicRou
+from .rag_unit import ragUnitRou
 
 rouAI = APIRouter()
 
-rouAI.include_router(ragBasicRou, prefix="/rag", tags=["ai-rag-basic"])
+rouAI.include_router(ragUnitRou, prefix="/rag1_unit", tags=["ai-rag-basic"])
 
 rouAI.include_router(aiRagRou, tags=["ai-rag"])
 rouAI.include_router(guardrailRou, prefix="/guardrail", tags=["ai-guardrail"])
