@@ -17,7 +17,7 @@ from app.schemas.sch_ai_rag_faithfulness import (
     RagEvalFaithfulnessResponse,
     RagEvalFaithfulnessRow,
 )
-from app.service.ser_ai_embedding import rag_answer_rerank
+from app.service.ser_ai_embedding import rag_rerank
 from app.service.ser_ai_embedding import minimize_evidence_for_llm
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
@@ -171,7 +171,7 @@ async def run_faithfulness(payload: RagEvalFaithfulnessRequest) -> RagEvalFaithf
 
             rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
             logger.info("===faith:embedding_start")
-            rag_response = await rag_answer_rerank(rag_payload, zme)
+            rag_response = await rag_rerank(rag_payload, zme)
             evidence = (rag_response or {}).get("evidence") or []
             retrieved_ids = [str(e.get("source_id")) for e in evidence if e.get("source_id")]
             answer_text = (rag_response or {}).get("answer") or ""

@@ -55,7 +55,7 @@ async def run_rag_rerank(
         return cached
     await _emit_status(status_cb, "rag_cache_miss", {"query": query, "top_k": top_k})
 
-    from app.service.ser_ai_embedding import rag_answer_rerank as rag_answer_rerank_service
+    from app.service.ser_ai_embedding import rag_rerank as rag_answer_rerank_service
 
     rag_payload = QueryReq(query=query, top_k=top_k)
     response = await rag_answer_rerank_service(rag_payload, zme, status_cb=status_cb)

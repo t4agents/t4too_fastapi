@@ -16,7 +16,7 @@ from app.schemas.sch_ai_rag_precision import (
     RagEvalPrecisionResponse,
     RagEvalPrecisionRow,
 )
-from app.service.ser_ai_embedding import rag_answer_rerank
+from app.service.ser_ai_embedding import rag_rerank
 
 logger = logging.getLogger("app.http")
 
@@ -84,7 +84,7 @@ async def run_precision_at_k(payload: RagEvalPrecisionRequest) -> RagEvalPrecisi
 
             rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
             logger.info("===precision:embedding_start")
-            rag_response = await rag_answer_rerank(rag_payload, zme)
+            rag_response = await rag_rerank(rag_payload, zme)
             evidence = (rag_response or {}).get("evidence") or []
             retrieved_ids = [str(e.get("source_id")) for e in evidence if e.get("source_id")]
 

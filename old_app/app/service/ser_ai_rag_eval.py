@@ -14,7 +14,7 @@ from app.db.models.m_payroll_history import PayrollHistory
 from app.llm.conn.openai_embedder import EMBED_MODEL, embed_fn
 from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai_rag_eval import RagEvalRequest, RagEvalResponse, RagEvalRow
-from app.service.ser_ai_embedding import rag_answer_rerank
+from app.service.ser_ai_embedding import rag_rerank
 from app.service.ser_ai_embedding import minimize_evidence_for_llm
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
@@ -230,7 +230,7 @@ async def run_rag_eval(payload: RagEvalRequest) -> RagEvalResponse:
             zme = ZMeDataClass(ztid=ten_id, zbid=biz_id, zuid=user_id, zdb=session)
 
             rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
-            rag_response = await rag_answer_rerank(rag_payload, zme)
+            rag_response = await rag_rerank(rag_payload, zme)
             evidence = (rag_response or {}).get("evidence") or []
             retrieved_ids = [str(e.get("source_id")) for e in evidence if e.get("source_id")]
 

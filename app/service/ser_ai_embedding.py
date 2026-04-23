@@ -27,7 +27,7 @@ from app.db.models.t4.m_payroll_history import PayrollHistoryDB
 from app.llm.conn.openai_embedder import embed_fn
 from app.schemas.sch_ai import JWType
 from app.schemas.sch_ai_rag_basic import QueryReq
-from app.service.ser_ai_cache import persistent_cache_get # persistent_cache_set
+from app.service.ser_ai_cache import persistent_cache_get, persistent_cache_set
 
 
 settings = get_settings_singleton()
@@ -453,137 +453,139 @@ async def rag_answer(payload: QueryReq, zjwt: JWType, db: AsyncSession) -> dict:
     }
 
 
-# async def rag_answer_rerank(
-#     payload: QueryReq,
-#     zjwt: JWType,
-#     status_cb: StatusCallback | None = None,
-#     db: AsyncSession,
-# ) -> dict:
-#     await _emit_status(
-#         status_cb,
-#         "rag_retrieve_start",
-#         {"query": payload.query, "top_k": payload.top_k},
-#     )
-#     evidence = await _retrieve_hybrid_candidates(payload, zjwt, db)
-#     await _emit_status(
-#         status_cb,
-#         "rag_retrieve_done",
-#         {"count": len(evidence), "top_k": payload.top_k},
-#     )
-#     if not evidence:
-#         await _emit_status(status_cb, "rag_no_evidence", {"query": payload.query})
-#         return {
-#             "query": payload.query,
-#             "top_k": payload.top_k,
-#             "model": ANSWER_MODEL,
-#             "rerank_model": COHERE_RERANK_MODEL,
-#             "answer": "No matching payroll history found for this query.",
-#             "confidence": 0,
-#             "reasoning_summary": ["No evidence was retrieved for the query."],
-#             "citations": [],
-#             "limitations": "No relevant payroll history records were retrieved.",
-#             "model_reasoning_summary": [],
-#             "evidence": [],
-#         }
+async def rag_rerank(
+    payload: QueryReq,
+    zjwt: JWType,
+    db: AsyncSession,
+    status_cb: StatusCallback | None = None,
+) -> dict:
+    await _emit_status(
+        status_cb,
+        "rag_retrieve_start",
+        {"query": payload.query, "top_k": payload.top_k},
+    )
+    evidence = await _retrieve_hybrid_candidates(payload, zjwt, db)
+    await _emit_status(
+        status_cb,
+        "rag_retrieve_done",
+        {"count": len(evidence), "top_k": payload.top_k},
+    )
+    if not evidence:
+        await _emit_status(status_cb, "rag_no_evidence", {"query": payload.query})
+        return {
+            "query": payload.query,
+            "top_k": payload.top_k,
+            "model": ANSWER_MODEL,
+            "rerank_model": COHERE_RERANK_MODEL,
+            "answer": "No matching payroll history found for this query.",
+            "confidence": 0,
+            "reasoning_summary": ["No evidence was retrieved for the query."],
+            "citations": [],
+            "limitations": "No relevant payroll history records were retrieved.",
+            "model_reasoning_summary": [],
+            "evidence": [],
+        }
 
-#     llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
-#     documents = [item["chunk"] for item in llm_evidence]
-#     fallback_reason: str | None = None
-#     try:
-#         await _emit_status(
-#             status_cb,
-#             "rag_rerank_start",
-#             {"model": COHERE_RERANK_MODEL, "top_k": payload.top_k},
-#         )
-#         joined = "\n".join(documents)
-#         docs_hash = hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
-#         cache_key = f"cohere_rerank|{zjwt.ztid}|{payload.query}|{payload.top_k}|{docs_hash}"
-#         cached_rerank = await persistent_cache_get(zjwt, cache_key, db=db)
-#         if cached_rerank is not None:
-#             rerank_results = cached_rerank
-#             logger.info(
-#                 "---------------- Cohere rerank cache hit -> results=%s",
-#                 len(rerank_results),
-#             )
-#         else:
-#             rerank_results = await _cohere_rerank(payload.query, documents, payload.top_k)
-#             await persistent_cache_set(zjwt, cache_key, rerank_results, ttl_seconds=COHERE_RERANK_CACHE_TTL, db=db)
-#         await _emit_status(
-#             status_cb,
-#             "rag_rerank_done",
-#             {"count": len(rerank_results), "model": COHERE_RERANK_MODEL},
-#         )
-#     except HTTPException as exc:
-#         if exc.status_code == 429 or (exc.status_code is not None and exc.status_code >= 500):
-#             fallback_reason = f"Cohere rerank unavailable (status {exc.status_code})."
-#         else:
-#             raise
-#     except Exception as exc:
-#         fallback_reason = f"Cohere rerank failed: {str(exc)}"
+    llm_evidence = minimize_evidence_for_llm(evidence, payload.query)
+    documents = [item["chunk"] for item in llm_evidence]
+    fallback_reason: str | None = None
+    try:
+        await _emit_status(
+            status_cb,
+            "rag_rerank_start",
+            {"model": COHERE_RERANK_MODEL, "top_k": payload.top_k},
+        )
+        joined = "\n".join(documents)
+        docs_hash = hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
+        cache_key = f"cohere_rerank|{zjwt.ztid}|{payload.query}|{payload.top_k}|{docs_hash}"
+        cached_rerank = await persistent_cache_get(zjwt, cache_key, db=db)
+        if cached_rerank is not None:
+            rerank_results = cached_rerank
+            logger.info(
+                "---------------- Cohere rerank cache hit -> results=%s",
+                len(rerank_results),
+            )
+        else:
+            rerank_results = await _cohere_rerank(payload.query, documents, payload.top_k)
+            await persistent_cache_set(zjwt, cache_key, rerank_results, ttl_seconds=COHERE_RERANK_CACHE_TTL, db=db)
+        await _emit_status(
+            status_cb,
+            "rag_rerank_done",
+            {"count": len(rerank_results), "model": COHERE_RERANK_MODEL},
+        )
+    except HTTPException as exc:
+        if exc.status_code == 429 or (exc.status_code is not None and exc.status_code >= 500):
+            fallback_reason = f"Cohere rerank unavailable (status {exc.status_code})."
+        else:
+            raise
+    except Exception as exc:
+        fallback_reason = f"Cohere rerank failed: {str(exc)}"
 
-#     if fallback_reason:
-#         await _emit_status(
-#             status_cb,
-#             "rag_rerank_fallback",
-#             {"reason": fallback_reason, "model": COHERE_RERANK_MODEL},
-#         )
-#         logger.info("---------------- Cohere rerank fallback -> using base evidence. reason=%s", fallback_reason)
-#         reranked = [
-#             {
-#                 "evidence_id": idx,
-#                 "score": item.get("score"),
-#                 "source_id": item.get("source_id"),
-#                 "chunk": item["chunk"],
-#                 "history": item["history"],
-#             }
-#             for idx, item in enumerate(evidence, start=1)
-#         ]
-#     else:
-#         reranked = []
-#         for new_idx, item in enumerate(rerank_results, start=1):
-#             idx = item.get("index")
-#             if idx is None or idx >= len(evidence):
-#                 continue
-#             base = evidence[idx]
-#             reranked.append(
-#                 {
-#                     "evidence_id": new_idx,
-#                     "score": item.get("relevance_score"),
-#                     "source_id": base.get("source_id"),
-#                     "chunk": base["chunk"],
-#                     "history": base["history"],
-#                 }
-#             )
+    if fallback_reason:
+        await _emit_status(
+            status_cb,
+            "rag_rerank_fallback",
+            {"reason": fallback_reason, "model": COHERE_RERANK_MODEL},
+        )
+        logger.info("---------------- Cohere rerank fallback -> using base evidence. reason=%s", fallback_reason)
+        reranked = [
+            {
+                "evidence_id": idx,
+                "score": item.get("score"),
+                "source_id": item.get("source_id"),
+                "chunk": item["chunk"],
+                "history": item["history"],
+            }
+            for idx, item in enumerate(evidence, start=1)
+        ]
+    else:
+        reranked = []
+        for new_idx, item in enumerate(rerank_results, start=1):
+            idx = item.get("index")
+            if idx is None or idx >= len(evidence):
+                continue
+            base = evidence[idx]
+            reranked.append(
+                {
+                    "evidence_id": new_idx,
+                    "score": item.get("relevance_score"),
+                    "source_id": base.get("source_id"),
+                    "chunk": base["chunk"],
+                    "history": base["history"],
+                }
+            )
 
-#     await _emit_status(status_cb, "rag_generate_start", {"model": ANSWER_MODEL})
-#     llm_reranked = minimize_evidence_for_llm(reranked, payload.query)
-#     answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_reranked)
-#     await _emit_status(status_cb, "rag_generate_done", {"model": ANSWER_MODEL})
-#     if fallback_reason:
-#         reasoning_summary = [fallback_reason] + list(reasoning_summary)
-#         limitations = answer_payload.get("limitations") or ""
-#         if limitations:
-#             limitations = f"{limitations} Rerank fallback: {fallback_reason}"
-#         else:
-#             limitations = f"Rerank fallback: {fallback_reason}"
-#         answer_payload["limitations"] = limitations
+    await _emit_status(status_cb, "rag_generate_start", {"model": ANSWER_MODEL})
+    llm_reranked = minimize_evidence_for_llm(reranked, payload.query)
+    answer_payload, reasoning_summary, usage = await _generate_answer(payload.query, llm_reranked)
+    await _emit_status(status_cb, "rag_generate_done", {"model": ANSWER_MODEL})
+    if fallback_reason:
+        reasoning_summary = [fallback_reason] + list(reasoning_summary)
+        limitations = answer_payload.get("limitations") or ""
+        if limitations:
+            limitations = f"{limitations} Rerank fallback: {fallback_reason}"
+        else:
+            limitations = f"Rerank fallback: {fallback_reason}"
+        answer_payload["limitations"] = limitations
 
-#     response = {
-#         "query": payload.query,
-#         "top_k": payload.top_k,
-#         "model": ANSWER_MODEL,
-#         "rerank_model": COHERE_RERANK_MODEL,
-#         "answer": answer_payload.get("answer"),
-#         "confidence": answer_payload.get("confidence"),
-#         "reasoning_summary": answer_payload.get("reasoning_summary"),
-#         "citations": answer_payload.get("citations"),
-#         "limitations": answer_payload.get("limitations"),
-#         "model_reasoning_summary": reasoning_summary,
-#         "evidence": reranked,
-#     }
-#     response["_guardrail"] = {
-#         "usage": usage,
-#     }
-#     if fallback_reason:
-#         response["_guardrail"]["fallback_reason"] = fallback_reason
-#     return response
+    response = {
+        "query": payload.query,
+        "top_k": payload.top_k,
+        "model": ANSWER_MODEL,
+        "rerank_model": COHERE_RERANK_MODEL,
+        "answer": answer_payload.get("answer"),
+        "confidence": answer_payload.get("confidence"),
+        "reasoning_summary": answer_payload.get("reasoning_summary"),
+        "citations": answer_payload.get("citations"),
+        "limitations": answer_payload.get("limitations"),
+        "model_reasoning_summary": reasoning_summary,
+        "evidence": reranked,
+    }
+    response["_guardrail"] = {
+        "usage": usage,
+    }
+    if fallback_reason:
+        response["_guardrail"] = response.get("_guardrail") or {}
+        response["_guardrail"]["fallback_reason"] = fallback_reason
+    
+    return response

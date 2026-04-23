@@ -10,7 +10,7 @@ from app.schemas.sch_ai_rag_basic import (
     RagRerankAnswerResponse,
 )
 from app.service.ser_ai_embedding import rag_answer as rag_answer_service
-from app.service.ser_ai_embedding import rag_answer_rerank as rag_answer_rerank_service
+from app.service.ser_ai_embedding import rag_rerank as rag_answer_rerank_service
 from app.service.ser_ai_embedding import rag_query as rag_query_service
 from app.service.ser_ai_embedding import minimize_evidence_for_llm
 from app.service.ser_ai_guardrail import log_rag_guardrail

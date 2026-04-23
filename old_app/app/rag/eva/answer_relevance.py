@@ -17,7 +17,7 @@ from app.schemas.sch_ai_rag_answer_relevance import (
     RagEvalAnswerRelevanceResponse,
     RagEvalAnswerRelevanceRow,
 )
-from app.service.ser_ai_embedding import rag_answer_rerank
+from app.service.ser_ai_embedding import rag_rerank
 from openai.types.responses.response_format_text_json_schema_config_param import (
     ResponseFormatTextJSONSchemaConfigParam,
 )
@@ -156,7 +156,7 @@ async def run_answer_relevance(
 
             rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
             logger.info("===relevance:rag_start")
-            rag_response = await rag_answer_rerank(rag_payload, zme)
+            rag_response = await rag_rerank(rag_payload, zme)
             answer_text = (rag_response or {}).get("answer") or ""
 
             is_relevant, relevance_note = await _judge_relevance(

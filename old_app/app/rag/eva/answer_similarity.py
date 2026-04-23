@@ -17,7 +17,7 @@ from app.schemas.sch_ai_rag_answer_similarity import (
     RagEvalAnswerSimilarityResponse,
     RagEvalAnswerSimilarityRow,
 )
-from app.service.ser_ai_embedding import rag_answer_rerank
+from app.service.ser_ai_embedding import rag_rerank
 
 logger = logging.getLogger("app.http")
 
@@ -116,7 +116,7 @@ async def run_answer_similarity(
 
             rag_payload = QueryReq(query=row.question, top_k=payload.top_k)
             logger.info("===similarity:rag_start")
-            rag_response = await rag_answer_rerank(rag_payload, zme)
+            rag_response = await rag_rerank(rag_payload, zme)
             answer_text = (rag_response or {}).get("answer") or ""
 
             answer_similarity, similarity_note = await _answer_similarity(

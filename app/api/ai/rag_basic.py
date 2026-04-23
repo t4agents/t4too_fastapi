@@ -17,7 +17,7 @@ from app.schemas.sch_ai_rag_basic import (RagAnswerResponse,QueryReq,RagQueryRes
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest, FeedbackCreateResponse
 from app.service.ser_ai_embedding import (minimize_evidence_for_llm,
     rag_answer as rag_answer_service,
-    # rag_answer_rerank as rag_answer_rerank_service,
+    rag_rerank,
     rag_query as rag_query_service,
 )
 from app.service.ser_ai_feedback import log_feedback_event
@@ -71,36 +71,37 @@ async def rag_answer(
     return response
 
 
-# @ragBasicRou.post("/rag_answer_rerank", response_model=RagRerankAnswerResponse)
-# async def rag_answer_rerank(
-#     payload: QueryReq,
-#     zjwt: JWType = Depends(get_zjwt),
-#     db: AsyncSession = Depends(get_db_rls),
-# ):
-#     start = time.perf_counter()
-#     response = await rag_answer_rerank_service(payload, zjwt, db=db)
-#     latency_ms = (time.perf_counter() - start) * 1000
 
-#     guardrail_meta = response.pop("_guardrail", None)
-#     try:
-#         guardrail_evidence = minimize_evidence_for_llm(response.get("evidence") or [], payload.query)
-#         await log_rag_guardrail(
-#             db,
-#             ten_id=zjwt.ztid,
-#             biz_id=zjwt.zbid,
-#             user_id=zjwt.zuid,
-#             route="rag_answer_rerank",
-#             question=payload.query,
-#             answer=response.get("answer") or "",
-#             evidence=guardrail_evidence,
-#             model=response.get("model"),
-#             latency_ms=latency_ms,
-#             guardrail_meta=guardrail_meta,
-#         )
-#     except Exception:
-#         pass
+@ragBasicRou.post("/rag3_rerank", response_model=RagRerankAnswerResponse)
+async def rag3_answer_rerank(
+    payload: QueryReq,
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+):
+    start = time.perf_counter()
+    response = await rag_rerank(payload, zjwt, db=db)
+    latency_ms = (time.perf_counter() - start) * 1000
 
-#     return response
+    guardrail_meta = response.pop("_guardrail", None)
+    try:
+        guardrail_evidence = minimize_evidence_for_llm(response.get("evidence") or [], payload.query)
+        await log_rag_guardrail(
+            db,
+            ten_id=zjwt.ztid,
+            biz_id=zjwt.zbid,
+            user_id=zjwt.zuid,
+            route="rag_answer_rerank",
+            question=payload.query,
+            answer=response.get("answer") or "",
+            evidence=guardrail_evidence,
+            model=response.get("model"),
+            latency_ms=latency_ms,
+            guardrail_meta=guardrail_meta,
+        )
+    except Exception:
+        pass
+
+    return response
 
 
 # @aiRagRou.post("/rag_answer_rerank_stream")
