@@ -319,43 +319,76 @@ async def _retrieve_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession
         logger.info("---------------- Retrieval cache hit -> candidates=%s", len(cached_candidates))
         return cached_candidates
 
-    regconfig = cast(literal("english"), REGCONFIG)
-    tsv = func.to_tsvector(regconfig, Embedding384DB.chunk)
-    tsq = func.plainto_tsquery(regconfig, payload.query)
-    keyword_score = func.least(func.ts_rank_cd(tsv, tsq) * 10, 1.0).label("keyword_score")
-
     query_vec = await _get_query_embedding(payload, zjwt, db=db)
-    distance = Embedding384DB.emb384.cosine_distance(query_vec).label("distance")
-    vector_score = func.coalesce(1 - distance, 0).label("vector_score")
-    hybrid_score = (vector_score * 0.7 + keyword_score * 0.3).label("hybrid_score")
+    query_vector_literal = "[" + ",".join(f"{float(v):.12g}" for v in query_vec) + "]"
 
-    order_by_expr = {
-        "vector": vector_score,
-        "keyword": keyword_score,
-        "hybrid": hybrid_score,
+    order_by_sql = {
+        "vector": "vector_score",
+        "keyword": "keyword_score",
+        "hybrid": "hybrid_score",
     }[mode]
 
-    stmt = (
-        select(
-            Embedding384DB,
-            PayrollHistoryDB,
-            vector_score,
-            keyword_score,
-            hybrid_score,
-        )
-        .join(PayrollHistoryDB, PayrollHistoryDB.id == Embedding384DB.source_id)
-        .where(PayrollHistoryDB.cli_id == zjwt.zcid)
-        .order_by(func.coalesce(order_by_expr, vector_score).desc())
-        .limit(payload.top_k)
+    stmt = text(
+        f"""
+        SELECT
+            e.source_id,
+            e.chunk,
+            to_jsonb(h) AS history,
+            COALESCE(
+                1 - (
+                    e.emb384 OPERATOR(extensions.<=>)
+                    CAST(:query_vector AS extensions.vector(384))
+                ),
+                0
+            )::float8 AS vector_score,
+            LEAST(
+                ts_rank_cd(
+                    to_tsvector(CAST('english' AS REGCONFIG), e.chunk),
+                    plainto_tsquery(CAST('english' AS REGCONFIG), :query_text)
+                ) * 10,
+                1.0
+            )::float8 AS keyword_score,
+            (
+                COALESCE(
+                    1 - (
+                        e.emb384 OPERATOR(extensions.<=>)
+                        CAST(:query_vector AS extensions.vector(384))
+                    ),
+                    0
+                ) * 0.7
+                +
+                LEAST(
+                    ts_rank_cd(
+                        to_tsvector(CAST('english' AS REGCONFIG), e.chunk),
+                        plainto_tsquery(CAST('english' AS REGCONFIG), :query_text)
+                    ) * 10,
+                    1.0
+                ) * 0.3
+            )::float8 AS hybrid_score
+        FROM too_ai.payroll_history_384 e
+        JOIN too_t4.payroll_history h
+          ON h.id = e.source_id
+        WHERE h.cli_id = :cli_id
+        ORDER BY {order_by_sql} DESC
+        LIMIT :top_k
+        """
     )
-    res = await db.execute(stmt)
-    rows = res.all()
+    res = await db.execute(
+        stmt,
+        {
+            "query_vector": query_vector_literal,
+            "query_text": payload.query,
+            "cli_id": zjwt.zcid,
+            "top_k": payload.top_k,
+        },
+    )
+    rows = res.mappings().all()
 
     candidates = []
-    for idx, (emb_row, hist_row, vec_value, kw_value, hybrid_value) in enumerate(rows, start=1):
-        vector_value = None if vec_value is None else float(vec_value)
-        keyword_value = None if kw_value is None else float(kw_value)
-        hybrid_value_float = None if hybrid_value is None else float(hybrid_value)
+    for idx, row in enumerate(rows, start=1):
+        vector_value = None if row.get("vector_score") is None else float(row.get("vector_score"))
+        keyword_value = None if row.get("keyword_score") is None else float(row.get("keyword_score"))
+        hybrid_value_float = None if row.get("hybrid_score") is None else float(row.get("hybrid_score"))
         if mode == "vector":
             score = vector_value
         elif mode == "keyword":
@@ -369,9 +402,9 @@ async def _retrieve_candidates(payload: QueryReq, zjwt: JWType, db: AsyncSession
                 "vector_score": vector_value,
                 "keyword_score": keyword_value,
                 "hybrid_score": hybrid_value_float,
-                "source_id": str(emb_row.source_id),
-                "chunk": emb_row.chunk,
-                "history": _orm_to_dict(hist_row),
+                "source_id": str(row.get("source_id")),
+                "chunk": row.get("chunk") or "",
+                "history": row.get("history") or {},
             }
         )
     # await persistent_cache_set(zjwt, retrieval_cache_key, candidates, ttl_seconds=RETRIEVAL_CACHE_TTL)

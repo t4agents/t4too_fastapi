@@ -7,8 +7,11 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependency_injection import ZMeDataClass, get_zme
+from app.core.auth import get_zjwt
+from app.core.dependency_injection import build_zme
+from app.db.conn.db_rls import get_db_rls
 from app.schemas.sch_ai import JWType
 from app.schemas.sch_ai_rag_basic import RagRerankAnswerResponse
 from app.schemas.sch_ai_feedback import FeedbackCreateRequest, FeedbackCreateResponse
@@ -16,27 +19,29 @@ from app.schemas.sch_ai_router import RouterQueryRequest
 from app.service.ser_ai_feedback import log_feedback_event
 from app.service.ser_ai_router import route_and_answer as route_and_answer_service
 
-routerRou = APIRouter()
+brainRou = APIRouter()
 logger = logging.getLogger("app.http")
-
 
 def _format_sse(event: str, data: dict) -> str:return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 def _format_sse_comment(comment: str) -> str:return f": {comment}\n\n"
 
-
-@routerRou.post("/python", response_model=RagRerankAnswerResponse)
+@brainRou.post("/python", response_model=RagRerankAnswerResponse)
 async def route_answer(
     payload: RouterQueryRequest,
-    zme: ZMeDataClass = Depends(get_zme),
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
 ):
+    zme = build_zme(zjwt, db)
     return await route_and_answer_service(payload, zme)
 
 
-@routerRou.post("/langgraph", response_model=RagRerankAnswerResponse)
+@brainRou.post("/langgraph", response_model=RagRerankAnswerResponse)
 async def route_answer_langgraph(
     payload: RouterQueryRequest,
-    zme: ZMeDataClass = Depends(get_zme),
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
 ):
+    zme = build_zme(zjwt, db)
     try:
         from app.langgraph.agent2 import route_and_answer as route_langgraph
     except Exception as exc:
@@ -45,12 +50,14 @@ async def route_answer_langgraph(
     return await route_langgraph(payload, zme)
 
 
-@routerRou.post("/lgstream")
+@brainRou.post("/lgstream")
 async def route_answer_langgraph_stream(
     payload: RouterQueryRequest,
     request: Request,
-    zme: ZMeDataClass = Depends(get_zme),
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
 ):
+    zme = build_zme(zjwt, db)
     try:
         from app.langgraph.agent2 import route_and_answer as route_langgraph
     except Exception as exc:

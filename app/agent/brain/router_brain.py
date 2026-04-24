@@ -62,22 +62,23 @@ SQL_FORMAT: ResponseFormatTextJSONSchemaConfigParam = {
 }
 
 SQL_SCHEMA_HINTS = (
-    "Tables and columns (PostgreSQL):\n"
-    "- payroll_history (finalized payroll records): id, ten_id, biz_id, employee_id, full_name, "
+    "Tables and columns (PostgreSQL). ALWAYS use schema-qualified names:\n"
+    "- too_t4.payroll_history (finalized payroll records): id, ten_id, biz_id, employee_id, full_name, "
     "period_start, period_end, period_key, pay_date, gross, net, total_deduction, bonus, tax, cpp, "
     "ei, regular_hours, overtime_hours, annual_salary_snapshot, hourly_rate_snapshot, status, excluded.\n"
-    "- payroll_entries (draft payroll entries): id, ten_id, biz_id, employee_id, full_name, "
+    "- too_t4.payroll_entries (draft payroll entries): id, ten_id, biz_id, employee_id, full_name, "
     "period_start, period_end, period_key, pay_date, gross, net, total_deduction, bonus, tax, cpp, "
     "ei, regular_hours, overtime_hours, annual_salary_snapshot, hourly_rate_snapshot, status, excluded.\n"
-    "- employees: id, ten_id, biz_id, first_name, last_name, full_name, employment_type, "
+    "- too_t4.employees: id, ten_id, biz_id, first_name, last_name, full_name, employment_type, "
     "hourly_rate, annual_salary, start_date, end_date, email, phone.\n"
-    "- payroll_periods: id, ten_id, biz_id, payroll_schedule_id, start_date, end_date, "
+    "- too_t4.payroll_periods: id, ten_id, biz_id, payroll_schedule_id, start_date, end_date, "
     "pay_date, period_key, period_number, status.\n"
-    "- payroll_schedules: id, ten_id, biz_id, frequency, payon, effective_from, "
+    "- too_t4.payroll_schedules: id, ten_id, biz_id, frequency, payon, effective_from, "
     "effective_to, status.\n"
-    "- invoices: id, ten_id, biz_id, description, amount, status, due_date.\n"
-    "- biz_entities: id, ten_id, biz_id, name, legal_name, business_number, province, country, employee_count.\n"
-    "Notes: Most tables include id, ten_id, biz_id, created_at. Prefer payroll_history for finalized reporting.\n"
+    "- too_inv.invoice: id, ten_id, biz_id, client_company_name, inv_number, inv_date, inv_due_date, "
+    "inv_total, inv_paid_total, inv_balance_due, inv_payment_status.\n"
+    "- too_global.zbe (business entity): id, ten_id, biz_id, legal_name, be_number, province, country, employee_count.\n"
+    "Notes: Most tables include id, ten_id, biz_id, created_at. Prefer too_t4.payroll_history for finalized reporting.\n"
 )
 
 
@@ -183,7 +184,7 @@ async def generate_sql(query: str) -> tuple[str, str, list[str]]:
         "You generate a SINGLE SELECT SQL query for the user's request. "
         "Only SELECT (or WITH ... SELECT) is allowed. "
         "No semicolons, no comments, no data modification. "
-        "Use only the table names listed in the schema hints. "
+        "Use only the table names listed in the schema hints, and ALWAYS schema-qualify tables (schema.table). "
         "Return JSON that matches the schema."
     )
 

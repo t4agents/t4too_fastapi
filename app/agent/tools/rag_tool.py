@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 
 from app.core.dependency_injection import ZMeDataClass
 from app.schemas.sch_ai_rag_basic import QueryReq
+from app.schemas.sch_ai import JWType
 from app.agent.tools.persist_cache import persistent_cache_get, persistent_cache_set
 from app.service.ser_ai_guardrail import log_rag_guardrail
 
@@ -58,7 +59,18 @@ async def run_rag_rerank(
     from app.service.ser_ai_embedding import rag_rerank as rag_answer_rerank_service
 
     rag_payload = QueryReq(query=query, top_k=top_k)
-    response = await rag_answer_rerank_service(rag_payload, zme, status_cb=status_cb)
+    zjwt = JWType(
+        ztid=zme.ztid,
+        zbid=zme.zbid,
+        zcid=zme.cli_id,
+        zuid=zme.zuid,
+    )
+    response = await rag_answer_rerank_service(
+        rag_payload,
+        zjwt,
+        zme.zdb,
+        status_cb=status_cb,
+    )
     try:
         await log_rag_guardrail(
             zme.zdb,

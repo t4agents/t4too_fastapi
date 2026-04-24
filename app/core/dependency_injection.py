@@ -3,13 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_zjwt
-from app.db.conn.db_rls import get_db_rls
 from app.schemas.sch_ai import JWType
-# from app.service.ser_ai_context import ai_context_from_zjwt
 
 
 @dataclass(slots=True)
@@ -37,15 +34,14 @@ class ZMeDataClass:
         return self.zdb
 
 
-async def get_zme(
-    zjwt: JWType = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
-) -> ZMeDataClass:
-    ctx = ai_context_from_zjwt(zjwt, db)
+def build_zme(zjwt: JWType, db: AsyncSession) -> ZMeDataClass:
+    cli_id = zjwt.zcid or zjwt.zuid
+    if cli_id is None:
+        raise HTTPException(status_code=400, detail="Missing client/user id in JWT context.")
     return ZMeDataClass(
-        ztid=ctx.ten_id,
-        zbid=ctx.biz_id,
-        zuid=ctx.user_id,
-        zdb=ctx.db,
-        cli_id=ctx.cli_id,
+        ztid=zjwt.ztid,
+        zbid=zjwt.zbid,
+        zuid=zjwt.zuid,
+        zdb=db,
+        cli_id=cli_id,
     )

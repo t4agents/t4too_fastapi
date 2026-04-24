@@ -66,6 +66,7 @@ def validate_sql_select(sql: str) -> tuple[bool, str]:
 
 async def execute_sql(zme: ZMeDataClass, sql_text: str) -> list[dict[str, Any]]:
     async with zme.zdb.begin_nested():
+        await zme.zdb.execute(text("SET LOCAL search_path TO too_t4, too_inv, too_global, too_ai, public"))
         result = await zme.zdb.execute(text(sql_text))
         rows = result.mappings().all()
     return normalize_rows([dict(r) for r in rows])
