@@ -20,12 +20,8 @@ routerRou = APIRouter()
 logger = logging.getLogger("app.http")
 
 
-def _format_sse(event: str, data: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
-
-
-def _format_sse_comment(comment: str) -> str:
-    return f": {comment}\n\n"
+def _format_sse(event: str, data: dict) -> str:return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+def _format_sse_comment(comment: str) -> str:return f": {comment}\n\n"
 
 
 @routerRou.post("/python", response_model=RagRerankAnswerResponse)
