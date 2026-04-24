@@ -18,13 +18,14 @@ from app.agent.tools import (
     run_rag_rerank,
     validate_sql_select,
 )
-from app.core.dependency_injection import ZMeDataClass
+from app.schemas.sch_ai import JWType
 from app.schemas.sch_ai_router import RouterQueryRequest
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("app.http")
 
 
-async def route_and_answer(payload: RouterQueryRequest, zme: ZMeDataClass) -> dict:
+async def route_and_answer(payload: RouterQueryRequest, zjwt: JWType, db: AsyncSession) -> dict:
     logger.info("----1 : router received query=%r top_k=%s", 555, payload.query, payload.top_k)
 
     force_sql, force_kw = should_force_sql(payload.query)
@@ -63,7 +64,7 @@ async def route_and_answer(payload: RouterQueryRequest, zme: ZMeDataClass) -> di
             top_k_rationale or "<empty>",
         )
 
-        rag_response = await run_rag_rerank(payload.query, decided_top_k, zme)
+        rag_response = await run_rag_rerank(payload.query, decided_top_k, zjwt, db)
         
         logger.info(
             "---- : RAG response received answer_len=%s evidence_count=%s",
@@ -108,7 +109,7 @@ async def route_and_answer(payload: RouterQueryRequest, zme: ZMeDataClass) -> di
                 "---- : SQL rejected -> falling back to RAG",
                 555,
             )
-            rag_response = await run_rag_rerank(payload.query, payload.top_k, zme)
+            rag_response = await run_rag_rerank(payload.query, payload.top_k, zjwt, db)
             if isinstance(rag_response, dict):
                 rag_response["route"] = "sql"
                 rag_response["sql"] = sql_text
@@ -124,7 +125,7 @@ async def route_and_answer(payload: RouterQueryRequest, zme: ZMeDataClass) -> di
             555,
         )
         try:
-            rows = await execute_sql(zme, sql_text)
+            rows = await execute_sql(db, sql_text)
             answer_text = json.dumps(rows, ensure_ascii=False, indent=2)
             
             logger.info(
@@ -144,7 +145,7 @@ async def route_and_answer(payload: RouterQueryRequest, zme: ZMeDataClass) -> di
                 "---- : SQL failed -> falling back to RAG",
                 555,
             )
-            rag_response = await run_rag_rerank(payload.query, payload.top_k, zme)
+            rag_response = await run_rag_rerank(payload.query, payload.top_k, zjwt, db)
             if isinstance(rag_response, dict):
                 rag_response["route"] = "sql"
                 rag_response["sql"] = sql_text

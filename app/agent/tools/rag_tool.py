@@ -2,11 +2,11 @@ import inspect
 import time
 from collections.abc import Awaitable, Callable
 
-from app.core.dependency_injection import ZMeDataClass
-from app.schemas.sch_ai_rag_basic import QueryReq
 from app.schemas.sch_ai import JWType
-from app.agent.tools.persist_cache import persistent_cache_get, persistent_cache_set
+from app.schemas.sch_ai_rag_basic import QueryReq
+from app.service.ser_ai_cache import persistent_cache_get, persistent_cache_set
 from app.service.ser_ai_guardrail import log_rag_guardrail
+from sqlalchemy.ext.asyncio import AsyncSession
 
 RAG_RESPONSE_CACHE_TTL = 300
 
@@ -28,21 +28,22 @@ async def _emit_status(status_cb: StatusCallback | None, status: str, meta: dict
 async def run_rag_rerank(
     query: str,
     top_k: int,
-    zme: ZMeDataClass,
+    zjwt: JWType,
+    db: AsyncSession,
     status_cb: StatusCallback | None = None,
 ) -> dict:
     start = time.perf_counter()
     await _emit_status(status_cb, "rag_cache_check", {"query": query, "top_k": top_k})
-    cache_key = f"rag_answer_rerank|{zme.ztid}|{query}|{top_k}"
-    cached = await persistent_cache_get(zme, cache_key)
+    cache_key = f"rag_answer_rerank|{zjwt.ztid}|{query}|{top_k}"
+    cached = await persistent_cache_get(zjwt, cache_key, db=db)
     if cached is not None:
         await _emit_status(status_cb, "rag_cache_hit", {"query": query, "top_k": top_k})
         try:
             await log_rag_guardrail(
-                zme.zdb,
-                ten_id=zme.ztid,
-                biz_id=zme.zbid,
-                user_id=zme.zuid,
+                db,
+                ten_id=zjwt.ztid,
+                biz_id=zjwt.zbid,
+                user_id=zjwt.zuid,
                 route="langgraph_rag",
                 question=query,
                 answer=(cached or {}).get("answer") or "",
@@ -59,24 +60,18 @@ async def run_rag_rerank(
     from app.service.ser_ai_embedding import rag_rerank as rag_answer_rerank_service
 
     rag_payload = QueryReq(query=query, top_k=top_k)
-    zjwt = JWType(
-        ztid=zme.ztid,
-        zbid=zme.zbid,
-        zcid=zme.cli_id,
-        zuid=zme.zuid,
-    )
     response = await rag_answer_rerank_service(
         rag_payload,
         zjwt,
-        zme.zdb,
+        db,
         status_cb=status_cb,
     )
     try:
         await log_rag_guardrail(
-            zme.zdb,
-            ten_id=zme.ztid,
-            biz_id=zme.zbid,
-            user_id=zme.zuid,
+            db,
+            ten_id=zjwt.ztid,
+            biz_id=zjwt.zbid,
+            user_id=zjwt.zuid,
             route="langgraph_rag",
             question=query,
             answer=(response or {}).get("answer") or "",
@@ -87,5 +82,11 @@ async def run_rag_rerank(
         )
     except Exception:
         pass
-    await persistent_cache_set(zme, cache_key, response, ttl_seconds=RAG_RESPONSE_CACHE_TTL)
+    await persistent_cache_set(
+        zjwt,
+        cache_key,
+        response,
+        db=db,
+        ttl_seconds=RAG_RESPONSE_CACHE_TTL,
+    )
     return response

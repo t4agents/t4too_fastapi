@@ -73,6 +73,8 @@ async def decide_route_node(state: Agent2State) -> Agent2State:
 async def rag_node(state: Agent2State) -> Agent2State:
     query = state.get("query") or ""
     top_k = state.get("top_k")
+    zjwt = state.get("zjwt")
+    db = state.get("db")
     await _emit_status(state, "rag_start", {"query": query, "top_k": top_k})
 
     decided_top_k, top_k_rationale, top_k_reasoning = await decide_top_k(
@@ -87,7 +89,8 @@ async def rag_node(state: Agent2State) -> Agent2State:
     rag_response = await run_rag_rerank(
         query,
         decided_top_k,
-        state.get("zme"),
+        zjwt,
+        db,
         status_cb=state.get("status_cb"),
     )
     if isinstance(rag_response, dict):
@@ -113,7 +116,8 @@ async def rag_node(state: Agent2State) -> Agent2State:
 
 async def sql_node(state: Agent2State) -> Agent2State:
     query = state.get("query") or ""
-    zme = state.get("zme")
+    zjwt = state.get("zjwt")
+    db = state.get("db")
     top_k = state.get("top_k")
     await _emit_status(state, "sql_start", {"query": query})
 
@@ -126,7 +130,8 @@ async def sql_node(state: Agent2State) -> Agent2State:
         rag_response = await run_rag_rerank(
             query,
             top_k,
-            zme,
+            zjwt,
+            db,
             status_cb=state.get("status_cb"),
         )
         if isinstance(rag_response, dict):
@@ -144,14 +149,15 @@ async def sql_node(state: Agent2State) -> Agent2State:
 
     try:
         await _emit_status(state, "sql_execute", {"sql": sql_text})
-        rows = await execute_sql(zme, sql_text)
+        rows = await execute_sql(db, sql_text)
         answer_text = json.dumps(rows, ensure_ascii=False, indent=2)
     except Exception as exc:
         await _emit_status(state, "sql_execute_failed", {"error": str(exc), "sql": sql_text})
         rag_response = await run_rag_rerank(
             query,
             top_k,
-            zme,
+            zjwt,
+            db,
             status_cb=state.get("status_cb"),
         )
         if isinstance(rag_response, dict):

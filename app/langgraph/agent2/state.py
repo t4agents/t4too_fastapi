@@ -1,13 +1,15 @@
 from collections.abc import Awaitable, Callable
 from typing import Any, Dict, List, Optional, TypedDict
 
-from app.core.dependency_injection import ZMeDataClass
+from app.schemas.sch_ai import JWType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class Agent2State(TypedDict, total=False):
     query: str
     top_k: int
-    zme: ZMeDataClass
+    zjwt: JWType
+    db: AsyncSession
     status_cb: Callable[[str, Dict[str, Any]], Awaitable[None] | None]
     route: str
     decision: Dict[str, Any]
