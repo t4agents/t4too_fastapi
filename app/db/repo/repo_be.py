@@ -10,7 +10,7 @@ from app.db.models.too.z_be import ZBizEntityDB
 from app.db.repo.repo_utils import coerce_model_value, coerce_model_values
 
 
-async def get_be_by_id(db: AsyncSession, be_id: UUID) -> Optional[ZBizEntityDB]:
+async def get_be_by_id(db: AsyncSession, be_id: UUID|None) -> Optional[ZBizEntityDB]:
     result = await db.execute(select(ZBizEntityDB).where(ZBizEntityDB.id == be_id))
     return result.scalar_one_or_none()
 

@@ -12,7 +12,7 @@ from app.db.repo.repo_utils import coerce_model_values
 
 _log = logging.getLogger(__name__)
     
-async def get_user_by_id(db: AsyncSession, user_id: UUID) -> Optional[ZUserDB]:
+async def get_user_by_id(db: AsyncSession, user_id: UUID|None) -> Optional[ZUserDB]:
     result = await db.execute(select(ZUserDB).where(ZUserDB.id == user_id))
     return result.scalar_one_or_none()
 

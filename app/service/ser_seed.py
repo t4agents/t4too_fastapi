@@ -133,12 +133,12 @@ async def _delete_rows_by_ids(
 
 
 async def apply_seed_defaults(
-    zjwt: JWType,
+    zuid: UUID|None,
     db: AsyncSession,
     *,
     reset: bool = False,
 ) -> dict[str, Any]:
-    zuid = zjwt.zuid
+    
     if not zuid: raise ValueError("Invalid JWT: missing zuid")
     _log.info("seed apply start sub=%s reset=%s", zuid, reset)
     user = await get_user_by_id(db, zuid)

@@ -5,10 +5,11 @@ from uuid import UUID
 
 
 class JWType(BaseModel):
+    zuid: UUID | None = None
     ztid: UUID | None = None
     zbid: UUID | None = None
     zcid: UUID | None = None
-    zuid: UUID | None = None
+    zemail: str | None = None
 
     app_metadata: dict[str, Any] = Field(default_factory=dict)
     user_metadata: dict[str, Any] = Field(default_factory=dict)

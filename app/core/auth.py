@@ -99,6 +99,9 @@ async def get_zjwt(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> JWTyp
 
     return JWType(
         zuid=decoded.get("sub") or decoded.get("id"),
+        zemail=decoded.get("email"),
+
+
         ztid=app_metadata.get("sba_ten_id"),
         zcid=user_metadata.get("sbu_client_id"),
         zbid=user_metadata.get("sbu_biz_id"),
@@ -109,9 +112,10 @@ async def get_zjwt(decoded: Dict[str, Any] = Depends(get_jwks_decoded)) -> JWTyp
 
     # print("1------------", zjwt.zuid)
     # print("2------------", zjwt["app_metadata"]["sba_ten_id"])
+    # sbu_user_type = zjwt.user_metadata.get("sbu_user_type")
     # print("3------------", zjwt["user_metadata"]["avatar"])
     # print("4------------", zjwt["user_metadata"]["sbu_name"])
-    # print("5------------", zjwt["user_metadata"]["display_name"])
+    # print("5------------", zjwt.user_metadata["display_name"])
     # print("6------------", zjwt["user_metadata"]["sbu_client_id"])
     # print("6------------", zjwt["user_metadata"]["sbu_client_name"])
 
