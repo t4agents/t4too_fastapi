@@ -42,7 +42,7 @@ async def post_be_profile(
 ):
     updates = payload
     try:        
-        _ = await update_sbu_be(zjwt, payload.get("be_name"), payload.get("be_logo") )
+        _ = await update_sbu_be(zjwt, payload.get("be_name"))
         be = await update_be_profile(zjwt, db, updates)
         
     except HTTPException as exc:

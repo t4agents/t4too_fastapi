@@ -17,10 +17,10 @@ async def updateid_ten_cli(uid: UUID|None) -> None:
 
 
 
-async def update_sbu_be(zjwt: JWType, be_name: str | None, be_avatar: str | None) -> None:
+async def update_sbu_be(zjwt: JWType, be_name: str | None) -> None:
     supabase = get_supabase_admin_client()
     try:
         supabase.auth.admin.update_user_by_id(str(zjwt.zuid),
-            {"user_metadata": {"sbu_be_name": be_name, "sbu_be_avatar": be_avatar},},
+            {"user_metadata": {"sbu_be_name": be_name},},
         )
     except Exception: raise
