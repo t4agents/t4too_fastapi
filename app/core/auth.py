@@ -14,7 +14,7 @@ from app.config import get_settings_singleton
 
 _JWKS_CACHE: Dict[str, Any] | None = None
 _JWKS_CACHE_TS: float | None = None
-_JWKS_TTL_SECONDS = 3600
+_JWKS_TTL_SECONDS = 36000
 
 _security = HTTPBearer(auto_error=False)
 
@@ -36,9 +36,25 @@ async def _get_jwks_cached() -> Dict[str, Any]:
     now = time.time()
     if _JWKS_CACHE and _JWKS_CACHE_TS and (now - _JWKS_CACHE_TS) < _JWKS_TTL_SECONDS:
         return _JWKS_CACHE
-    _JWKS_CACHE = await _fetch_jwks()
-    _JWKS_CACHE_TS = now
+    try:
+        fresh_jwks = await _fetch_jwks()
+    except (httpx.HTTPError, HTTPException):
+        if _JWKS_CACHE:
+            # Network/transient errors should not invalidate an already known keyset.
+            return _JWKS_CACHE
+        raise
+
+    _JWKS_CACHE = fresh_jwks
+    _JWKS_CACHE_TS = time.time()
     return _JWKS_CACHE
+
+
+async def _refresh_jwks() -> Dict[str, Any]:
+    global _JWKS_CACHE, _JWKS_CACHE_TS
+    fresh_jwks = await _fetch_jwks()
+    _JWKS_CACHE = fresh_jwks
+    _JWKS_CACHE_TS = time.time()
+    return fresh_jwks
 
 
 def _find_jwk(jwks: Dict[str, Any], kid: str | None) -> Dict[str, Any] | None:
@@ -67,8 +83,17 @@ async def get_jwks_decoded(credentials: HTTPAuthorizationCredentials = Depends(_
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Invalid token header.",) from exc
 
+    kid = header.get("kid")
     jwks = await _get_jwks_cached()
-    jwk = _find_jwk(jwks, header.get("kid"))
+    jwk = _find_jwk(jwks, kid)
+    if not jwk and kid:
+        # Key rotation can introduce a new kid before cache TTL expires.
+        try:
+            jwks = await _refresh_jwks()
+            jwk = _find_jwk(jwks, kid)
+        except (httpx.HTTPError, HTTPException):
+            # Keep existing behavior below and return 401 if key is still unavailable.
+            pass
     if not jwk:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Signing key not found.",)

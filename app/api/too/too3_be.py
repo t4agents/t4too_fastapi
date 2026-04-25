@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
+from app.core.supabase_meta import update_sbu_be
 from app.db.conn.db_async import get_db_admin
 from app.db.models.too.z_be import ZBizEntityDB
 from app.schemas.sch_ai import JWType
@@ -40,8 +41,10 @@ async def post_be_profile(
     db: AsyncSession = Depends(get_db_admin),
 ):
     updates = payload
-    try:
+    try:        
+        _ = await update_sbu_be(zjwt, payload.get("be_name"), payload.get("be_logo") )
         be = await update_be_profile(zjwt, db, updates)
+        
     except HTTPException as exc:
         if exc.status_code != status.HTTP_404_NOT_FOUND:
             raise

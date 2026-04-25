@@ -136,6 +136,6 @@ async def provision_new_user_with_seed(zjwt: JWType, db: AsyncSession) -> None:
                 usr_id=zuid,
                 created_by=zuid,
             )
-            seed_summary = await apply_seed_defaults(zuid=zuid, db=db, reset=False)
+            seed_summary = await apply_seed_defaults(zjwt=zjwt, db=db, reset=False)
     except Exception:        raise
     await updateid_ten_cli(zuid)
