@@ -1,5 +1,6 @@
-from sqlalchemy import Text, Numeric, func, cast, literal
+from sqlalchemy import DateTime, Text, Numeric, func, cast, literal
 from sqlalchemy.dialects.postgresql import REGCONFIG
+from datetime import datetime
 
 from uuid import UUID, uuid4
 from sqlalchemy import Column, ForeignKey, Index, String, Integer, Uuid
@@ -22,5 +23,27 @@ class Embedding384DB(Base):
     __table_args__ = (
         Index("ix_emb384_hnsw",emb384,postgresql_using="hnsw",postgresql_ops={"emb384": "vector_cosine_ops"}),
         Index("ix_emb384_chunk_tsv_gin",func.to_tsvector(cast(literal("english"), REGCONFIG), chunk),postgresql_using="gin",),
+        {"schema": SCHEMA_TOO_AI}
+    )
+
+
+
+class Embedding1024DB(Base):
+    __tablename__ = "inv_1024"
+
+    id: Mapped[UUID] = mapped_column(Uuid,primary_key=True,default=uuid4, index=True)
+    ten_id: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
+    created_by: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    source_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, index=True,)
+    chunk: Mapped[str] = mapped_column(Text, nullable=False)
+    text_score: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    
+    emb1024: Mapped[list[float]] = mapped_column(Vector(1024), nullable=False)
+
+    __table_args__ = (
+        Index("ix_emb1024_hnsw",emb1024,postgresql_using="hnsw",postgresql_ops={"emb1024": "vector_cosine_ops"}),
+        Index("ix_emb1024_chunk_tsv_gin",func.to_tsvector(cast(literal("english"), REGCONFIG), chunk),postgresql_using="gin",),
         {"schema": SCHEMA_TOO_AI}
     )
