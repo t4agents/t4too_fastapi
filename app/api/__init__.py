@@ -4,7 +4,7 @@ from .too import rouToo
 from .t4 import rouT4
 from .inv import invRou
 from .ai import rouAI
-from .bi import rouBI
+from .embedding import rouBI
 
 rou = APIRouter()
 
