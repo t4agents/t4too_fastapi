@@ -12,27 +12,15 @@ from app.schemas.sch_ai_rag_basic import QueryReq, QueryRes
 from app.service.bi_rag_service import bi_rag_query_service
 
 from .ser_chunk import InvChunkService
-from .ser_embedding import EmbeddingService
 
 
-invEmbedding = APIRouter()
+invChunk = APIRouter()
 
 
-@invEmbedding.post("/rebuild-chunks", summary="Rebuild dividend_chunks from dividends",)
+@invChunk.post("/rebuild-inv-chunks", summary="delete all embeddings in inv_1024 and re-chunk",)
 async def rebuild_inv_chunks(
+    zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
 ):
     service = InvChunkService(db)
-    return await service.rebuild_chunks()
-
-
-@invEmbedding.post("/embed-all")
-async def embed_all_inv(db: AsyncSession = Depends(get_db_rls),):
-    count = await EmbeddingService.embed_all_dummy(db)
-    return {"embedded": count}
-
-
-
-# @invEmbedding.post("/admin/reindex", dependencies=[AdminDeps])
-# async def reindex(db: AsyncSession = Depends(get_db_rls),):
-#     await bulk_index_dividends(db)
+    return await service.rebuild_chunks(zjwt)

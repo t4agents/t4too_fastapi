@@ -9,12 +9,12 @@ from app.db.models.too.z_base import Base, BaseMixin
 from app.db.schemas.schemas import SCHEMA_TOO_AI
 from pgvector.sqlalchemy import Vector
 
-class Embedding384DB(Base):
+class Embedding384DB(Base, BaseMixin):
     __tablename__ = "payroll_history_384"
 
-    id: Mapped[UUID] = mapped_column(Uuid,primary_key=True,default=uuid4, index=True)
 
     source_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, index=True,)
+    chunk_id: Mapped[int] = mapped_column(Integer, default=1,nullable=True)
     chunk: Mapped[str] = mapped_column(Text, nullable=False)
     text_score: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
     
@@ -28,15 +28,11 @@ class Embedding384DB(Base):
 
 
 
-class Embedding1024DB(Base):
+class Embedding1024DB(Base, BaseMixin):
     __tablename__ = "inv_1024"
 
-    id: Mapped[UUID] = mapped_column(Uuid,primary_key=True,default=uuid4, index=True)
-    ten_id: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
-    created_by: Mapped[UUID] = mapped_column(Uuid, index=True, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
     source_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, index=True,)
+    chunk_id: Mapped[int] = mapped_column(Integer, default=1,nullable=True)
     chunk: Mapped[str] = mapped_column(Text, nullable=False)
     text_score: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
     
