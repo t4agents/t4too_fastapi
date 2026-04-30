@@ -1,13 +1,15 @@
 from fastapi import APIRouter
 
-from app.core.config import settings
+from app.config import get_settings_singleton
 
 router = APIRouter(tags=["health"])
+settings = get_settings_singleton()
+APP_NAME = getattr(settings, "APP_NAME", "t4too_fastapi")
 
 
 @router.get("/healthz")
 def healthz() -> dict[str, str]:
-    return {"status": "ok", "service": settings.app_name}
+    return {"status": "ok", "service": APP_NAME}
 
 
 @router.get("/ai/principles")
