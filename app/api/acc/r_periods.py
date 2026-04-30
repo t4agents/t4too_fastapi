@@ -25,7 +25,6 @@ async def close_period(
         row = PeriodCloseDB(
             ten_id=zjwt.ztid,
             biz_id=zjwt.zbid,
-            cli_id=zjwt.zcid,
             usr_id=zjwt.zuid,
             created_by=zjwt.zuid,
             period_yyyymm=period_yyyymm,
@@ -49,7 +48,6 @@ async def reopen_period(
         row = PeriodCloseDB(
             ten_id=zjwt.ztid,
             biz_id=zjwt.zbid,
-            cli_id=zjwt.zcid,
             usr_id=zjwt.zuid,
             created_by=zjwt.zuid,
             period_yyyymm=period_yyyymm,

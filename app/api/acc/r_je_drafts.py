@@ -70,7 +70,6 @@ async def generate_draft(
     draft = JeDraftDB(
         ten_id=zjwt.ztid,
         biz_id=zjwt.zbid,
-        cli_id=zjwt.zcid,
         usr_id=zjwt.zuid,
         created_by=zjwt.zuid,
         transaction_id=txn.id,

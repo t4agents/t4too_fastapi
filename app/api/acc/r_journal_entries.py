@@ -70,7 +70,6 @@ async def post_from_draft(
     je = JournalEntryDB(
         ten_id=zjwt.ztid,
         biz_id=zjwt.zbid,
-        cli_id=zjwt.zcid,
         usr_id=zjwt.zuid,
         created_by=zjwt.zuid,
         entry_date=entry_date,
@@ -141,7 +140,6 @@ async def reverse_entry(
     reversal = JournalEntryDB(
         ten_id=zjwt.ztid,
         biz_id=zjwt.zbid,
-        cli_id=zjwt.zcid,
         usr_id=zjwt.zuid,
         created_by=zjwt.zuid,
         entry_date=datetime.now(timezone.utc).date(),

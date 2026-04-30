@@ -33,7 +33,6 @@ async def apply_generic_template(
             COADB(
                 ten_id=zjwt.ztid,
                 biz_id=zjwt.zbid,
-                cli_id=zjwt.zcid,
                 usr_id=zjwt.zuid,
                 created_by=zjwt.zuid,
                 code=item["code"],
