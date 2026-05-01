@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.acc.ac_ledger import (
     COADB,
-    JeDraftLineDB,
     JournalEntryDB,
     JournalEntryLine,
     PeriodCloseDB,
@@ -86,13 +85,6 @@ async def is_period_closed(db: AsyncSession, period_yyyymm: int) -> bool:
         )
     ).scalar_one_or_none()
     return row is not None
-
-
-def assert_draft_balanced(lines: list[JeDraftLineDB]) -> None:
-    debit = sum((line.amount for line in lines if line.line_type == "debit"), Decimal("0"))
-    credit = sum((line.amount for line in lines if line.line_type == "credit"), Decimal("0"))
-    if debit != credit:
-        raise ValueError("Draft is not balanced")
 
 
 async def ledger_rows(db: AsyncSession, from_date: date | None = None, to_date: date | None = None, account_id: UUID | None = None):

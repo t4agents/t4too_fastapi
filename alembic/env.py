@@ -35,7 +35,7 @@ target_metadata = Base.metadata
 
 # Limit autogenerate comparisons to our app schemas only.
 # Keep this list in sync with app/db/schemas.py.
-APP_SCHEMAS = {"too_inv", "too_t4", "too_global", "too_ai"}
+APP_SCHEMAS = {"too_inv", "too_t4", "too_global", "too_ai" , "too_acc"}
 
 
 def include_name(name, type_, parent_names):

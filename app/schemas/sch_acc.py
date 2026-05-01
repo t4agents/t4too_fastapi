@@ -41,45 +41,8 @@ class TransactionOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class DraftGenerateIn(BaseModel):
+class JournalGenerateIn(BaseModel):
     transaction_id: UUID
-
-
-class DraftLinePatch(BaseModel):
-    account_id: UUID
-    line_type: LineType
-    amount: Decimal
-    note: str | None = None
-
-
-class DraftPatch(BaseModel):
-    memo: str | None = None
-    approved: bool | None = None
-    lines: list[DraftLinePatch] | None = None
-
-
-class DraftLineOut(BaseModel):
-    id: UUID
-    draft_id: UUID
-    account_id: UUID
-    line_type: LineType
-    amount: Decimal
-    note: str | None
-
-    model_config = {"from_attributes": True}
-
-
-class DraftOut(BaseModel):
-    id: UUID
-    transaction_id: UUID | None
-    ai_model: str
-    confidence: Decimal
-    rationale: str
-    memo: str | None
-    approved: bool | None
-    suggested_at: datetime
-    reviewed_at: datetime | None
-    lines: list[DraftLineOut] = []
 
 
 class JournalLineOut(BaseModel):

@@ -9,23 +9,93 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
-from app.db.models.acc.ac_ledger import JeDraftDB, JeDraftLineDB, JournalEntryDB, JournalEntryLine, TransactionRawDB
-from app.schemas.sch_acc import DraftGenerateIn, DraftOut, JournalEntryOut, JournalLineOut, LineType
+from app.db.models.acc.ac_ledger import COADB, JournalEntryDB, JournalEntryLine, TransactionRawDB
+from app.schemas.sch_acc import JournalEntryOut, JournalGenerateIn, JournalLineOut, LineType
 from app.schemas.sch_ai import JWType
-from app.service.acc.accounting import assert_draft_balanced, is_period_closed, yyyymm_from_date
-from .r_je_drafts import generate_draft
+from app.service.acc.accounting import is_period_closed, yyyymm_from_date
+from app.service.acc.ai_drafting import generate_je_draft
 
 router = APIRouter(prefix="/journal-entries", tags=["journal-entries"])
 _LINE_TYPES: set[str] = {"debit", "credit"}
 
 
-@router.post("/generate", response_model=DraftOut)
-async def generate_draft_alias(
-    payload: DraftGenerateIn,
+@router.post("/generate", response_model=JournalEntryOut, status_code=status.HTTP_201_CREATED)
+async def generate_entry(
+    payload: JournalGenerateIn,
     zjwt: JWType = Depends(get_zjwt),
     db: AsyncSession = Depends(get_db_rls),
-) -> DraftOut:
-    return await generate_draft(payload=payload, zjwt=zjwt, db=db)
+) -> JournalEntryOut:
+    txn = (await db.execute(select(TransactionRawDB).where(TransactionRawDB.id == payload.transaction_id))).scalar_one_or_none()
+    if not txn:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    period = yyyymm_from_date(txn.txn_date)
+    if await is_period_closed(db, period):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Period is closed")
+
+    accounts = list((await db.execute(select(COADB).where(COADB.is_deleted.is_not(True)))).scalars().all())
+    if not accounts:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No accounts available. Create accounts first.")
+
+    ai_payload = generate_je_draft(
+        amount=txn.amount,
+        description=txn.description,
+        accounts=[{"code": a.code, "name": a.name, "type": a.type} for a in accounts],
+    )
+
+    account_by_code = {a.code: a for a in accounts}
+    candidate_lines: list[tuple[UUID, str, Decimal, str | None]] = []
+    for item in ai_payload.get("lines", []):
+        account = account_by_code.get(str(item.get("account_code", "")).strip())
+        if not account:
+            continue
+        amount = Decimal(str(item.get("amount", "0")))
+        line_type = str(item.get("line_type", "")).lower()
+        if amount <= 0 or line_type not in _LINE_TYPES:
+            continue
+        candidate_lines.append((account.id, line_type, amount, item.get("note")))
+
+    if not candidate_lines:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="AI did not produce valid journal lines")
+
+    debit_total = sum((amount for _, line_type, amount, _ in candidate_lines if line_type == "debit"), Decimal("0"))
+    credit_total = sum((amount for _, line_type, amount, _ in candidate_lines if line_type == "credit"), Decimal("0"))
+    if debit_total != credit_total:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Generated journal lines are not balanced")
+
+    je = JournalEntryDB(
+        ten_id=zjwt.ztid,
+        biz_id=zjwt.zbid,
+        usr_id=zjwt.zuid,
+        created_by=zjwt.zuid,
+        entry_date=txn.txn_date,
+        memo=str(ai_payload.get("memo", txn.description[:120])),
+        source="ai",
+        source_ref_id=txn.id,
+        posted_by=zjwt.zuid,
+        period_yyyymm=period,
+    )
+    db.add(je)
+    await db.flush()
+    for account_id, line_type, amount, note in candidate_lines:
+        db.add(
+            JournalEntryLine(
+                journal_entry_id=je.id,
+                account_id=account_id,
+                line_type=line_type,
+                amount=amount,
+                description=note,
+                ten_id=zjwt.ztid,
+                biz_id=zjwt.zbid,
+                usr_id=zjwt.zuid,
+                created_by=zjwt.zuid,
+            )
+        )
+
+    txn.status = "posted"
+    await db.commit()
+    await db.refresh(je)
+    return await _entry_out(db, je)
 
 
 async def _entry_out(db: AsyncSession, entry: JournalEntryDB) -> JournalEntryOut:
@@ -52,68 +122,6 @@ async def _entry_out(db: AsyncSession, entry: JournalEntryDB) -> JournalEntryOut
         is_reversal=entry.is_reversal,
         lines=lines,
     )
-
-
-@router.post("/from-draft/{draft_id}", response_model=JournalEntryOut, status_code=status.HTTP_201_CREATED)
-async def post_from_draft(
-    draft_id: UUID,
-    zjwt: JWType = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
-) -> JournalEntryOut:
-    draft = (await db.execute(select(JeDraftDB).where(JeDraftDB.id == draft_id))).scalar_one_or_none()
-    if not draft:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Draft not found")
-
-    lines = list((await db.execute(select(JeDraftLineDB).where(JeDraftLineDB.draft_id == draft.id))).scalars().all())
-    if not lines:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draft has no lines")
-    assert_draft_balanced(lines)
-
-    txn = None
-    if draft.transaction_id:
-        txn = (await db.execute(select(TransactionRawDB).where(TransactionRawDB.id == draft.transaction_id))).scalar_one_or_none()
-    entry_date = txn.txn_date if txn else datetime.now(timezone.utc).date()
-    period = yyyymm_from_date(entry_date)
-    if await is_period_closed(db, period):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Period is closed")
-
-    je = JournalEntryDB(
-        ten_id=zjwt.ztid,
-        biz_id=zjwt.zbid,
-        usr_id=zjwt.zuid,
-        created_by=zjwt.zuid,
-        entry_date=entry_date,
-        memo=draft.memo,
-        source="ai",
-        source_ref_id=draft.id,
-        posted_by=zjwt.zuid,
-        period_yyyymm=period,
-    )
-    db.add(je)
-    await db.flush()
-    for line in lines:
-        db.add(
-            JournalEntryLine(
-                journal_entry_id=je.id,
-                account_id=line.account_id,
-                line_type=line.line_type,
-                amount=line.amount,
-                description=line.note,
-                ten_id=zjwt.ztid,
-                biz_id=zjwt.zbid,
-                usr_id=zjwt.zuid,
-                created_by=zjwt.zuid,
-            )
-        )
-
-    draft.approved = True
-    draft.approved_by = zjwt.zuid
-    draft.reviewed_at = datetime.now(timezone.utc)
-    if txn:
-        txn.status = "posted"
-    await db.commit()
-    await db.refresh(je)
-    return await _entry_out(db, je)
 
 
 @router.get("", response_model=list[JournalEntryOut])

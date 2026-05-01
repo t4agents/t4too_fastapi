@@ -49,49 +49,6 @@ class TransactionRawDB(Base, BaseMixin):
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'new'"))
 
 
-class JeDraftDB(Base, BaseMixin):
-    __tablename__ = "je_drafts"
-    __table_args__ = (
-        CheckConstraint("confidence >= 0 and confidence <= 1", name="ck_je_drafts_confidence"),
-        {"schema": SCHEMA_TOO_ACC}
-    )
-
-    transaction_id: Mapped[UUID | None] = mapped_column(
-        Uuid,
-        ForeignKey(f"{SCHEMA_TOO_ACC}.transactions_raw.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    ai_model: Mapped[str] = mapped_column(String(120), nullable=False)
-    confidence: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
-    rationale: Mapped[str] = mapped_column(Text, nullable=False)
-    memo: Mapped[str | None] = mapped_column(Text, nullable=True)
-    suggested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    approved: Mapped[bool | None] = mapped_column(nullable=True)
-    approved_by: Mapped[UUID | None] = mapped_column(Uuid, nullable=True)
-
-
-class JeDraftLineDB(Base, BaseMixin):
-    __tablename__ = "je_draft_lines"
-    __table_args__ = (
-        CheckConstraint("line_type in ('debit','credit')", name="ck_je_draft_lines_line_type"),
-        CheckConstraint("amount > 0", name="ck_je_draft_lines_amount_positive"),
-            {"schema": SCHEMA_TOO_ACC}
-    )
-
-    draft_id: Mapped[UUID] = mapped_column(
-        Uuid,
-        ForeignKey(f"{SCHEMA_TOO_ACC}.je_drafts.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    account_id: Mapped[UUID] = mapped_column(
-        Uuid, ForeignKey(f"{SCHEMA_TOO_ACC}.coa.id", ondelete="RESTRICT"), nullable=False
-    )
-    line_type: Mapped[str] = mapped_column(String(10), nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
-    note: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-
 class JournalEntryDB(Base, BaseMixin):
     __tablename__ = "journal_entries"
     __table_args__ = (
