@@ -12,6 +12,7 @@ from app.db.models.acc.ac_ledger import TransactionRawDB
 from app.schemas.sch_acc import TransactionOut
 from app.schemas.sch_ai import JWType
 from app.service.acc.accounting import import_transactions, parse_csv_transactions
+from .r_journal_entries import create_ai_entry_for_transaction
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 settings = get_settings_singleton()
@@ -31,7 +32,27 @@ async def import_csv(
     content = await file.read()
     txns = parse_csv_transactions(content, zjwt.ztid, file.filename, DEFAULT_CURRENCY)
     result = await import_transactions(db, txns)
-    return {"imported_count": result.imported_count, "duplicate_count": result.duplicate_count, "transaction_ids": result.ids}
+
+    created_entry_ids: list[str] = []
+    entry_failed_count = 0
+    if result.ids:
+        txn_ids = [UUID(txn_id) for txn_id in result.ids]
+        imported_rows = list((await db.execute(select(TransactionRawDB).where(TransactionRawDB.id.in_(txn_ids)))).scalars().all())
+        for txn in imported_rows:
+            try:
+                entry = await create_ai_entry_for_transaction(txn=txn, zjwt=zjwt, db=db)
+                created_entry_ids.append(str(entry.id))
+            except HTTPException:
+                entry_failed_count += 1
+
+    return {
+        "imported_count": result.imported_count,
+        "duplicate_count": result.duplicate_count,
+        "transaction_ids": result.ids,
+        "journal_entry_count": len(created_entry_ids),
+        "journal_entry_ids": created_entry_ids,
+        "journal_entry_failed_count": entry_failed_count,
+    }
 
 
 @router.get("", response_model=list[TransactionOut])

@@ -19,16 +19,11 @@ router = APIRouter(prefix="/journal-entries", tags=["journal-entries"])
 _LINE_TYPES: set[str] = {"debit", "credit"}
 
 
-@router.post("/generate", response_model=JournalEntryOut, status_code=status.HTTP_201_CREATED)
-async def generate_entry(
-    payload: JournalGenerateIn,
-    zjwt: JWType = Depends(get_zjwt),
-    db: AsyncSession = Depends(get_db_rls),
+async def create_ai_entry_for_transaction(
+    txn: TransactionRawDB,
+    zjwt: JWType,
+    db: AsyncSession,
 ) -> JournalEntryOut:
-    txn = (await db.execute(select(TransactionRawDB).where(TransactionRawDB.id == payload.transaction_id))).scalar_one_or_none()
-    if not txn:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
-
     period = yyyymm_from_date(txn.txn_date)
     if await is_period_closed(db, period):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Period is closed")
@@ -96,6 +91,18 @@ async def generate_entry(
     await db.commit()
     await db.refresh(je)
     return await _entry_out(db, je)
+
+
+@router.post("/generate", response_model=JournalEntryOut, status_code=status.HTTP_201_CREATED)
+async def generate_entry(
+    payload: JournalGenerateIn,
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+) -> JournalEntryOut:
+    txn = (await db.execute(select(TransactionRawDB).where(TransactionRawDB.id == payload.transaction_id))).scalar_one_or_none()
+    if not txn:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+    return await create_ai_entry_for_transaction(txn=txn, zjwt=zjwt, db=db)
 
 
 async def _entry_out(db: AsyncSession, entry: JournalEntryDB) -> JournalEntryOut:
