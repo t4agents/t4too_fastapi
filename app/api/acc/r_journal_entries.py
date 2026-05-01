@@ -10,12 +10,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import get_zjwt
 from app.db.conn.db_rls import get_db_rls
 from app.db.models.acc.ac_ledger import JeDraftDB, JeDraftLineDB, JournalEntryDB, JournalEntryLine, TransactionRawDB
-from app.schemas.sch_acc import JournalEntryOut, JournalLineOut, LineType
+from app.schemas.sch_acc import DraftGenerateIn, DraftOut, JournalEntryOut, JournalLineOut, LineType
 from app.schemas.sch_ai import JWType
 from app.service.acc.accounting import assert_draft_balanced, is_period_closed, yyyymm_from_date
+from .r_je_drafts import generate_draft
 
 router = APIRouter(prefix="/journal-entries", tags=["journal-entries"])
 _LINE_TYPES: set[str] = {"debit", "credit"}
+
+
+@router.post("/generate", response_model=DraftOut)
+async def generate_draft_alias(
+    payload: DraftGenerateIn,
+    zjwt: JWType = Depends(get_zjwt),
+    db: AsyncSession = Depends(get_db_rls),
+) -> DraftOut:
+    return await generate_draft(payload=payload, zjwt=zjwt, db=db)
 
 
 async def _entry_out(db: AsyncSession, entry: JournalEntryDB) -> JournalEntryOut:
@@ -82,7 +92,19 @@ async def post_from_draft(
     db.add(je)
     await db.flush()
     for line in lines:
-        db.add(JournalEntryLine(journal_entry_id=je.id, account_id=line.account_id, line_type=line.line_type, amount=line.amount, description=line.note))
+        db.add(
+            JournalEntryLine(
+                journal_entry_id=je.id,
+                account_id=line.account_id,
+                line_type=line.line_type,
+                amount=line.amount,
+                description=line.note,
+                ten_id=zjwt.ztid,
+                biz_id=zjwt.zbid,
+                usr_id=zjwt.zuid,
+                created_by=zjwt.zuid,
+            )
+        )
 
     draft.approved = True
     draft.approved_by = zjwt.zuid
@@ -154,7 +176,19 @@ async def reverse_entry(
     db.add(reversal)
     await db.flush()
     for line in original_lines:
-        db.add(JournalEntryLine(journal_entry_id=reversal.id, account_id=line.account_id, line_type="credit" if line.line_type == "debit" else "debit", amount=Decimal(line.amount), description=f"Reversal: {line.description or ''}".strip()))
+        db.add(
+            JournalEntryLine(
+                journal_entry_id=reversal.id,
+                account_id=line.account_id,
+                line_type="credit" if line.line_type == "debit" else "debit",
+                amount=Decimal(line.amount),
+                description=f"Reversal: {line.description or ''}".strip(),
+                ten_id=zjwt.ztid,
+                biz_id=zjwt.zbid,
+                usr_id=zjwt.zuid,
+                created_by=zjwt.zuid,
+            )
+        )
 
     await db.commit()
     await db.refresh(reversal)

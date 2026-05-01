@@ -90,7 +90,19 @@ async def generate_draft(
         line_type = str(item.get("line_type", "")).lower()
         if amount <= 0 or line_type not in {"debit", "credit"}:
             continue
-        db.add(JeDraftLineDB(draft_id=draft.id, account_id=account.id, line_type=line_type, amount=amount, note=item.get("note")))
+        db.add(
+            JeDraftLineDB(
+                draft_id=draft.id,
+                account_id=account.id,
+                line_type=line_type,
+                amount=amount,
+                note=item.get("note"),
+                ten_id=zjwt.ztid,
+                biz_id=zjwt.zbid,
+                usr_id=zjwt.zuid,
+                created_by=zjwt.zuid,
+            )
+        )
 
     txn.status = "mapped"
     await db.commit()
@@ -139,7 +151,19 @@ async def patch_draft(
     if payload.lines is not None:
         await db.execute(delete(JeDraftLineDB).where(JeDraftLineDB.draft_id == draft.id))
         for item in payload.lines:
-            db.add(JeDraftLineDB(draft_id=draft.id, account_id=item.account_id, line_type=item.line_type, amount=item.amount, note=item.note))
+            db.add(
+                JeDraftLineDB(
+                    draft_id=draft.id,
+                    account_id=item.account_id,
+                    line_type=item.line_type,
+                    amount=item.amount,
+                    note=item.note,
+                    ten_id=zjwt.ztid,
+                    biz_id=zjwt.zbid,
+                    usr_id=zjwt.zuid,
+                    created_by=zjwt.zuid,
+                )
+            )
 
     await db.commit()
     await db.refresh(draft)
