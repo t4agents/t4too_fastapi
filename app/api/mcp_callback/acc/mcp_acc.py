@@ -1,14 +1,20 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+import time
+from urllib.parse import urljoin
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings_singleton
 from app.db.conn.db_async import get_db_admin
 
 from ....db.models.acc.ac_mcp import get_recent_bank_transactions, get_vendor_by_name
 
 router = APIRouter(prefix="/mcp_callback/acc", tags=["mcp-callback-acc"])
+settings = get_settings_singleton()
 
 
 class OCRRequest(BaseModel):
@@ -16,8 +22,54 @@ class OCRRequest(BaseModel):
 
 
 @router.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health(request: Request) -> dict[str, object]:
+    # This endpoint verifies local service health and triggers agents->mcp diagnosis.
+    local_url = str(request.url)
+    caller_url = request.headers.get("origin") or request.headers.get("referer")
+    service_name = request.url.hostname or "t4too_fastapi"
+    agents_diagnose_url = urljoin(str(settings.TOO_AGENTS_API_URL), "diagnose_mcp")
+
+    local_check = {
+        "url": local_url,
+        "base_url": str(request.base_url),
+        "service": service_name,
+        "status": "ok",
+    }
+    if caller_url:
+        local_check["caller_url"] = caller_url
+
+    agents_check: dict[str, object] = {
+        "url": agents_diagnose_url,
+        "status": "unknown",
+    }
+
+    started = time.perf_counter()
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(agents_diagnose_url)
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+
+        agents_check["http_status"] = response.status_code
+        agents_check["latency_ms"] = elapsed_ms
+        agents_check["status"] = "ok" if response.is_success else "failed"
+        try:
+            agents_check["response"] = response.json()
+        except ValueError:
+            agents_check["response"] = response.text
+    except Exception as exc:
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        agents_check["status"] = "failed"
+        agents_check["latency_ms"] = elapsed_ms
+        agents_check["error"] = str(exc)
+
+    overall_status = "ok" if agents_check["status"] == "ok" else "degraded"
+    return {
+        "status": overall_status,
+        "checks": {
+            "current_repo": local_check,
+            "agents_and_mcp": agents_check,
+        },
+    }
 
 
 @router.get("/vendors/lookup")

@@ -26,6 +26,8 @@ class _Settings(BaseSettings):
     GUARDRAIL_ENABLE_LLM_JUDGE: bool = True
     PII_MINIMIZE_RAG_EVIDENCE: bool = True
 
+    TOO_AGENTS_API_URL: str = "https://tooagentsapi.fastapicloud.dev/"
+
     # ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # STRIPE_SECRET_KEY: str = ""
